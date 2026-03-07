@@ -1,6 +1,12 @@
 # Projeto Pulso Politico
 
-Monorepo inicial para o MVP do Pulso Politico.
+Monorepo do MVP do Pulso Politico, com frontend React, API FastAPI, fluxo local de operacao/release e base funcional para CRM politico, onboarding, relatorios, billing e monitoramento de adversarios.
+
+Repositorio publico:
+- `https://github.com/mendoncaantonio926-max/Antonio-Rincon`
+
+Release publicada mais recente:
+- `https://github.com/mendoncaantonio926-max/Antonio-Rincon/releases/tag/v0.1.5`
 
 ## Estrutura
 
