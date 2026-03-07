@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload frontend dist
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: web-dist-windows
           path: apps/web/dist
@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload verify report
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: verify-report-windows
           path: verify-report.json
@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload doctor snapshot
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: doctor-report-windows
           path: doctor-report.json
@@ -102,7 +102,7 @@ jobs:
 
       - name: Upload doctor summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: doctor-summary-windows
           path: doctor-report.md
@@ -111,7 +111,7 @@ jobs:
 
       - name: Upload verify summary
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: verify-summary-windows
           path: verify-report.md
