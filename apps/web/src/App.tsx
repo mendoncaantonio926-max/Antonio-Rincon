@@ -4,6 +4,7 @@ import { Badge, Button, Card, Input, Table } from "@pulso/ui";
 import { AuthPage } from "./AuthPage";
 import {
   api,
+  BillingEvent,
   Campaign,
   Contact,
   DashboardSummary,
@@ -12,9 +13,10 @@ import {
   OnboardingState,
   Opponent,
   OpponentEvent,
+  OpponentSummary,
   Report,
-  Subscription,
   BillingPlan,
+  Subscription,
   Task,
   AiSummary,
 } from "./api";
@@ -424,6 +426,11 @@ function DashboardPage() {
             </select>
           </div>
           <strong>{aiSummary?.summary ?? "Carregando recomendacoes..."}</strong>
+          <div className="dashboard-recommendations">
+            <span>{aiSummary?.next_action ?? "Definindo proxima acao..."}</span>
+            <span>{aiSummary?.action_reason ?? "Lendo o contexto operacional do workspace."}</span>
+            <span>Urgencia: {aiSummary?.urgency ?? "normal"}</span>
+          </div>
           {aiSummary?.recommendations?.length ? (
             <div className="dashboard-recommendations">
               {aiSummary.recommendations.map((item) => (
@@ -1578,16 +1585,19 @@ function BillingPage() {
   const { tokens } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<BillingPlan[]>([]);
+  const [events, setEvents] = useState<BillingEvent[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
   async function loadSubscription() {
     if (!tokens?.access_token) return;
-    const [subscriptionPayload, plansPayload] = await Promise.all([
+    const [subscriptionPayload, plansPayload, eventsPayload] = await Promise.all([
       api.getSubscription(tokens.access_token),
       api.listPlans(tokens.access_token),
+      api.listBillingEvents(tokens.access_token),
     ]);
     setSubscription(subscriptionPayload);
     setPlans(plansPayload);
+    setEvents(eventsPayload);
   }
 
   useEffect(() => {
@@ -1605,7 +1615,9 @@ function BillingPage() {
     }
   }
 
-  async function handleSubscriptionAction(action: "cancel" | "reactivate" | "renew_trial") {
+  async function handleSubscriptionAction(
+    action: "cancel" | "reactivate" | "renew_trial" | "mark_past_due" | "resolve_past_due",
+  ) {
     if (!tokens?.access_token) return;
     try {
       const response = await api.subscriptionAction(tokens.access_token, action);
@@ -1632,8 +1644,20 @@ function BillingPage() {
             <span>{subscription?.status ?? "-"}</span>
           </article>
           <article className="list-card">
+            <strong>Leitura comercial</strong>
+            <span>{subscription?.commercial_status ?? "-"}</span>
+          </article>
+          <article className="list-card">
+            <strong>Ciclo</strong>
+            <span>{subscription?.billing_cycle ?? "-"}</span>
+          </article>
+          <article className="list-card">
             <strong>Trial ate</strong>
             <span>{subscription?.trial_ends_at ?? "-"}</span>
+          </article>
+          <article className="list-card">
+            <strong>Proxima referencia</strong>
+            <span>{subscription?.next_billing_at ?? "-"}</span>
           </article>
           <article className="list-card">
             <strong>Dias restantes</strong>
@@ -1651,6 +1675,10 @@ function BillingPage() {
             <strong>Plano sugerido</strong>
             <span>{subscription?.suggested_plan ?? "-"}</span>
           </article>
+          <article className="list-card">
+            <strong>Cancelamento agendado</strong>
+            <span>{subscription?.cancel_at_period_end ? "Sim" : "Nao"}</span>
+          </article>
         </div>
         {message ? <div className="info-box">{message}</div> : null}
         <div className="list-grid onboarding-guidance-grid">
@@ -1665,15 +1693,25 @@ function BillingPage() {
           <article className="list-card onboarding-guidance">
             <strong>Leitura comercial</strong>
             <span>
-              {subscription?.trial_days_remaining
-                ? `Trial em andamento com ${subscription.trial_days_remaining} dia(s) restante(s).`
-                : "Conta pronta para conversao ou renovacao de plano."}
+              {subscription?.cancel_at_period_end
+                ? `Cancelamento previsto para ${subscription.current_period_ends_at ?? "o fim do periodo atual"}.`
+                : subscription?.status === "past_due"
+                  ? "Conta em pendencia. Priorize regularizacao antes de ampliar o uso."
+                  : subscription?.trial_days_remaining
+                    ? `Trial em andamento com ${subscription.trial_days_remaining} dia(s) restante(s).`
+                    : "Conta pronta para conversao, renovacao ou upgrade de plano."}
             </span>
           </article>
         </div>
         <div className="inline-actions">
           <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("renew_trial")}>
             Renovar trial
+          </button>
+          <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("mark_past_due")}>
+            Marcar pendencia
+          </button>
+          <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("resolve_past_due")}>
+            Resolver pendencia
           </button>
           <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("reactivate")}>
             Reativar
@@ -1701,6 +1739,22 @@ function BillingPage() {
               </button>
             </article>
           ))}
+        </div>
+        <div className="section-header">
+          <h2>Historico comercial</h2>
+        </div>
+        <div className="list-grid">
+          {events.length === 0 ? (
+            <p className="meta-copy">Nenhum evento comercial registrado ainda.</p>
+          ) : (
+            events.slice(0, 6).map((event) => (
+              <article className="list-card" key={event.id}>
+                <strong>{event.title}</strong>
+                <span>{new Date(event.created_at).toLocaleString("pt-BR")}</span>
+                <p>{event.detail}</p>
+              </article>
+            ))
+          )}
         </div>
       </div>
     </section>
@@ -1747,6 +1801,7 @@ function LeadsPage() {
 function OpponentsPage() {
   const { tokens } = useAuth();
   const [opponents, setOpponents] = useState<Opponent[]>([]);
+  const [summary, setSummary] = useState<OpponentSummary | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [events, setEvents] = useState<OpponentEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -1765,7 +1820,9 @@ function OpponentsPage() {
         stance: stanceFilter || undefined,
         watch_level: watchLevelFilter || undefined,
       });
+      const summaryPayload = await api.getOpponentsSummary(tokens.access_token);
       setOpponents(response);
+      setSummary(summaryPayload);
       if (!selectedId && response[0]) {
         setSelectedId(response[0].id);
       } else if (selectedId && !response.find((item) => item.id === selectedId)) {
@@ -1857,10 +1914,17 @@ function OpponentsPage() {
 
   const selectedOpponent = opponents.find((item) => item.id === selectedId) ?? null;
   const criticalEvents = events.filter((item) => item.severity === "critical").length;
+  const recentEvents = events.filter((item) => {
+    const threshold = new Date();
+    threshold.setDate(threshold.getDate() - 30);
+    return new Date(item.event_date) >= threshold;
+  }).length;
+  const lastEventDate = events[0]?.event_date ?? null;
   const comparison = {
-    critical: opponents.filter((item) => item.watch_level === "critical").length,
-    incumbent: opponents.filter((item) => item.stance === "incumbent").length,
-    challenger: opponents.filter((item) => item.stance === "challenger").length,
+    critical: summary?.critical_watch_count ?? opponents.filter((item) => item.watch_level === "critical").length,
+    incumbent: summary?.stance_distribution?.incumbent ?? opponents.filter((item) => item.stance === "incumbent").length,
+    challenger:
+      summary?.stance_distribution?.challenger ?? opponents.filter((item) => item.stance === "challenger").length,
   };
 
   return (
@@ -1926,6 +1990,14 @@ function OpponentsPage() {
             <strong>Desafiantes</strong>
             <span>{comparison.challenger}</span>
           </article>
+          <article className="list-card onboarding-guidance">
+            <strong>Eventos criticos</strong>
+            <span>{summary?.critical_events_count ?? 0}</span>
+          </article>
+          <article className="list-card onboarding-guidance">
+            <strong>Ultimos 30 dias</strong>
+            <span>{summary?.recent_events_count ?? 0}</span>
+          </article>
         </div>
         <div className="toolbar">
           <input
@@ -1966,6 +2038,20 @@ function OpponentsPage() {
             </article>
           ))}
         </div>
+        <div className="section-header">
+          <h2>Watchlist comparativa</h2>
+        </div>
+        <div className="list-grid">
+          {(summary?.top_watchlist ?? []).map((item) => (
+            <article className="list-card" key={item.opponent_id}>
+              <strong>{item.name}</strong>
+              <span>{item.stance} · {item.watch_level}</span>
+              <span>{item.total_events} evento(s) no total</span>
+              <span>{item.critical_events} critico(s) · {item.recent_events} recentes</span>
+              <span>{item.last_event_date ? new Date(item.last_event_date).toLocaleDateString("pt-BR") : "Sem eventos"}</span>
+            </article>
+          ))}
+        </div>
       </div>
 
       <div className="panel">
@@ -1983,6 +2069,10 @@ function OpponentsPage() {
             <span>{criticalEvents}</span>
           </article>
           <article className="list-card onboarding-guidance">
+            <strong>Eventos recentes</strong>
+            <span>{recentEvents}</span>
+          </article>
+          <article className="list-card onboarding-guidance">
             <strong>Contexto</strong>
             <span>{selectedOpponent?.context ?? "Selecione um adversario para detalhar a timeline"}</span>
           </article>
@@ -1991,6 +2081,10 @@ function OpponentsPage() {
             <span>
               {selectedOpponent ? `${selectedOpponent.stance} · ${selectedOpponent.watch_level}` : "Sem selecao"}
             </span>
+          </article>
+          <article className="list-card onboarding-guidance">
+            <strong>Ultimo sinal</strong>
+            <span>{lastEventDate ? new Date(lastEventDate).toLocaleDateString("pt-BR") : "Sem eventos"}</span>
           </article>
         </div>
         <div className="toolbar">

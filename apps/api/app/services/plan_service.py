@@ -60,19 +60,36 @@ def get_suggested_plan(subscription: Subscription) -> str:
     return "enterprise"
 
 
+def get_commercial_status(subscription: Subscription) -> str:
+    if subscription.cancel_at_period_end and subscription.status in {"active", "trialing"}:
+        return "cancelamento_agendado"
+    if subscription.status == "trialing":
+        return "trial_ativo"
+    if subscription.status == "past_due":
+        return "pendencia_financeira"
+    if subscription.status == "canceled":
+        return "cancelado"
+    return "ativo"
+
+
 def serialize_subscription(subscription: Subscription) -> dict[str, str | int | bool]:
     payload = {
         "id": subscription.id,
         "tenant_id": subscription.tenant_id,
         "plan": subscription.plan,
         "status": subscription.status,
+        "billing_cycle": subscription.billing_cycle,
         "trial_ends_at": subscription.trial_ends_at,
+        "current_period_ends_at": subscription.current_period_ends_at,
+        "cancel_at_period_end": subscription.cancel_at_period_end,
         "trial_days_remaining": get_trial_days_remaining(subscription),
         "seats_included": subscription.seats_included,
         "ai_requests_limit": subscription.ai_requests_limit,
         "report_exports_limit": subscription.report_exports_limit,
         "suggested_plan": get_suggested_plan(subscription),
         "can_export_reports": subscription.report_exports_limit > 0,
+        "commercial_status": get_commercial_status(subscription),
+        "next_billing_at": subscription.current_period_ends_at,
         "created_at": subscription.created_at.isoformat(),
         "updated_at": subscription.updated_at.isoformat(),
     }
@@ -96,6 +113,10 @@ def update_subscription_plan(tenant_id: str, actor_user_id: str, plan: str) -> S
     config = PLAN_CONFIG[plan]
     subscription.plan = plan
     subscription.status = "active"
+    subscription.billing_cycle = "monthly"
+    subscription.trial_ends_at = None
+    subscription.current_period_ends_at = (date.today() + timedelta(days=30)).isoformat()
+    subscription.cancel_at_period_end = False
     subscription.seats_included = config["seats_included"]
     subscription.ai_requests_limit = config["ai_requests_limit"]
     subscription.report_exports_limit = config["report_exports_limit"]
@@ -108,7 +129,7 @@ def update_subscription_plan(tenant_id: str, actor_user_id: str, plan: str) -> S
             action="billing.plan_updated",
             resource_type="subscription",
             resource_id=subscription.id,
-            metadata={"plan": plan},
+            metadata={"plan": plan, "status": subscription.status, "next_billing_at": subscription.current_period_ends_at},
         )
     )
     return subscription
@@ -118,15 +139,35 @@ def apply_subscription_action(tenant_id: str, actor_user_id: str, action: str) -
     subscription = get_subscription_for_tenant(tenant_id)
 
     if action == "cancel":
-        subscription.status = "canceled"
-        message = "Assinatura cancelada em modo local."
+        if subscription.status == "canceled":
+            message = "Assinatura ja estava cancelada."
+        else:
+            subscription.cancel_at_period_end = True
+            if subscription.current_period_ends_at is None:
+                subscription.current_period_ends_at = (date.today() + timedelta(days=30)).isoformat()
+            message = "Cancelamento agendado para o fim do periodo atual."
     elif action == "reactivate":
-        subscription.status = "active"
-        message = "Assinatura reativada em modo local."
+        subscription.cancel_at_period_end = False
+        if subscription.status == "canceled":
+            subscription.status = "active"
+        if subscription.current_period_ends_at is None:
+            subscription.current_period_ends_at = (date.today() + timedelta(days=30)).isoformat()
+        message = "Assinatura reativada e renovada para seguir ativa."
     elif action == "renew_trial":
         subscription.status = "trialing"
         subscription.trial_ends_at = (date.today() + timedelta(days=14)).isoformat()
+        subscription.current_period_ends_at = subscription.trial_ends_at
+        subscription.cancel_at_period_end = False
         message = "Trial renovado por 14 dias em modo local."
+    elif action == "mark_past_due":
+        subscription.status = "past_due"
+        subscription.cancel_at_period_end = False
+        message = "Assinatura marcada como pendente em modo local."
+    elif action == "resolve_past_due":
+        subscription.status = "active"
+        if subscription.current_period_ends_at is None:
+            subscription.current_period_ends_at = (date.today() + timedelta(days=30)).isoformat()
+        message = "Pendencia resolvida e assinatura reativada."
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Acao de assinatura invalida.")
 
@@ -139,9 +180,47 @@ def apply_subscription_action(tenant_id: str, actor_user_id: str, action: str) -
             action=f"billing.subscription_{action}",
             resource_type="subscription",
             resource_id=subscription.id,
+            metadata={
+                "plan": subscription.plan,
+                "status": subscription.status,
+                "cancel_at_period_end": subscription.cancel_at_period_end,
+                "current_period_ends_at": subscription.current_period_ends_at,
+            },
         )
     )
     return subscription, message
+
+
+def list_billing_events(tenant_id: str) -> list[dict[str, str]]:
+    entries = [
+        item
+        for item in store.audit_logs.values()
+        if item.tenant_id == tenant_id and item.resource_type == "subscription" and item.action.startswith("billing.")
+    ]
+    entries.sort(key=lambda item: item.created_at, reverse=True)
+    event_titles = {
+        "billing.plan_updated": "Plano alterado",
+        "billing.subscription_cancel": "Cancelamento agendado",
+        "billing.subscription_reactivate": "Assinatura reativada",
+        "billing.subscription_renew_trial": "Trial renovado",
+        "billing.subscription_mark_past_due": "Assinatura em pendencia",
+        "billing.subscription_resolve_past_due": "Pendencia resolvida",
+    }
+    serialized: list[dict[str, str]] = []
+    for item in entries:
+        serialized.append(
+            {
+                "id": item.id,
+                "action": item.action,
+                "title": event_titles.get(item.action, "Atualizacao comercial"),
+                "detail": (
+                    f"Plano {item.metadata.get('plan', '-')}, status {item.metadata.get('status', '-')}, "
+                    f"proxima referencia {item.metadata.get('current_period_ends_at') or item.metadata.get('next_billing_at') or '-'}."
+                ),
+                "created_at": item.created_at.isoformat(),
+            }
+        )
+    return serialized
 
 
 def require_report_export_capacity(tenant_id: str) -> None:

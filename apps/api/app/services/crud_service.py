@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from fastapi import HTTPException, status
@@ -392,6 +392,51 @@ def list_opponent_events(tenant_id: str, opponent_id: str, severity: str | None 
         events = [event for event in events if event.severity == severity]
     events.sort(key=lambda item: item.event_date, reverse=True)
     return events
+
+
+def build_opponents_summary(tenant_id: str) -> dict:
+    opponents = list_opponents(tenant_id)
+    recent_threshold = (datetime.now(UTC).date() - timedelta(days=30)).isoformat()
+    stance_distribution = {"incumbent": 0, "challenger": 0, "ally_risk": 0, "local_force": 0}
+    watch_distribution = {"observe": 0, "attention": 0, "critical": 0}
+    comparison_items: list[dict] = []
+    total_critical_events = 0
+    total_recent_events = 0
+
+    for opponent in opponents:
+        stance_distribution[opponent.stance] = stance_distribution.get(opponent.stance, 0) + 1
+        watch_distribution[opponent.watch_level] = watch_distribution.get(opponent.watch_level, 0) + 1
+        events = list_opponent_events(tenant_id, opponent.id)
+        critical_events = len([event for event in events if event.severity == "critical"])
+        recent_events = len([event for event in events if event.event_date >= recent_threshold])
+        total_critical_events += critical_events
+        total_recent_events += recent_events
+        comparison_items.append(
+            {
+                "opponent_id": opponent.id,
+                "name": opponent.name,
+                "stance": opponent.stance,
+                "watch_level": opponent.watch_level,
+                "total_events": len(events),
+                "critical_events": critical_events,
+                "recent_events": recent_events,
+                "last_event_date": events[0].event_date if events else None,
+            }
+        )
+
+    comparison_items.sort(
+        key=lambda item: (item["critical_events"], item["recent_events"], item["total_events"]),
+        reverse=True,
+    )
+    return {
+        "total_opponents": len(opponents),
+        "critical_watch_count": watch_distribution.get("critical", 0),
+        "critical_events_count": total_critical_events,
+        "recent_events_count": total_recent_events,
+        "stance_distribution": stance_distribution,
+        "watch_distribution": watch_distribution,
+        "top_watchlist": comparison_items[:5],
+    }
 
 
 def delete_opponent(tenant_id: str, user_id: str, opponent_id: str) -> None:

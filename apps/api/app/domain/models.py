@@ -162,7 +162,10 @@ class Subscription:
     tenant_id: str
     plan: Plan = "essential"
     status: Literal["trialing", "active", "past_due", "canceled"] = "trialing"
+    billing_cycle: Literal["monthly", "annual"] = "monthly"
     trial_ends_at: str | None = None
+    current_period_ends_at: str | None = None
+    cancel_at_period_end: bool = False
     seats_included: int = 1
     ai_requests_limit: int = 50
     report_exports_limit: int = 10

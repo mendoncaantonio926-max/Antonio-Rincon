@@ -14,7 +14,14 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 ### Added
 
+- billing com historico comercial por eventos e leitura de ciclo, proxima referencia e cancelamento agendado
+- IA com acao recomendada, motivo e urgencia por modulo no dashboard
+- resumo historico de adversarios com watchlist comparativa, eventos recentes e leitura temporal da timeline
+
 ### Changed
+
+- transicoes de billing/trial agora refletem melhor o fluxo comercial local, incluindo pendencia financeira e reativacao operacional
+- sumarizacao de IA agora prioriza a proxima acao contextual em vez de apenas listar observacoes gerais
 
 ### Fixed
 

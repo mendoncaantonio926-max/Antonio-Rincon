@@ -34,3 +34,24 @@ class OpponentEventResponse(OpponentEventCreateRequest):
     opponent_id: str
     created_by: str
     created_at: str
+
+
+class OpponentComparisonItemResponse(BaseModel):
+    opponent_id: str
+    name: str
+    stance: str
+    watch_level: str
+    total_events: int
+    critical_events: int
+    recent_events: int
+    last_event_date: str | None = None
+
+
+class OpponentSummaryResponse(BaseModel):
+    total_opponents: int
+    critical_watch_count: int
+    critical_events_count: int
+    recent_events_count: int
+    stance_distribution: dict[str, int]
+    watch_distribution: dict[str, int]
+    top_watchlist: list[OpponentComparisonItemResponse]

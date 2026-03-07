@@ -67,6 +67,25 @@ export type OpponentEvent = {
   severity: string;
 };
 
+export type OpponentSummary = {
+  total_opponents: number;
+  critical_watch_count: number;
+  critical_events_count: number;
+  recent_events_count: number;
+  stance_distribution: Record<string, number>;
+  watch_distribution: Record<string, number>;
+  top_watchlist: Array<{
+    opponent_id: string;
+    name: string;
+    stance: string;
+    watch_level: string;
+    total_events: number;
+    critical_events: number;
+    recent_events: number;
+    last_event_date?: string | null;
+  }>;
+};
+
 export type OnboardingState = {
   id: string;
   tenant_id: string;
@@ -93,13 +112,18 @@ export type Subscription = {
   tenant_id: string;
   plan: "essential" | "pro" | "executive" | "enterprise";
   status: string;
+  billing_cycle: "monthly" | "annual";
   trial_ends_at?: string | null;
+  current_period_ends_at?: string | null;
+  cancel_at_period_end: boolean;
   trial_days_remaining: number;
   seats_included: number;
   ai_requests_limit: number;
   report_exports_limit: number;
   suggested_plan: "essential" | "pro" | "executive" | "enterprise";
   can_export_reports: boolean;
+  commercial_status: string;
+  next_billing_at?: string | null;
 };
 
 export type BillingPlan = {
@@ -108,6 +132,14 @@ export type BillingPlan = {
   ai_requests_limit: number;
   report_exports_limit: number;
   recommended_for: string;
+};
+
+export type BillingEvent = {
+  id: string;
+  action: string;
+  title: string;
+  detail: string;
+  created_at: string;
 };
 
 export type Report = {
@@ -148,6 +180,9 @@ export type AiSummary = {
   headline: string;
   module: string;
   summary: string;
+  next_action: string;
+  action_reason: string;
+  urgency: string;
   recommendations: string[];
 };
 
@@ -269,6 +304,9 @@ export const api = {
     if (params?.watch_level) search.set("watch_level", params.watch_level);
     return request<Opponent[]>(`/opponents${search.size ? `?${search.toString()}` : ""}`, { token });
   },
+  getOpponentsSummary(token: string) {
+    return request<OpponentSummary>("/opponents/summary", { token });
+  },
   createOpponent(token: string, body: Record<string, unknown>) {
     return request<Opponent>("/opponents", { method: "POST", token, body });
   },
@@ -344,6 +382,9 @@ export const api = {
   listPlans(token: string) {
     return request<BillingPlan[]>("/billing/plans", { token });
   },
+  listBillingEvents(token: string) {
+    return request<BillingEvent[]>("/billing/events", { token });
+  },
   checkout(token: string, body: Record<string, unknown>) {
     return request<{ checkout_url: string; message: string }>("/billing/checkout", {
       method: "POST",
@@ -351,7 +392,7 @@ export const api = {
       body,
     });
   },
-  subscriptionAction(token: string, action: "cancel" | "reactivate" | "renew_trial") {
+  subscriptionAction(token: string, action: "cancel" | "reactivate" | "renew_trial" | "mark_past_due" | "resolve_past_due") {
     return request<{ message: string }>("/billing/subscription/action", {
       method: "POST",
       token,

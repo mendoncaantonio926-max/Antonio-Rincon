@@ -6,12 +6,15 @@ from app.api.deps import CurrentContextDep
 from app.api.permissions import require_min_role
 from app.domain.models import to_dict
 from app.schemas.opponents import (
+    OpponentComparisonItemResponse,
     OpponentCreateRequest,
     OpponentEventCreateRequest,
     OpponentEventResponse,
     OpponentResponse,
+    OpponentSummaryResponse,
 )
 from app.services.crud_service import (
+    build_opponents_summary,
     create_opponent,
     create_opponent_event,
     delete_opponent,
@@ -20,6 +23,11 @@ from app.services.crud_service import (
 )
 
 router = APIRouter(prefix="/opponents", tags=["opponents"])
+
+
+@router.get("/summary", response_model=OpponentSummaryResponse)
+def get_opponents_summary(context: CurrentContextDep) -> dict:
+    return build_opponents_summary(context.membership.tenant_id)
 
 
 @router.get("", response_model=list[OpponentResponse])

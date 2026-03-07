@@ -34,3 +34,14 @@ def create_all() -> None:
             connection.execute(text("ALTER TABLE opponents ADD COLUMN stance VARCHAR(32) NOT NULL DEFAULT 'challenger'"))
         if "watch_level" not in opponent_columns:
             connection.execute(text("ALTER TABLE opponents ADD COLUMN watch_level VARCHAR(32) NOT NULL DEFAULT 'attention'"))
+        subscription_columns = {column["name"] for column in inspector.get_columns("subscriptions")}
+        if "billing_cycle" not in subscription_columns:
+            connection.execute(
+                text("ALTER TABLE subscriptions ADD COLUMN billing_cycle VARCHAR(16) NOT NULL DEFAULT 'monthly'")
+            )
+        if "current_period_ends_at" not in subscription_columns:
+            connection.execute(text("ALTER TABLE subscriptions ADD COLUMN current_period_ends_at VARCHAR(32)"))
+        if "cancel_at_period_end" not in subscription_columns:
+            connection.execute(
+                text("ALTER TABLE subscriptions ADD COLUMN cancel_at_period_end BOOLEAN NOT NULL DEFAULT 0")
+            )

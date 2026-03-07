@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.deps import CurrentContextDep
 from app.api.permissions import require_min_role
 from app.schemas.billing import (
+    BillingEventResponse,
     CheckoutRequest,
     CheckoutResponse,
     PlanCatalogItemResponse,
@@ -13,6 +14,7 @@ from app.schemas.billing import (
 from app.services.plan_service import (
     apply_subscription_action,
     get_subscription_for_tenant,
+    list_billing_events,
     list_plan_catalog,
     serialize_subscription,
     update_subscription_plan,
@@ -29,6 +31,11 @@ def get_subscription(context: CurrentContextDep) -> dict:
 @router.get("/plans", response_model=list[PlanCatalogItemResponse])
 def get_plans() -> list[dict]:
     return list_plan_catalog()
+
+
+@router.get("/events", response_model=list[BillingEventResponse])
+def get_billing_events(context: CurrentContextDep) -> list[dict]:
+    return list_billing_events(context.membership.tenant_id)
 
 
 @router.post("/checkout", response_model=CheckoutResponse)

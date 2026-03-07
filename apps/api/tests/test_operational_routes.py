@@ -190,6 +190,12 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert filtered_events_response.status_code == 200
     assert all(item["severity"] == "critical" for item in filtered_events_response.json())
 
+    opponents_summary_response = client.get("/opponents/summary", headers=headers)
+    assert opponents_summary_response.status_code == 200
+    assert opponents_summary_response.json()["total_opponents"] >= 1
+    assert opponents_summary_response.json()["critical_events_count"] >= 1
+    assert len(opponents_summary_response.json()["top_watchlist"]) >= 1
+
     state_response = client.get("/onboarding", headers=headers)
     assert state_response.status_code == 200
     assert state_response.json()["campaign_id"] == campaign_response.json()["id"]
@@ -213,6 +219,8 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert subscription_response.status_code == 200
     assert "trial_days_remaining" in subscription_response.json()
     assert "suggested_plan" in subscription_response.json()
+    assert subscription_response.json()["current_period_ends_at"] is not None
+    assert subscription_response.json()["commercial_status"] == "ativo"
 
     cancel_response = client.post(
         "/billing/subscription/action",
@@ -220,6 +228,10 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
         json={"action": "cancel"},
     )
     assert cancel_response.status_code == 200
+    canceled_subscription_response = client.get("/billing/subscription", headers=headers)
+    assert canceled_subscription_response.status_code == 200
+    assert canceled_subscription_response.json()["cancel_at_period_end"] is True
+    assert canceled_subscription_response.json()["commercial_status"] == "cancelamento_agendado"
 
     reactivate_response = client.post(
         "/billing/subscription/action",
@@ -228,12 +240,31 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     )
     assert reactivate_response.status_code == 200
 
+    past_due_response = client.post(
+        "/billing/subscription/action",
+        headers=headers,
+        json={"action": "mark_past_due"},
+    )
+    assert past_due_response.status_code == 200
+
+    resolve_past_due_response = client.post(
+        "/billing/subscription/action",
+        headers=headers,
+        json={"action": "resolve_past_due"},
+    )
+    assert resolve_past_due_response.status_code == 200
+
     renew_trial_response = client.post(
         "/billing/subscription/action",
         headers=headers,
         json={"action": "renew_trial"},
     )
     assert renew_trial_response.status_code == 200
+
+    billing_events_response = client.get("/billing/events", headers=headers)
+    assert billing_events_response.status_code == 200
+    assert len(billing_events_response.json()) >= 5
+    assert any(item["action"] == "billing.subscription_mark_past_due" for item in billing_events_response.json())
 
     dashboard_response = client.get("/dashboard/summary", headers=headers)
     assert dashboard_response.status_code == 200
@@ -299,10 +330,14 @@ def test_membership_invite_and_ai_summary() -> None:
     assert ai_response.status_code == 200
     assert "Resumo IA" in ai_response.json()["headline"]
     assert ai_response.json()["module"] == "dashboard"
+    assert "next_action" in ai_response.json()
+    assert "action_reason" in ai_response.json()
+    assert ai_response.json()["urgency"] in {"normal", "high"}
 
     ai_contacts_response = client.get("/ai/summary?module=contacts", headers=headers)
     assert ai_contacts_response.status_code == 200
     assert ai_contacts_response.json()["module"] == "contacts"
+    assert ai_contacts_response.json()["next_action"]
 
     tenant_update_response = client.patch(
         "/tenants/current",
