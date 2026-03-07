@@ -2,34 +2,40 @@
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 0.3rem 0.65rem;
+  padding: 0.38rem 0.78rem;
   font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  border: 1px solid transparent;
 }
 
 .pulso-badge--neutral {
-  background: #e8edf4;
-  color: #41556f;
+  background: rgba(18, 31, 51, 0.06);
+  color: #425165;
+  border-color: rgba(18, 31, 51, 0.08);
 }
 
 .pulso-badge--info {
-  background: #dceafe;
-  color: #154075;
+  background: rgba(36, 80, 138, 0.1);
+  color: #1c4473;
+  border-color: rgba(36, 80, 138, 0.16);
 }
 
 .pulso-badge--success {
-  background: #dff4e7;
-  color: #145233;
+  background: rgba(44, 102, 71, 0.12);
+  color: #1f5b3e;
+  border-color: rgba(44, 102, 71, 0.16);
 }
 
 .pulso-badge--warning {
-  background: #fff1cf;
-  color: #7d5700;
+  background: rgba(196, 141, 72, 0.14);
+  color: #7d5421;
+  border-color: rgba(196, 141, 72, 0.2);
 }
 
 .pulso-badge--danger {
-  background: #fbe2e0;
-  color: #8b2f2b;
+  background: rgba(146, 70, 62, 0.12);
+  color: #872e29;
+  border-color: rgba(146, 70, 62, 0.18);
 }

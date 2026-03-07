@@ -1,9 +1,9 @@
 .pulso-card {
-  border: 1px solid rgba(22, 43, 76, 0.12);
-  border-radius: 20px;
-  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
-  box-shadow: 0 18px 45px rgba(18, 36, 64, 0.08);
-  padding: 1.4rem;
+  border: 1px solid rgba(120, 87, 45, 0.14);
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.92) 0%, rgba(247, 240, 229, 0.96) 100%);
+  box-shadow: 0 24px 50px rgba(18, 31, 51, 0.1);
+  padding: 1.45rem;
 }
 
 .pulso-card__header {
@@ -12,17 +12,19 @@
 
 .pulso-card__eyebrow {
   margin: 0 0 0.3rem;
-  color: #1b4b8c;
+  color: #92463e;
   font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
 .pulso-card__title {
   margin: 0;
   color: #15253c;
-  font-size: 1.3rem;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 1.45rem;
+  letter-spacing: -0.03em;
 }
 
 .pulso-card__body {

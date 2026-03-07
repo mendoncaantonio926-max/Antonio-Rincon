@@ -17,13 +17,18 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - billing com historico comercial por eventos e leitura de ciclo, proxima referencia e cancelamento agendado
 - IA com acao recomendada, motivo e urgencia por modulo no dashboard
 - resumo historico de adversarios com watchlist comparativa, eventos recentes e leitura temporal da timeline
+- nova direcao visual premium para landing, auth, shell autenticado e componentes compartilhados
 
 ### Changed
 
 - transicoes de billing/trial agora refletem melhor o fluxo comercial local, incluindo pendencia financeira e reativacao operacional
 - sumarizacao de IA agora prioriza a proxima acao contextual em vez de apenas listar observacoes gerais
+- experiencia do frontend deixou de ser scaffold visual basico e passou a usar linguagem editorial mais forte, distinta e menos generica
 
 ### Fixed
+
+- restauracao de sessao no frontend agora lida com `localStorage` corrompido sem quebrar o carregamento
+- captura de lead passou a indicar estado de envio para evitar submissao repetida
 
 ### Docs
 

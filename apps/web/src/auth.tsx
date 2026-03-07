@@ -32,9 +32,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const parsed = JSON.parse(stored) as { tokens: AuthResponse["tokens"]; user: AuthResponse["user"] };
-    setTokens(parsed.tokens);
-    setUser(parsed.user);
+    try {
+      const parsed = JSON.parse(stored) as { tokens: AuthResponse["tokens"]; user: AuthResponse["user"] };
+      setTokens(parsed.tokens);
+      setUser(parsed.user);
+    } catch {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
     setLoading(false);
   }, []);
 

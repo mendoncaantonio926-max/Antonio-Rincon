@@ -25,6 +25,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 
 function LandingPage() {
   const [leadMessage, setLeadMessage] = useState<string | null>(null);
+  const [leadPending, setLeadPending] = useState(false);
   const plans = [
     {
       name: "Essential",
@@ -63,6 +64,7 @@ function LandingPage() {
   async function handleLeadSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    setLeadPending(true);
     try {
       await api.createLead({
         name: String(formData.get("name") ?? ""),
@@ -76,6 +78,8 @@ function LandingPage() {
       setLeadMessage("Lead enviado com sucesso.");
     } catch (error) {
       setLeadMessage(error instanceof Error ? error.message : "Falha ao enviar lead.");
+    } finally {
+      setLeadPending(false);
     }
   }
 
@@ -83,37 +87,59 @@ function LandingPage() {
     <main className="landing-shell">
       <section className="hero">
         <div className="hero-copy">
-          <Badge tone="info">Pulso Politico</Badge>
-          <h1>Transforme dados em votos e operacao em resultado.</h1>
+          <Badge tone="warning">Sistema operacional para campanha e mandato</Badge>
+          <h1>Transforme pressao politica em comando, leitura e execucao com presenca de marca.</h1>
           <p className="hero-text">
-            Plataforma SaaS para campanhas eleitorais e transicao para mandato,
-            com CRM, kanban, relatorios, auditoria e inteligencia operacional.
+            Plataforma para campanhas eleitorais e transicao para mandato, com CRM, monitoramento,
+            workflow, relatorios e inteligencia operacional apresentados com a sobriedade de uma
+            sala de estrategia, nao com cara de template reciclado.
           </p>
           <div className="hero-actions">
             <Link to="/register">
-              <Button label="Testar gratis" />
+              <Button label="Abrir workspace" />
             </Link>
             <Link to="/contact">
-              <Button label="Agendar demo" variant="secondary" />
+              <Button label="Agendar demo executiva" variant="secondary" />
             </Link>
             <a href="https://wa.me/5511999999999" target="_blank" rel="noreferrer">
-              <Button label="WhatsApp" variant="secondary" />
+              <Button label="Canal comercial" variant="secondary" />
             </a>
           </div>
           <div className="hero-trust">
-            <Badge tone="success">MVP operacional</Badge>
-            <Badge tone="neutral">CRM + Kanban + Auditoria</Badge>
-            <Badge tone="warning">Demo comercial pronta</Badge>
+            <Badge tone="success">CRM, relatorios e monitoramento vivos</Badge>
+            <Badge tone="neutral">Dashboard com IA contextual</Badge>
+            <Badge tone="info">Release publica v0.1.5</Badge>
+          </div>
+          <div className="hero-metrics">
+            <article>
+              <strong>3 frentes</strong>
+              <span>campanha, coordenacao e continuidade</span>
+            </article>
+            <article>
+              <strong>1 base</strong>
+              <span>contatos, tarefas, adversarios e billing no mesmo fluxo</span>
+            </article>
+            <article>
+              <strong>0 improviso</strong>
+              <span>mais governanca, historico e leitura executiva</span>
+            </article>
           </div>
         </div>
-        <Card className="hero-panel" title="Primeiros modulos do MVP">
-          <ul>
-            <li>Auth + multi-tenant</li>
-            <li>Onboarding guiado</li>
-            <li>CRM de contatos</li>
-            <li>Kanban operacional</li>
-            <li>Dashboard inicial</li>
-          </ul>
+        <Card className="hero-panel" eyebrow="Sala de comando" title="Leitura premium do workspace">
+          <div className="hero-panel-stack">
+            <article className="hero-panel-highlight">
+              <strong>Operacao</strong>
+              <p>CRM politico, tarefas, onboarding, auditoria e billing com narrativa unica.</p>
+            </article>
+            <article className="hero-panel-highlight">
+              <strong>Monitoramento</strong>
+              <p>Adversarios, timeline, watchlist comparativa e sinais criticos em destaque.</p>
+            </article>
+            <article className="hero-panel-highlight">
+              <strong>Decisao</strong>
+              <p>IA contextual, relatorios exportaveis e proxima acao recomendada por modulo.</p>
+            </article>
+          </div>
         </Card>
       </section>
 
@@ -223,7 +249,7 @@ function LandingPage() {
           <Input label="Principal desafio" name="challenge" multiline rows={4} />
           {leadMessage ? <div className="info-box">{leadMessage}</div> : null}
           <div className="cta-actions">
-            <Button type="submit" label="Enviar lead" />
+            <Button type="submit" label={leadPending ? "Enviando..." : "Enviar lead"} disabled={leadPending} />
             <a href="https://wa.me/5511999999999" target="_blank" rel="noreferrer">
               <Button type="button" label="Chamar no WhatsApp" variant="secondary" />
             </a>
@@ -2144,7 +2170,10 @@ function AppShell() {
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <div className="brand">Pulso</div>
+        <div className="sidebar-brand">
+          <div className="brand">Pulso</div>
+          <span>workspace politico</span>
+        </div>
         <nav>
           <NavLink to="/app">Dashboard</NavLink>
           <NavLink to="/app/onboarding">Onboarding</NavLink>
@@ -2162,6 +2191,7 @@ function AppShell() {
         <div className="topbar topbar-actions">
           <div>
             <p className="eyebrow">Painel autenticado</p>
+            <h1 className="topbar-title">Operacao em andamento</h1>
           </div>
           <Button label="Sair" variant="secondary" onClick={logout} />
         </div>
@@ -2186,10 +2216,13 @@ export default function App() {
   return (
     <AuthProvider>
       <header className="site-header">
-        <Link to="/" className="brand-link">
-          Pulso Politico
-        </Link>
-        <nav>
+        <div className="site-header__brand">
+          <Link to="/" className="brand-link">
+            Pulso Politico
+          </Link>
+          <span className="site-header__tag">estrategia, governanca e execucao politica</span>
+        </div>
+        <nav className="site-nav">
           <Link to="/">Landing</Link>
           <Link to="/plans">Planos</Link>
           <Link to="/contact">Contato</Link>
