@@ -1,0 +1,54 @@
+name: Bug report
+description: Registrar defeito funcional, operacional ou de build
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Resumo
+      description: Descreva o problema de forma objetiva.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para reproduzir
+      description: Inclua comandos, rota, tela e dados usados.
+      placeholder: |
+        1. Executar ...
+        2. Acessar ...
+        3. Observar ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Resultado atual
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area afetada
+      options:
+        - Backend
+        - Frontend
+        - Scripts
+        - CI
+        - Documentacao
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidencias
+      description: Cole erro, stack trace, screenshot ou output relevante.
+

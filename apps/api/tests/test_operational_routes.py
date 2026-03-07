@@ -1,0 +1,313 @@
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+
+client = TestClient(app)
+
+
+def _get_access_token() -> str:
+    response = client.post(
+        "/auth/login",
+        json={"email": "owner@pulso.local", "password": "Admin1234"},
+    )
+    assert response.status_code == 200
+    return response.json()["tokens"]["access_token"]
+
+
+def test_contacts_tasks_reports_flow() -> None:
+    token = _get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    contact_response = client.post(
+        "/contacts",
+        headers=headers,
+        json={
+            "name": "Lideranca Bairro Centro",
+            "kind": "leadership",
+            "status": "new",
+            "city": "Sao Paulo",
+            "tags": ["bairro", "centro"],
+        },
+    )
+    assert contact_response.status_code == 201
+    contact_id = contact_response.json()["id"]
+
+    update_contact_response = client.patch(
+        f"/contacts/{contact_id}",
+        headers=headers,
+        json={"status": "priority"},
+    )
+    assert update_contact_response.status_code == 200
+    assert update_contact_response.json()["status"] == "priority"
+
+    note_response = client.post(
+        f"/contacts/{contact_id}/notes",
+        headers=headers,
+        json={"content": "Contato visitado na reuniao regional."},
+    )
+    assert note_response.status_code == 200
+    assert note_response.json()["note_history"][0]["content"] == "Contato visitado na reuniao regional."
+
+    task_response = client.post(
+        "/tasks",
+        headers=headers,
+        json={"title": "Marcar reuniao com liderancas", "priority": "high"},
+    )
+    assert task_response.status_code == 201
+    task_id = task_response.json()["id"]
+
+    patch_response = client.patch(
+        f"/tasks/{task_id}",
+        headers=headers,
+        json={"status": "in_progress"},
+    )
+    assert patch_response.status_code == 200
+    assert patch_response.json()["status"] == "in_progress"
+
+    report_response = client.post(
+        "/reports",
+        headers=headers,
+        json={"title": "Resumo semanal", "report_type": "operational"},
+    )
+    assert report_response.status_code == 201
+    report_id = report_response.json()["id"]
+    assert report_response.json()["metrics"]["contacts_count"] >= 1
+
+    export_response = client.post(f"/reports/{report_id}/export/pdf", headers=headers)
+    assert export_response.status_code == 200
+    assert "Watermark" in export_response.json()["content"]
+
+    export_csv_response = client.post(f"/reports/{report_id}/export/csv", headers=headers)
+    assert export_csv_response.status_code == 200
+    assert "contacts_count" in export_csv_response.json()["content"]
+
+    filtered_reports_response = client.get("/reports?report_type=operational", headers=headers)
+    assert filtered_reports_response.status_code == 200
+    assert all(item["report_type"] == "operational" for item in filtered_reports_response.json())
+
+    filtered_contacts_response = client.get("/contacts?query=Centro", headers=headers)
+    assert filtered_contacts_response.status_code == 200
+    assert len(filtered_contacts_response.json()) >= 1
+
+    filtered_contacts_by_status_response = client.get("/contacts?status=priority", headers=headers)
+    assert filtered_contacts_by_status_response.status_code == 200
+    assert all(item["status"] == "priority" for item in filtered_contacts_by_status_response.json())
+
+    filtered_contacts_by_tag_response = client.get("/contacts?tag=centro", headers=headers)
+    assert filtered_contacts_by_tag_response.status_code == 200
+    assert len(filtered_contacts_by_tag_response.json()) >= 1
+
+    filtered_contacts_by_city_response = client.get("/contacts?city=sao", headers=headers)
+    assert filtered_contacts_by_city_response.status_code == 200
+    assert len(filtered_contacts_by_city_response.json()) >= 1
+
+    filtered_contacts_by_history_response = client.get("/contacts?query=reuniao", headers=headers)
+    assert filtered_contacts_by_history_response.status_code == 200
+    assert len(filtered_contacts_by_history_response.json()) >= 1
+
+    filtered_tasks_response = client.get("/tasks?status=in_progress", headers=headers)
+    assert filtered_tasks_response.status_code == 200
+    assert all(item["status"] == "in_progress" for item in filtered_tasks_response.json())
+
+
+def test_onboarding_billing_and_dashboard_flow() -> None:
+    token = _get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    onboarding_response = client.patch(
+        "/onboarding",
+        headers=headers,
+        json={"profile_type": "campaign", "objective": "ativar workspace"},
+    )
+    assert onboarding_response.status_code == 200
+    assert onboarding_response.json()["profile_type"] == "campaign"
+    assert onboarding_response.json()["completed"] is False
+
+    campaign_response = client.post(
+        "/onboarding/campaigns",
+        headers=headers,
+        json={
+            "name": "Campanha Centro 2026",
+            "office": "Vereador",
+            "city": "Sao Paulo",
+            "state": "SP",
+            "phase": "campaign",
+        },
+    )
+    assert campaign_response.status_code == 201
+
+    invite_response = client.post(
+        "/memberships/invite",
+        headers=headers,
+        json={
+            "email": "coordenacao.onboarding@example.com",
+            "full_name": "Coordenacao Onboarding",
+            "role": "coordinator",
+        },
+    )
+    assert invite_response.status_code == 201
+
+    opponent_response = client.post(
+        "/opponents",
+        headers=headers,
+        json={
+            "name": "Adversario Centro",
+            "context": "Base forte no centro expandido",
+            "stance": "incumbent",
+            "watch_level": "critical",
+            "links": ["https://example.com/adversario"],
+            "notes": "Primeiro registro do onboarding",
+            "tags": ["centro"],
+        },
+    )
+    assert opponent_response.status_code == 201
+    opponent_id = opponent_response.json()["id"]
+
+    opponent_event_response = client.post(
+        f"/opponents/{opponent_id}/events",
+        headers=headers,
+        json={
+            "title": "Movimento de rua",
+            "description": "Agenda intensificada no centro",
+            "event_date": "2026-03-01",
+            "severity": "critical",
+        },
+    )
+    assert opponent_event_response.status_code == 201
+
+    filtered_opponents_response = client.get(
+        "/opponents?query=centro&tag=centro&stance=incumbent&watch_level=critical",
+        headers=headers,
+    )
+    assert filtered_opponents_response.status_code == 200
+    assert len(filtered_opponents_response.json()) >= 1
+
+    filtered_events_response = client.get(
+        f"/opponents/{opponent_id}/events?severity=critical",
+        headers=headers,
+    )
+    assert filtered_events_response.status_code == 200
+    assert all(item["severity"] == "critical" for item in filtered_events_response.json())
+
+    state_response = client.get("/onboarding", headers=headers)
+    assert state_response.status_code == 200
+    assert state_response.json()["campaign_id"] == campaign_response.json()["id"]
+    assert state_response.json()["team_configured"] is True
+    assert state_response.json()["first_opponent_created"] is True
+    assert state_response.json()["completed"] is True
+
+    billing_response = client.post(
+        "/billing/checkout",
+        headers=headers,
+        json={"plan": "pro"},
+    )
+    assert billing_response.status_code == 200
+    assert "Plano pro" in billing_response.json()["message"]
+
+    plans_response = client.get("/billing/plans", headers=headers)
+    assert plans_response.status_code == 200
+    assert len(plans_response.json()) >= 4
+
+    subscription_response = client.get("/billing/subscription", headers=headers)
+    assert subscription_response.status_code == 200
+    assert "trial_days_remaining" in subscription_response.json()
+    assert "suggested_plan" in subscription_response.json()
+
+    cancel_response = client.post(
+        "/billing/subscription/action",
+        headers=headers,
+        json={"action": "cancel"},
+    )
+    assert cancel_response.status_code == 200
+
+    reactivate_response = client.post(
+        "/billing/subscription/action",
+        headers=headers,
+        json={"action": "reactivate"},
+    )
+    assert reactivate_response.status_code == 200
+
+    renew_trial_response = client.post(
+        "/billing/subscription/action",
+        headers=headers,
+        json={"action": "renew_trial"},
+    )
+    assert renew_trial_response.status_code == 200
+
+    dashboard_response = client.get("/dashboard/summary", headers=headers)
+    assert dashboard_response.status_code == 200
+    assert dashboard_response.json()["plan"] == "pro"
+    assert "next_action" in dashboard_response.json()
+    assert "priority_contacts_count" in dashboard_response.json()
+
+
+def test_public_lead_capture() -> None:
+    response = client.post(
+        "/public/leads",
+        json={
+            "name": "Lead Comercial",
+            "email": "lead.comercial@example.com",
+            "phone": "11999999999",
+            "role": "consultor",
+            "city": "Campinas",
+            "challenge": "Organizar operacao",
+        },
+    )
+    assert response.status_code == 201
+    assert response.json()["email"] == "lead.comercial@example.com"
+
+
+def test_membership_invite_and_ai_summary() -> None:
+    token = _get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    invite_response = client.post(
+        "/memberships/invite",
+        headers=headers,
+        json={
+            "email": "analista.time@example.com",
+            "full_name": "Analista Time",
+            "role": "analyst",
+        },
+    )
+    assert invite_response.status_code == 201
+    assert invite_response.json()["role"] == "analyst"
+
+    memberships_response = client.get("/memberships", headers=headers)
+    assert memberships_response.status_code == 200
+    assert len(memberships_response.json()) >= 2
+    invited_membership = next(
+        item for item in memberships_response.json() if item["email"] == "analista.time@example.com"
+    )
+
+    role_update_response = client.patch(
+        f"/memberships/{invited_membership['id']}/role",
+        headers=headers,
+        json={"role": "coordinator"},
+    )
+    assert role_update_response.status_code == 200
+    assert role_update_response.json()["role"] == "coordinator"
+
+    delete_response = client.delete(
+        f"/memberships/{invited_membership['id']}",
+        headers=headers,
+    )
+    assert delete_response.status_code == 204
+
+    ai_response = client.get("/ai/summary", headers=headers)
+    assert ai_response.status_code == 200
+    assert "Resumo IA" in ai_response.json()["headline"]
+    assert ai_response.json()["module"] == "dashboard"
+
+    ai_contacts_response = client.get("/ai/summary?module=contacts", headers=headers)
+    assert ai_contacts_response.status_code == 200
+    assert ai_contacts_response.json()["module"] == "contacts"
+
+    tenant_update_response = client.patch(
+        "/tenants/current",
+        headers=headers,
+        json={"name": "Workspace Governanca"},
+    )
+    assert tenant_update_response.status_code == 200
+    assert tenant_update_response.json()["name"] == "Workspace Governanca"

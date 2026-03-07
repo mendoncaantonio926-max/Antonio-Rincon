@@ -1,0 +1,44 @@
+.pulso-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.pulso-field__label {
+  color: #27405f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.pulso-field__control {
+  width: 100%;
+  border: 1px solid #cad5e3;
+  border-radius: 12px;
+  background: #fff;
+  color: #132033;
+  padding: 0.85rem 1rem;
+  font: inherit;
+}
+
+.pulso-field__control:focus {
+  outline: 2px solid #86aee0;
+  outline-offset: 1px;
+  border-color: #1b4b8c;
+}
+
+.pulso-field__control--textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.pulso-field__hint,
+.pulso-field__error {
+  font-size: 0.8rem;
+}
+
+.pulso-field__hint {
+  color: #607188;
+}
+
+.pulso-field__error {
+  color: #a63b32;
+}

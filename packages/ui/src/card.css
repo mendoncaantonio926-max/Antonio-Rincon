@@ -1,0 +1,31 @@
+.pulso-card {
+  border: 1px solid rgba(22, 43, 76, 0.12);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  box-shadow: 0 18px 45px rgba(18, 36, 64, 0.08);
+  padding: 1.4rem;
+}
+
+.pulso-card__header {
+  margin-bottom: 1rem;
+}
+
+.pulso-card__eyebrow {
+  margin: 0 0 0.3rem;
+  color: #1b4b8c;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pulso-card__title {
+  margin: 0;
+  color: #15253c;
+  font-size: 1.3rem;
+}
+
+.pulso-card__body {
+  display: grid;
+  gap: 1rem;
+}

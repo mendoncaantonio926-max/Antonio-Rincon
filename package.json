@@ -1,0 +1,43 @@
+{
+  "name": "pulso-politico",
+  "private": true,
+  "version": "0.1.5",
+  "workspaces": [
+    "apps/web",
+    "packages/ui",
+    "packages/types",
+    "packages/config"
+  ],
+  "scripts": {
+    "help": "scripts\\help.cmd",
+    "version:show": "scripts\\show-version.cmd",
+    "release:status": "scripts\\release-status.cmd",
+    "release:plan": "scripts\\plan-release.cmd",
+    "version:bump": "scripts\\bump-version.cmd",
+    "release:cut-changelog": "scripts\\cut-release-changelog.cmd",
+    "release:prepare": "scripts\\prepare-release.cmd",
+    "setup": "scripts\\setup.cmd",
+    "clean": "scripts\\clean.cmd",
+    "rebuild": "scripts\\rebuild.cmd",
+    "doctor": "scripts\\doctor.cmd",
+    "doctor:summary": "scripts\\write-doctor-summary.cmd",
+    "verify:version": "scripts\\verify-version.cmd",
+    "verify:release-readiness": "scripts\\verify-release-readiness.cmd",
+    "verify:release": "scripts\\verify-release.cmd",
+    "release:local": "scripts\\release-local.cmd",
+    "start:api": "scripts\\run-api.cmd",
+    "start:web": "scripts\\run-web.cmd",
+    "dev:web": "npm --workspace apps/web run dev",
+    "build:web": "npm --workspace apps/web run build",
+    "smoke:api": "scripts\\smoke-api.cmd",
+    "smoke:web": "scripts\\smoke-web.cmd",
+    "smoke": "scripts\\smoke-all.cmd",
+    "verify:docs": "powershell -ExecutionPolicy Bypass -File scripts/check-doc-paths.ps1",
+    "verify:changelog": "powershell -ExecutionPolicy Bypass -File scripts/check-changelog.ps1 -Mode working-tree",
+    "verify:quality": "scripts\\check-quality.cmd",
+    "verify:report": "scripts\\verify-report.cmd --json",
+    "verify:summary": "scripts\\verify-summary.cmd",
+    "prepare:pr": "scripts\\prepare-pr.cmd",
+    "verify": "scripts\\verify-all.cmd"
+  }
+}

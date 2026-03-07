@@ -1,0 +1,145 @@
+name: Verify
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  schedule:
+    - cron: "0 10 * * 1"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install frontend dependencies
+        shell: cmd
+        run: scripts\ci-bootstrap.cmd
+
+      - name: Verify monorepo
+        shell: cmd
+        env:
+          PULSO_BOOTSTRAP_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        run: scripts\verify-all.cmd
+
+      - name: Generate doctor snapshot
+        if: always()
+        shell: cmd
+        env:
+          PULSO_BOOTSTRAP_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        run: scripts\doctor.cmd --json > doctor-report.json
+
+      - name: Generate doctor summary
+        if: always()
+        shell: cmd
+        run: scripts\write-doctor-summary.cmd doctor-report.json doctor-report.md
+
+      - name: Publish doctor summary
+        if: always()
+        shell: pwsh
+        run: Get-Content doctor-report.md >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Generate verify report
+        if: success()
+        shell: cmd
+        env:
+          PULSO_BOOTSTRAP_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        run: scripts\verify-report.cmd --json > verify-report.json
+
+      - name: Generate verify summary
+        if: success()
+        shell: cmd
+        run: scripts\write-verify-summary.cmd verify-report.json verify-report.md
+
+      - name: Publish verify summary
+        if: success()
+        shell: pwsh
+        run: Get-Content verify-report.md >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload frontend dist
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist-windows
+          path: apps/web/dist
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload verify report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-report-windows
+          path: verify-report.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload doctor snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: doctor-report-windows
+          path: doctor-report.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload doctor summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: doctor-summary-windows
+          path: doctor-report.md
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload verify summary
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-summary-windows
+          path: verify-report.md
+          if-no-files-found: error
+          retention-days: 7
+
+  changelog:
+    if: github.event_name == 'pull_request'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate changelog
+        shell: pwsh
+        run: |
+          $baseRef = "origin/${{ github.base_ref }}"
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          ./scripts/check-changelog.ps1 -BaseRef $baseRef
+
+  docs:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate doc paths
+        shell: pwsh
+        run: ./scripts/check-doc-paths.ps1

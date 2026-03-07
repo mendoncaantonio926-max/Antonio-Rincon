@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versao da release: vazio, X.Y.Z, vX.Y.Z, patch, minor ou major"
+        required: false
+        type: string
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install frontend dependencies
+        shell: cmd
+        run: scripts\ci-bootstrap.cmd
+
+      - name: Validate version input
+        id: release_version
+        shell: pwsh
+        run: |
+          $resolved = ./scripts/resolve-release-version.ps1 -Version "${{ inputs.version }}"
+          "value=$resolved" >> $env:GITHUB_OUTPUT
+          ./scripts/check-release-readiness.ps1 -Version $resolved -RequireCurrentVersion
+          git fetch --tags
+          if (git rev-parse "$resolved" 2>$null) {
+            throw "A tag $resolved ja existe."
+          }
+
+      - name: Verify monorepo
+        shell: cmd
+        env:
+          PULSO_BOOTSTRAP_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        run: scripts\verify-all.cmd
+
+      - name: Archive frontend dist
+        shell: pwsh
+        run: |
+          if (Test-Path release) { Remove-Item release -Recurse -Force }
+          New-Item -ItemType Directory -Force release | Out-Null
+          Compress-Archive -Path apps/web/dist/* -DestinationPath release/web-dist-${{ steps.release_version.outputs.value }}.zip
+          ./scripts/write-release-notes.ps1 `
+            -Version "${{ steps.release_version.outputs.value }}" `
+            -OutputPath "release/release-${{ steps.release_version.outputs.value }}.md"
+          ./scripts/write-release-manifest.ps1 `
+            -Version "${{ steps.release_version.outputs.value }}" `
+            -ArtifactPath "release/web-dist-${{ steps.release_version.outputs.value }}.zip" `
+            -ManifestPath "release/release-${{ steps.release_version.outputs.value }}.json" `
+            -NotesPath "release/release-${{ steps.release_version.outputs.value }}.md"
+
+      - name: Verify release artifact
+        shell: pwsh
+        run: |
+          ./scripts/verify-release.ps1 -Version "${{ steps.release_version.outputs.value }}"
+
+      - name: Create tag
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.release_version.outputs.value }}"
+          git push origin "${{ steps.release_version.outputs.value }}"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_version.outputs.value }}
+          body_path: release/release-${{ steps.release_version.outputs.value }}.md
+          files: |
+            release/web-dist-${{ steps.release_version.outputs.value }}.zip
+            release/release-${{ steps.release_version.outputs.value }}.json
+            release/release-${{ steps.release_version.outputs.value }}.md

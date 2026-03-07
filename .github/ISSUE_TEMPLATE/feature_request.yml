@@ -1,0 +1,46 @@
+name: Feature request
+description: Propor evolucao funcional ou operacional
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: Qual lacuna real precisa ser resolvida?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: Descreva o comportamento esperado.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impacto
+      description: Quem usa, onde aparece e qual o ganho operacional ou comercial.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area principal
+      options:
+        - Produto
+        - Backend
+        - Frontend
+        - Operacao
+        - CI
+        - Documentacao
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Como validar
+      description: Explique como saberemos que a entrega esta correta.
+

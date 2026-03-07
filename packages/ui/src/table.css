@@ -1,0 +1,34 @@
+.pulso-table-shell {
+  overflow-x: auto;
+}
+
+.pulso-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.pulso-table th,
+.pulso-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e6edf5;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pulso-table th {
+  color: #4a617b;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pulso-table td {
+  color: #132033;
+}
+
+.pulso-table__empty {
+  color: #607188;
+  text-align: center;
+}
