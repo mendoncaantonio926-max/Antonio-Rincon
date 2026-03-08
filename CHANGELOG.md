@@ -23,6 +23,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 - `verify:quality` agora inclui lint alem de typecheck e compilacao estrutural
 - `verify-all` agora inclui etapa dedicada de testes do frontend antes do build final
+- auditoria real de navegador agora valida tambem filtros de contatos, filtro de timeline por severidade e filtro de relatorios por tipo
 ### Fixed
 
 ### Docs

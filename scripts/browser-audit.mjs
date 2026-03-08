@@ -304,6 +304,35 @@ async function main() {
     await page.getByText(contactName).waitFor();
     checks.push("contato_criado_pelo_frontend");
 
+    await page
+      .getByPlaceholder("Buscar por nome, cidade, tag, email, telefone ou historico")
+      .fill(contactName);
+    await page.getByPlaceholder("Filtrar por tag").fill("auditoria");
+    await page.getByPlaceholder("Filtrar por cidade").fill("Sao Paulo");
+    await page.waitForFunction(
+      ({ expectedName }) => {
+        const records = Array.from(document.querySelectorAll(".contact-record"));
+        return (
+          records.length === 1 &&
+          document.body.innerText.includes(expectedName) &&
+          !document.body.innerText.includes("Nenhum contato cadastrado.")
+        );
+      },
+      { expectedName: contactName },
+    );
+    await page.getByRole("button", { name: "Limpar filtros" }).click();
+    await page.waitForFunction(() => {
+      const search = document.querySelector(
+        '.contact-toolbar input[placeholder="Buscar por nome, cidade, tag, email, telefone ou historico"]',
+      );
+      const tag = document.querySelector('.contact-toolbar input[placeholder="Filtrar por tag"]');
+      const city = document.querySelector(
+        '.contact-toolbar input[placeholder="Filtrar por cidade"]',
+      );
+      return search?.value === "" && tag?.value === "" && city?.value === "";
+    });
+    checks.push("contatos_filtrados_no_browser");
+
     await page.getByRole("link", { name: "Adversarios" }).click();
     await page.waitForURL("**/app/opponents");
     await page.getByRole("heading", { name: "Novo adversario" }).waitFor();
@@ -328,6 +357,12 @@ async function main() {
     await page.getByText("Sinal de rua").waitFor();
     checks.push("evento_de_adversario_criado");
 
+    await page.locator(".timeline-stage .toolbar select").selectOption("info");
+    await page.getByText("Nenhum evento registrado para o filtro atual.").waitFor();
+    await page.locator(".timeline-stage .toolbar select").selectOption("critical");
+    await page.getByText("Sinal de rua").waitFor();
+    checks.push("timeline_filtrada_por_severidade");
+
     await page.getByRole("link", { name: "Relatorios" }).click();
     await page.waitForURL("**/app/reports");
     await page.getByRole("heading", { name: "Novo relatorio" }).waitFor();
@@ -340,6 +375,12 @@ async function main() {
     await reportCard.getByRole("button", { name: "Exportar CSV" }).click();
     await page.locator(".export-preview").getByText(".csv").waitFor();
     checks.push("relatorio_gerado_e_exportado");
+
+    await page.locator(".reports-stage select").selectOption("operational");
+    await reportCard.waitFor({ state: "hidden" });
+    await page.locator(".reports-stage select").selectOption("ai_summary");
+    await reportCard.waitFor();
+    checks.push("relatorios_filtrados_por_tipo");
 
     await page.getByRole("link", { name: "Leads" }).click();
     await page.waitForURL("**/app/leads");
