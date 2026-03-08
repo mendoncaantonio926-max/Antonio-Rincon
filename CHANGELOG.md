@@ -31,6 +31,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - equipe e tarefas agora usam leitura operacional mais refinada, com cards, board mais legivel e hierarquia visual alinhada ao restante do produto
 - auditoria agora apresenta leitura de governanca mais clara e tambem entra na auditoria real de navegador
 - shell autenticado e leads agora usam contexto editorial mais consistente, com topo por rota, melhor narrativa comercial e acabamento visual mais uniforme
+- primitives visuais, microinteracoes e ritmo de pagina agora estao mais refinados, com botoes, campos, cards e navegacao mais consistentes
 
 ### Fixed
 

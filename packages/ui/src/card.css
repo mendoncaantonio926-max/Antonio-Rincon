@@ -1,4 +1,6 @@
 .pulso-card {
+  position: relative;
+  overflow: hidden;
   border: 1px solid rgba(120, 87, 45, 0.14);
   border-radius: 26px;
   background: linear-gradient(180deg, rgba(255, 252, 247, 0.92) 0%, rgba(247, 240, 229, 0.96) 100%);
@@ -6,8 +8,20 @@
   padding: 1.45rem;
 }
 
+.pulso-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top right, rgba(196, 141, 72, 0.12), transparent 22%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 24%);
+}
+
 .pulso-card__header {
   margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .pulso-card__eyebrow {
@@ -30,4 +44,6 @@
 .pulso-card__body {
   display: grid;
   gap: 1rem;
+  position: relative;
+  z-index: 1;
 }
