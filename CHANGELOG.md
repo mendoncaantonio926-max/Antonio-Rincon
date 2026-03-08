@@ -14,6 +14,18 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Docs
+
+### Ops
+
+## [0.1.7] - 2026-03-08
+
+### Added
+
 - IA agora expone foco sugerido, dono recomendado, janela de resposta, bloqueadores e sinais de contexto por modulo, incluindo billing
 - lint automatizado com Biome para frontend, componentes compartilhados e scripts web do monorepo
 - lint automatizado do backend com Ruff, integrado ao `verify:quality`, agora com baseline `E` e `F` e excecao temporaria para `E501`
@@ -198,5 +210,6 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 - scripts de backend e frontend padronizados para setup, smoke e validacao ponta a ponta
 - CI, changelog, release e triagem de PR alinhados ao fluxo local
+
 
 
