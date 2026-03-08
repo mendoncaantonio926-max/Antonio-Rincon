@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Link, NavLink, Route, Routes } from "react-router-dom";
+import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { Badge, Button, Card, Input } from "@pulso/ui";
 import { AuthPage } from "./AuthPage";
 import {
@@ -2041,6 +2041,9 @@ function LeadsPage() {
   const { tokens } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const recentLeads = leads.filter((lead) => Date.now() - new Date(lead.created_at).getTime() <= 1000 * 60 * 60 * 24 * 7).length;
+  const leadsWithPhone = leads.filter((lead) => Boolean(lead.phone)).length;
+  const leadsWithCity = leads.filter((lead) => Boolean(lead.city)).length;
 
   useEffect(() => {
     if (!tokens?.access_token) return;
@@ -2053,20 +2056,54 @@ function LeadsPage() {
   }, [tokens]);
 
   return (
-    <section className="app-section">
-      <div className="panel">
+    <section className="app-section leads-layout">
+      <div className="panel leads-stage">
         <div className="section-header">
-          <h2>Leads captados</h2>
+          <div>
+            <p className="eyebrow">Entrada comercial</p>
+            <h2>Leads captados</h2>
+          </div>
           <span>{leads.length}</span>
         </div>
         {error ? <div className="error-box">{error}</div> : null}
-        <div className="list-grid">
+        <div className="list-grid onboarding-guidance-grid summary-grid">
+          <article className="summary-tile">
+            <strong>Total captado</strong>
+            <span>{leads.length}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Ultimos 7 dias</strong>
+            <span>{recentLeads}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Com WhatsApp</strong>
+            <span>{leadsWithPhone}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Com cidade</strong>
+            <span>{leadsWithCity}</span>
+          </article>
+        </div>
+        <div className="leads-intro">
+          <p className="meta-copy">
+            Este painel mostra a qualidade da entrada comercial e ajuda a separar interesse raso de oportunidade com contexto suficiente para abordagem.
+          </p>
+        </div>
+        <div className="list-grid lead-records">
           {leads.length === 0 ? <p className="meta-copy">Nenhum lead captado ainda.</p> : null}
           {leads.map((lead) => (
-            <article className="list-card" key={lead.id}>
-              <strong>{lead.name}</strong>
+            <article className="list-card lead-card" key={lead.id}>
+              <div className="section-header">
+                <strong>{lead.name}</strong>
+                <span>{new Date(lead.created_at).toLocaleDateString("pt-BR")}</span>
+              </div>
               <span>{lead.email}</span>
-              <span>{new Date(lead.created_at).toLocaleString("pt-BR")}</span>
+              <div className="lead-card__meta">
+                <span>{lead.phone || "Sem WhatsApp"}</span>
+                <span>{lead.city || "Cidade nao informada"}</span>
+                <span>{lead.role || "Papel nao informado"}</span>
+              </div>
+              <p>{lead.challenge || "Sem desafio informado no primeiro contato."}</p>
             </article>
           ))}
         </div>
@@ -2428,6 +2465,72 @@ function OpponentsPage() {
 
 function AppShell() {
   const { logout } = useAuth();
+  const location = useLocation();
+  const navigationItems = [
+    { to: "/app", label: "Dashboard" },
+    { to: "/app/onboarding", label: "Onboarding" },
+    { to: "/app/team", label: "Equipe" },
+    { to: "/app/contacts", label: "Contatos" },
+    { to: "/app/tasks", label: "Tarefas" },
+    { to: "/app/opponents", label: "Adversarios" },
+    { to: "/app/reports", label: "Relatorios" },
+    { to: "/app/billing", label: "Assinatura" },
+    { to: "/app/leads", label: "Leads" },
+    { to: "/app/audit", label: "Auditoria" },
+  ] as const;
+  const pageMeta: Record<string, { eyebrow: string; title: string; subtitle: string }> = {
+    "/app": {
+      eyebrow: "Painel executivo",
+      title: "Operacao em andamento",
+      subtitle: "Leitura central do workspace com prioridade, sinais e foco da coordenacao.",
+    },
+    "/app/onboarding": {
+      eyebrow: "Ativacao do workspace",
+      title: "Onboarding guiado",
+      subtitle: "Primeiros passos para tirar a operacao do zero sem perder contexto.",
+    },
+    "/app/team": {
+      eyebrow: "Governanca interna",
+      title: "Equipe e papeis",
+      subtitle: "Estruture identidade, responsabilidades e expansao do time com controle claro.",
+    },
+    "/app/contacts": {
+      eyebrow: "Base politica",
+      title: "Contatos e historico",
+      subtitle: "Relacao viva com liderancas, imprensa e frentes locais em um fluxo unico.",
+    },
+    "/app/tasks": {
+      eyebrow: "Ritmo operacional",
+      title: "Execucao e prioridades",
+      subtitle: "Board, urgencia e responsaveis para manter a entrega sob comando.",
+    },
+    "/app/opponents": {
+      eyebrow: "Monitoramento politico",
+      title: "Adversarios e timeline",
+      subtitle: "Watchlist, eventos e leitura comparativa para antecipar movimento.",
+    },
+    "/app/reports": {
+      eyebrow: "Leitura consolidada",
+      title: "Relatorios e exportacao",
+      subtitle: "Transforme operacao em material executivo, comparativo e exportavel.",
+    },
+    "/app/billing": {
+      eyebrow: "Leitura comercial",
+      title: "Assinatura e planos",
+      subtitle: "Status comercial, trial, pendencias e historico em uma visao unica.",
+    },
+    "/app/leads": {
+      eyebrow: "Entrada comercial",
+      title: "Leads e demanda",
+      subtitle: "Capte, qualifique e leia a demanda inicial antes da conversa comercial.",
+    },
+    "/app/audit": {
+      eyebrow: "Governanca e rastreabilidade",
+      title: "Auditoria operacional",
+      subtitle: "Cada movimento relevante do workspace reunido em uma trilha clara.",
+    },
+  };
+  const currentMeta = pageMeta[location.pathname] ?? pageMeta["/app"];
 
   return (
     <main className="app-shell">
@@ -2437,23 +2540,23 @@ function AppShell() {
           <span>workspace politico</span>
         </div>
         <nav>
-          <NavLink to="/app">Dashboard</NavLink>
-          <NavLink to="/app/onboarding">Onboarding</NavLink>
-          <NavLink to="/app/team">Equipe</NavLink>
-          <NavLink to="/app/contacts">Contatos</NavLink>
-          <NavLink to="/app/tasks">Tarefas</NavLink>
-          <NavLink to="/app/opponents">Adversarios</NavLink>
-          <NavLink to="/app/reports">Relatorios</NavLink>
-          <NavLink to="/app/billing">Assinatura</NavLink>
-          <NavLink to="/app/leads">Leads</NavLink>
-          <NavLink to="/app/audit">Auditoria</NavLink>
+          {navigationItems.map((item) => (
+            <NavLink key={item.to} to={item.to}>
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
+        <div className="sidebar-note">
+          <strong>Estrutura viva</strong>
+          <span>CRM, monitoramento, execucao e governanca numa narrativa unica.</span>
+        </div>
       </aside>
       <section className="app-content">
         <div className="topbar topbar-actions">
           <div>
-            <p className="eyebrow">Painel autenticado</p>
-            <h1 className="topbar-title">Operacao em andamento</h1>
+            <p className="eyebrow">{currentMeta.eyebrow}</p>
+            <h1 className="topbar-title">{currentMeta.title}</h1>
+            <p className="meta-copy topbar-subtitle">{currentMeta.subtitle}</p>
           </div>
           <Button label="Sair" variant="secondary" onClick={logout} />
         </div>

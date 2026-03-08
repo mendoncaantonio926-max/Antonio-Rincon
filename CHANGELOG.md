@@ -30,6 +30,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - contatos, adversarios e relatorios agora seguem a mesma linha premium nas telas autenticadas, com resumo melhor, blocos mais editoriais e leitura mais clara
 - equipe e tarefas agora usam leitura operacional mais refinada, com cards, board mais legivel e hierarquia visual alinhada ao restante do produto
 - auditoria agora apresenta leitura de governanca mais clara e tambem entra na auditoria real de navegador
+- shell autenticado e leads agora usam contexto editorial mais consistente, com topo por rota, melhor narrativa comercial e acabamento visual mais uniforme
 
 ### Fixed
 

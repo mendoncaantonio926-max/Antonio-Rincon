@@ -340,7 +340,7 @@ async function main() {
 
     await page.getByRole("link", { name: "Assinatura" }).click();
     await page.waitForURL("**/app/billing");
-    await page.getByRole("heading", { name: "Assinatura" }).waitFor();
+    await page.getByRole("heading", { name: "Assinatura", exact: true }).waitFor();
     await page.getByRole("heading", { name: "Historico comercial" }).waitFor();
     const billingShot = path.join(logDir, "billing.png");
     if (await safeScreenshot(page, billingShot, browserMessages)) {
@@ -356,7 +356,7 @@ async function main() {
 
     await page.getByRole("link", { name: "Auditoria" }).click();
     await page.waitForURL("**/app/audit");
-    await page.getByRole("heading", { name: "Auditoria" }).waitFor();
+    await page.getByRole("heading", { name: "Auditoria", exact: true }).waitFor();
     await page.locator(".audit-card, .summary-tile").first().waitFor();
     checks.push("auditoria_renderizada");
 

@@ -797,6 +797,25 @@ h3,
   transform: translateX(2px);
 }
 
+.sidebar-note {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-note strong {
+  font-size: 0.92rem;
+  color: #fff;
+}
+
+.sidebar-note span {
+  color: rgba(247, 240, 230, 0.72);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -818,6 +837,11 @@ h3,
 .topbar-title {
   margin: 0.18rem 0 0;
   font-size: 2rem;
+}
+
+.topbar-subtitle {
+  margin-top: 0.5rem;
+  max-width: 42rem;
 }
 
 .dashboard-hero {
@@ -1199,6 +1223,46 @@ h3,
 
 .audit-layout {
   display: grid;
+}
+
+.leads-layout {
+  display: grid;
+}
+
+.leads-stage {
+  display: grid;
+  gap: 1rem;
+}
+
+.leads-intro {
+  padding: 1rem 1.05rem;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(247, 240, 228, 0.88));
+  border: 1px solid rgba(120, 87, 45, 0.12);
+}
+
+.leads-intro p,
+.lead-card p,
+.lead-card__meta span {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.lead-records {
+  gap: 1rem;
+}
+
+.lead-card {
+  gap: 0.8rem;
+}
+
+.lead-card__meta {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  background: rgba(18, 31, 51, 0.04);
+  border: 1px solid rgba(18, 31, 51, 0.06);
 }
 
 .audit-intro {
