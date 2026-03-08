@@ -14,6 +14,18 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Docs
+
+### Ops
+
+## [0.1.6] - 2026-03-08
+
+### Added
+
 - billing com historico comercial por eventos e leitura de ciclo, proxima referencia e cancelamento agendado
 - IA com acao recomendada, motivo e urgencia por modulo no dashboard
 - resumo historico de adversarios com watchlist comparativa, eventos recentes e leitura temporal da timeline
@@ -176,4 +188,5 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 - scripts de backend e frontend padronizados para setup, smoke e validacao ponta a ponta
 - CI, changelog, release e triagem de PR alinhados ao fluxo local
+
 
