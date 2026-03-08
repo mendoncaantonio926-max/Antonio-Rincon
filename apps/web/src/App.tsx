@@ -471,6 +471,7 @@ function DashboardPage() {
               <option value="contacts">Contatos</option>
               <option value="tasks">Tarefas</option>
               <option value="opponents">Adversarios</option>
+              <option value="billing">Assinatura</option>
             </select>
           </div>
           <p className="dashboard-ai-summary">{aiSummary?.summary ?? "Carregando recomendacoes..."}</p>
@@ -479,6 +480,20 @@ function DashboardPage() {
             <p>{aiSummary?.action_reason ?? "Lendo o contexto operacional do workspace."}</p>
             <span>Urgencia {aiSummary?.urgency ?? "normal"}</span>
           </div>
+          <div className="dashboard-ai-meta">
+            <article className="dashboard-ai-meta-card">
+              <span>Foco sugerido</span>
+              <strong>{aiSummary?.focus_area ?? "Lendo contexto"}</strong>
+            </article>
+            <article className="dashboard-ai-meta-card">
+              <span>Dono sugerido</span>
+              <strong>{aiSummary?.suggested_owner ?? "Coordenacao"}</strong>
+            </article>
+            <article className="dashboard-ai-meta-card">
+              <span>Janela de resposta</span>
+              <strong>{aiSummary?.due_window ?? "Nesta semana"}</strong>
+            </article>
+          </div>
           {aiSummary?.recommendations?.length ? (
             <div className="dashboard-recommendations dashboard-recommendations--grid">
               {aiSummary.recommendations.map((item) => (
@@ -486,6 +501,20 @@ function DashboardPage() {
               ))}
             </div>
           ) : null}
+          <div className="dashboard-ai-lists">
+            <article className="dashboard-ai-list">
+              <span>Sinais que sustentam a leitura</span>
+              <div className="dashboard-recommendations">
+                {aiSummary?.supporting_signals?.map((item) => <span key={item}>{item}</span>)}
+              </div>
+            </article>
+            <article className="dashboard-ai-list">
+              <span>Bloqueadores atuais</span>
+              <div className="dashboard-recommendations">
+                {aiSummary?.blockers?.map((item) => <span key={item}>{item}</span>)}
+              </div>
+            </article>
+          </div>
         </section>
         <section className="panel dashboard-snapshot">
           <div className="section-heading">

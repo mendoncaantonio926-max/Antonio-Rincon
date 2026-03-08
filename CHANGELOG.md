@@ -14,6 +14,8 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 ### Added
 
+- IA agora expone foco sugerido, dono recomendado, janela de resposta, bloqueadores e sinais de contexto por modulo, incluindo billing
+
 ### Changed
 
 ### Fixed

@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 const logDir = path.join(repoRoot, "apps", "web", ".localdata", "browser-audit");
 mkdirSync(logDir, { recursive: true });
+const runId = new Date().toISOString().replaceAll(":", "-").replaceAll(".", "-");
 const failureDebugPath = path.join(logDir, "browser-audit-debug.json");
 const apiPort = 8010;
 const apiUrl = `http://127.0.0.1:${apiPort}`;
@@ -39,8 +40,8 @@ function findApiPython() {
 }
 
 function spawnLogged(command, args, name, options = {}) {
-  const stdoutPath = path.join(logDir, `${name}.stdout.log`);
-  const stderrPath = path.join(logDir, `${name}.stderr.log`);
+  const stdoutPath = path.join(logDir, `${name}.${runId}.stdout.log`);
+  const stderrPath = path.join(logDir, `${name}.${runId}.stderr.log`);
   const child = spawn(command, args, {
     cwd: repoRoot,
     windowsHide: true,

@@ -333,11 +333,21 @@ def test_membership_invite_and_ai_summary() -> None:
     assert "next_action" in ai_response.json()
     assert "action_reason" in ai_response.json()
     assert ai_response.json()["urgency"] in {"normal", "high"}
+    assert ai_response.json()["focus_area"]
+    assert ai_response.json()["suggested_owner"]
+    assert ai_response.json()["due_window"]
+    assert isinstance(ai_response.json()["blockers"], list)
+    assert isinstance(ai_response.json()["supporting_signals"], list)
 
     ai_contacts_response = client.get("/ai/summary?module=contacts", headers=headers)
     assert ai_contacts_response.status_code == 200
     assert ai_contacts_response.json()["module"] == "contacts"
     assert ai_contacts_response.json()["next_action"]
+
+    ai_billing_response = client.get("/ai/summary?module=billing", headers=headers)
+    assert ai_billing_response.status_code == 200
+    assert ai_billing_response.json()["module"] == "billing"
+    assert ai_billing_response.json()["suggested_owner"]
 
     tenant_update_response = client.patch(
         "/tenants/current",

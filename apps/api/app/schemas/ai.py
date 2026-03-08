@@ -10,4 +10,9 @@ class AiSummaryResponse(BaseModel):
     next_action: str
     action_reason: str
     urgency: str
+    focus_area: str
+    suggested_owner: str
+    due_window: str
+    blockers: list[str]
+    supporting_signals: list[str]
     recommendations: list[str]

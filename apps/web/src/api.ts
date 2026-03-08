@@ -203,6 +203,11 @@ export type AiSummary = {
   next_action: string;
   action_reason: string;
   urgency: string;
+  focus_area: string;
+  suggested_owner: string;
+  due_window: string;
+  blockers: string[];
+  supporting_signals: string[];
   recommendations: string[];
 };
 
