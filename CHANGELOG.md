@@ -27,6 +27,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - experiencia do frontend deixou de ser scaffold visual basico e passou a usar linguagem editorial mais forte, distinta e menos generica
 - build operacional do frontend agora usa um builder deterministico proprio em vez do encadeamento anterior do workspace
 - dashboard autenticado e assinatura passaram a usar composicao executiva mais densa e menos generica, com hierarquia visual mais premium
+- contatos, adversarios e relatorios agora seguem a mesma linha premium nas telas autenticadas, com resumo melhor, blocos mais editoriais e leitura mais clara
 
 ### Fixed
 

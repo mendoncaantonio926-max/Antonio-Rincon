@@ -1073,6 +1073,132 @@ h3,
   border: 1px solid rgba(120, 87, 45, 0.12);
 }
 
+.entity-form {
+  align-content: start;
+}
+
+.summary-grid {
+  gap: 0.8rem;
+}
+
+.summary-tile {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 108px;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(247, 240, 228, 0.88));
+  border: 1px solid rgba(120, 87, 45, 0.12);
+}
+
+.summary-tile strong {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.summary-tile span {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: var(--ink-strong);
+}
+
+.contacts-layout {
+  grid-template-columns: minmax(300px, 360px) 1fr;
+}
+
+.contacts-stage,
+.reports-stage,
+.opponents-stage,
+.timeline-stage {
+  display: grid;
+  gap: 1rem;
+}
+
+.contacts-records,
+.report-records,
+.opponent-records,
+.watchlist-records,
+.timeline-records {
+  gap: 1rem;
+}
+
+.contact-record,
+.report-card,
+.opponent-card,
+.watchlist-card,
+.timeline-record {
+  padding: 1.1rem;
+  border-radius: 22px;
+  background: rgba(255, 252, 247, 0.84);
+}
+
+.contact-record {
+  gap: 0.75rem;
+}
+
+.contact-record .inline-actions {
+  justify-content: space-between;
+  align-items: end;
+}
+
+.report-records {
+  align-content: start;
+}
+
+.reports-layout {
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) minmax(280px, 360px);
+}
+
+.report-card {
+  gap: 0.8rem;
+}
+
+.report-card p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.report-metrics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.report-preview-panel {
+  align-content: start;
+}
+
+.opponents-layout {
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.opponent-card,
+.watchlist-card,
+.timeline-record {
+  box-shadow: 0 14px 34px rgba(20, 30, 48, 0.05);
+}
+
+.opponent-card .card-link,
+.watchlist-card,
+.timeline-record {
+  gap: 0.5rem;
+}
+
+.timeline-record {
+  position: relative;
+  padding-left: 1.35rem;
+}
+
+.timeline-record::before {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  top: 1.2rem;
+  bottom: 1.2rem;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(196, 141, 72, 0.34), rgba(18, 31, 51, 0.08));
+}
+
 .feature-grid article {
   background: rgba(255, 252, 247, 0.72);
   border: 1px solid rgba(120, 87, 45, 0.12);
@@ -1093,7 +1219,10 @@ ul {
   .wide-layout,
   .dashboard-hero,
   .dashboard-focus-grid,
-  .billing-layout {
+  .billing-layout,
+  .contacts-layout,
+  .reports-layout,
+  .opponents-layout {
     grid-template-columns: 1fr;
   }
 

@@ -1125,9 +1125,12 @@ function ContactsPage() {
   );
 
   return (
-    <section className="app-section split-layout">
-      <form className="panel form-panel" onSubmit={handleSubmit}>
-        <h2>Novo contato</h2>
+    <section className="app-section split-layout contacts-layout">
+      <form className="panel form-panel entity-form" onSubmit={handleSubmit}>
+        <div className="section-heading">
+          <p className="eyebrow">CRM politico</p>
+          <h2>Novo contato</h2>
+        </div>
         <label>
           Nome
           <input name="name" required minLength={2} />
@@ -1177,14 +1180,17 @@ function ContactsPage() {
         <Button type="submit" label="Salvar contato" />
       </form>
 
-      <div className="panel">
+      <div className="panel contacts-stage">
         <div className="section-header">
-          <h2>Contatos</h2>
+          <div>
+            <p className="eyebrow">Visao da base</p>
+            <h2>Contatos</h2>
+          </div>
           <span>{contacts.length} registros</span>
         </div>
-        <div className="list-grid contact-status-grid">
+        <div className="list-grid contact-status-grid summary-grid">
           {Object.entries(groupedByStatus).map(([status, count]) => (
-            <article className="list-card" key={status}>
+            <article className="summary-tile" key={status}>
               <strong>{statusLabels[status as Contact["status"]]}</strong>
               <span>{count} contato(s)</span>
             </article>
@@ -1234,10 +1240,10 @@ function ContactsPage() {
           </button>
         </div>
         {error ? <div className="error-box">{error}</div> : null}
-        <div className="list-grid">
+        <div className="list-grid contacts-records">
           {contacts.length === 0 ? <p className="meta-copy">Nenhum contato cadastrado.</p> : null}
           {contacts.map((contact) => (
-            <article className="list-card" key={contact.id}>
+            <article className="list-card contact-record" key={contact.id}>
               <div className="section-header">
                 <div className="contact-heading">
                   <strong>{contact.name}</strong>
@@ -1563,9 +1569,12 @@ function ReportsPage() {
   }
 
   return (
-    <section className="app-section split-layout">
-      <form className="panel form-panel" onSubmit={handleCreateReport}>
-        <h2>Novo relatorio</h2>
+    <section className="app-section split-layout reports-layout">
+      <form className="panel form-panel entity-form" onSubmit={handleCreateReport}>
+        <div className="section-heading">
+          <p className="eyebrow">Relatoria</p>
+          <h2>Novo relatorio</h2>
+        </div>
         <label>
           Titulo
           <input name="title" required minLength={2} />
@@ -1584,21 +1593,24 @@ function ReportsPage() {
         <Button type="submit" label="Gerar relatorio" />
       </form>
 
-      <div className="panel">
+      <div className="panel reports-stage">
         <div className="section-header">
-          <h2>Relatorios</h2>
+          <div>
+            <p className="eyebrow">Leitura consolidada</p>
+            <h2>Relatorios</h2>
+          </div>
           <span>{reports.length}</span>
         </div>
-        <div className="list-grid onboarding-guidance-grid">
-          <article className="list-card onboarding-guidance">
+        <div className="list-grid onboarding-guidance-grid summary-grid">
+          <article className="summary-tile">
             <strong>Tarefas abertas</strong>
             <span>{totals.openTasks}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Contatos prioritarios</strong>
             <span>{totals.priorityContacts}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Tarefas vencidas</strong>
             <span>{totals.overdueTasks}</span>
           </article>
@@ -1613,28 +1625,28 @@ function ReportsPage() {
             <option value="ai_summary">Resumo IA</option>
           </select>
         </div>
-        <div className="list-grid">
+        <div className="list-grid report-records">
           {reports.map((report) => (
-            <article className="list-card" key={report.id}>
+            <article className="list-card report-card" key={report.id}>
               <div className="section-header">
                 <strong>{report.title}</strong>
                 <Badge tone="neutral">{report.report_type}</Badge>
               </div>
               <p>{report.summary}</p>
-              <div className="list-grid onboarding-guidance-grid">
-                <article className="list-card">
+              <div className="list-grid onboarding-guidance-grid report-metrics-grid">
+                <article className="summary-tile">
                   <strong>Contatos</strong>
                   <span>{report.metrics.contacts_count}</span>
                 </article>
-                <article className="list-card">
+                <article className="summary-tile">
                   <strong>Prioritarios</strong>
                   <span>{report.metrics.priority_contacts_count}</span>
                 </article>
-                <article className="list-card">
+                <article className="summary-tile">
                   <strong>Tarefas abertas</strong>
                   <span>{report.metrics.open_tasks_count}</span>
                 </article>
-                <article className="list-card">
+                <article className="summary-tile">
                   <strong>Vencidas</strong>
                   <span>{report.metrics.overdue_tasks_count}</span>
                 </article>
@@ -1652,7 +1664,7 @@ function ReportsPage() {
         </div>
       </div>
 
-      <div className="panel">
+      <div className="panel report-preview-panel">
         <div className="section-header">
           <h2>Preview exportado</h2>
         </div>
@@ -2024,9 +2036,12 @@ function OpponentsPage() {
   };
 
   return (
-    <section className="app-section split-layout wide-layout">
-      <form className="panel form-panel" onSubmit={handleCreateOpponent}>
-        <h2>Novo adversario</h2>
+    <section className="app-section split-layout wide-layout opponents-layout">
+      <form className="panel form-panel entity-form" onSubmit={handleCreateOpponent}>
+        <div className="section-heading">
+          <p className="eyebrow">Radar politico</p>
+          <h2>Novo adversario</h2>
+        </div>
         <label>
           Nome
           <input name="name" required minLength={2} />
@@ -2068,29 +2083,32 @@ function OpponentsPage() {
         <Button type="submit" label="Salvar adversario" />
       </form>
 
-      <div className="panel">
+      <div className="panel opponents-stage">
         <div className="section-header">
-          <h2>Adversarios</h2>
+          <div>
+            <p className="eyebrow">Mapa competitivo</p>
+            <h2>Adversarios</h2>
+          </div>
           <span>{opponents.length} registros</span>
         </div>
-        <div className="list-grid onboarding-guidance-grid">
-          <article className="list-card onboarding-guidance">
+        <div className="list-grid onboarding-guidance-grid summary-grid">
+          <article className="summary-tile">
             <strong>Monitoramento critico</strong>
             <span>{comparison.critical}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Incumbentes</strong>
             <span>{comparison.incumbent}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Desafiantes</strong>
             <span>{comparison.challenger}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Eventos criticos</strong>
             <span>{summary?.critical_events_count ?? 0}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Ultimos 30 dias</strong>
             <span>{summary?.recent_events_count ?? 0}</span>
           </article>
@@ -2116,10 +2134,10 @@ function OpponentsPage() {
             <option value="critical">Critico</option>
           </select>
         </div>
-        <div className="list-grid">
+        <div className="list-grid opponent-records">
           {opponents.map((opponent) => (
             <article
-              className={`list-card ${selectedId === opponent.id ? "list-card--selected" : ""}`}
+              className={`list-card opponent-card ${selectedId === opponent.id ? "list-card--selected" : ""}`}
               key={opponent.id}
             >
               <button className="card-link" type="button" onClick={() => setSelectedId(opponent.id)}>
@@ -2137,12 +2155,12 @@ function OpponentsPage() {
         <div className="section-header">
           <h2>Watchlist comparativa</h2>
         </div>
-        <div className="list-grid">
+        <div className="list-grid watchlist-records">
           {(summary?.top_watchlist ?? []).length === 0 ? (
             <p className="meta-copy">A watchlist comparativa aparece assim que houver monitorados com eventos.</p>
           ) : null}
           {(summary?.top_watchlist ?? []).map((item) => (
-            <article className="list-card" key={item.opponent_id}>
+            <article className="list-card watchlist-card" key={item.opponent_id}>
               <strong>{item.name}</strong>
               <span>{item.stance} - {item.watch_level}</span>
               <span>{item.total_events} evento(s) no total</span>
@@ -2153,35 +2171,35 @@ function OpponentsPage() {
         </div>
       </div>
 
-      <div className="panel">
+      <div className="panel timeline-stage">
         <div className="section-header">
           <h2>Timeline</h2>
           <span>{events.length} eventos</span>
         </div>
-        <div className="list-grid onboarding-guidance-grid">
-          <article className="list-card onboarding-guidance">
+        <div className="list-grid onboarding-guidance-grid summary-grid">
+          <article className="summary-tile">
             <strong>Selecionado</strong>
             <span>{selectedOpponent?.name ?? "Nenhum adversario selecionado"}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Eventos criticos</strong>
             <span>{criticalEvents}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Eventos recentes</strong>
             <span>{recentEvents}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Contexto</strong>
             <span>{selectedOpponent?.context ?? "Selecione um adversario para detalhar a timeline"}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Classificacao</strong>
             <span>
               {selectedOpponent ? `${selectedOpponent.stance} - ${selectedOpponent.watch_level}` : "Sem selecao"}
             </span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="summary-tile">
             <strong>Ultimo sinal</strong>
             <span>{lastEventDate ? new Date(lastEventDate).toLocaleDateString("pt-BR") : "Sem eventos"}</span>
           </article>
@@ -2217,10 +2235,10 @@ function OpponentsPage() {
           </label>
           <Button type="submit" label="Adicionar evento" />
         </form>
-        <div className="list-grid">
+        <div className="list-grid timeline-records">
           {events.length === 0 ? <p className="meta-copy">Nenhum evento registrado para o filtro atual.</p> : null}
           {events.map((item) => (
-            <article className="list-card" key={item.id}>
+            <article className="list-card timeline-record" key={item.id}>
               <div className="section-header">
                 <strong>{item.title}</strong>
                 <Badge tone={item.severity === "critical" ? "warning" : item.severity === "warning" ? "info" : "neutral"}>
