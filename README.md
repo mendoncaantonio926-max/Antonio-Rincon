@@ -73,6 +73,14 @@ Onde:
 - `npm run lint` valida frontend, componentes compartilhados e scripts web com Biome
 - `npm run lint:write` aplica os ajustes seguros do Biome no mesmo escopo
 
+Para validar a cobertura automatizada de frontend:
+
+```bash
+npm run test:web
+```
+
+- `npm run test:web` roda Vitest com Testing Library sobre fluxos criticos do app web
+
 Para obter um relatorio estruturado da verificacao ponta a ponta:
 
 ```bat

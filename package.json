@@ -29,6 +29,7 @@
     "start:web": "scripts\\run-web.cmd",
     "dev:web": "npm --workspace apps/web run dev",
     "build:web": "node scripts/build-web.mjs apps/web",
+    "test:web": "npm --workspace apps/web run test",
     "lint": "cmd /c node_modules\\.bin\\biome.cmd check apps\\web\\src packages\\ui\\src scripts\\browser-audit.mjs scripts\\build-web.mjs scripts\\serve-web-dist.mjs",
     "lint:write": "cmd /c node_modules\\.bin\\biome.cmd check --write apps\\web\\src packages\\ui\\src scripts\\browser-audit.mjs scripts\\build-web.mjs scripts\\serve-web-dist.mjs",
     "smoke:api": "scripts\\smoke-api.cmd",

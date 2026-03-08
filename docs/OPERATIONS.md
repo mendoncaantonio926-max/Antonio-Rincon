@@ -22,6 +22,7 @@
 - `npm run verify:quality` expoe o mesmo fluxo por alias
 - `npm run lint` valida frontend, UI compartilhada e scripts web com Biome
 - `npm run lint:write` aplica os ajustes seguros do Biome no mesmo escopo
+- `npm run test:web` roda a cobertura automatizada de frontend com Vitest e Testing Library
 - a validacao de versao tambem aceita `--json`
 - `scripts\verify-report.cmd --json` gera um resumo estruturado da verificacao ponta a ponta, com versao, testes do backend, build/smokes do frontend, snapshot de release e diagnostico de ambiente
 - a verificacao ponta a ponta agora tambem inclui uma etapa dedicada de qualidade antes dos testes e smokes

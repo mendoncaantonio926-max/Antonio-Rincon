@@ -16,10 +16,12 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 - IA agora expone foco sugerido, dono recomendado, janela de resposta, bloqueadores e sinais de contexto por modulo, incluindo billing
 - lint automatizado com Biome para frontend, componentes compartilhados e scripts web do monorepo
+- testes automatizados de frontend com Vitest e Testing Library cobrindo autenticacao e protecao de rota
 
 ### Changed
 
 - `verify:quality` agora inclui lint alem de typecheck e compilacao estrutural
+- `verify-all` agora inclui etapa dedicada de testes do frontend antes do build final
 ### Fixed
 
 ### Docs
