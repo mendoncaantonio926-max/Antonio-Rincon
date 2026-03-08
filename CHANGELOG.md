@@ -17,7 +17,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - IA agora expone foco sugerido, dono recomendado, janela de resposta, bloqueadores e sinais de contexto por modulo, incluindo billing
 - lint automatizado com Biome para frontend, componentes compartilhados e scripts web do monorepo
 - testes automatizados de frontend com Vitest e Testing Library cobrindo autenticacao e protecao de rota
-- testes automatizados de fluxos autenticados cobrindo contatos, tarefas e acoes comerciais de billing
+- testes automatizados de fluxos autenticados cobrindo contatos, tarefas, relatorios, adversarios, leads e acoes comerciais de billing
 
 ### Changed
 
