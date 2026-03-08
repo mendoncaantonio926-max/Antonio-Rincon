@@ -479,6 +479,13 @@ function TeamPage() {
   const [members, setMembers] = useState<Membership[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState<string>("Workspace");
+  const roleLabels: Record<Membership["role"], string> = {
+    owner: "Owner",
+    admin: "Admin",
+    coordinator: "Coordenacao",
+    analyst: "Analise",
+    viewer: "Leitura",
+  };
 
   async function loadMembers() {
     if (!tokens?.access_token) return;
@@ -552,13 +559,13 @@ function TeamPage() {
   return (
     <section className="app-section split-layout wide-layout">
       <form className="panel form-panel" onSubmit={handleTenantUpdate}>
-        <h2>Workspace</h2>
+        <h2>Identidade do workspace</h2>
         <label>
           Nome do workspace
           <input name="tenant_name" defaultValue={tenantName} required minLength={3} />
         </label>
         {message ? <div className="info-box">{message}</div> : null}
-        <Button type="submit" label="Salvar workspace" />
+        <Button type="submit" label="Atualizar identidade" />
       </form>
 
       <form className="panel form-panel" onSubmit={handleInvite}>
@@ -575,12 +582,12 @@ function TeamPage() {
           Role
           <select name="role" defaultValue="analyst">
             <option value="admin">Admin</option>
-            <option value="coordinator">Coordinator</option>
-            <option value="analyst">Analyst</option>
-            <option value="viewer">Viewer</option>
+            <option value="coordinator">Coordenacao</option>
+            <option value="analyst">Analise</option>
+            <option value="viewer">Leitura</option>
           </select>
         </label>
-        <Button type="submit" label="Convidar" />
+        <Button type="submit" label="Enviar convite" />
       </form>
 
       <div className="panel">
@@ -604,14 +611,16 @@ function TeamPage() {
             {
               key: "role",
               header: "Role",
-              render: (member) => <Badge tone={member.role === "owner" ? "info" : "neutral"}>{member.role}</Badge>,
+              render: (member) => (
+                <Badge tone={member.role === "owner" ? "info" : "neutral"}>{roleLabels[member.role]}</Badge>
+              ),
             },
             {
               key: "actions",
               header: "Acoes",
               render: (member) =>
                 member.role === "owner" ? (
-                  "Workspace owner"
+                  "Responsavel principal"
                 ) : (
                   <div className="inline-actions">
                     <select
@@ -621,9 +630,9 @@ function TeamPage() {
                       }
                     >
                       <option value="admin">Admin</option>
-                      <option value="coordinator">Coordinator</option>
-                      <option value="analyst">Analyst</option>
-                      <option value="viewer">Viewer</option>
+                      <option value="coordinator">Coordenacao</option>
+                      <option value="analyst">Analise</option>
+                      <option value="viewer">Leitura</option>
                     </select>
                     <button
                       className="inline-button"
@@ -1761,7 +1770,7 @@ function BillingPage() {
               <span>{plan.ai_requests_limit} requisicao(oes) IA</span>
               <p>{plan.recommended_for}</p>
               <button className="inline-button" type="button" onClick={() => activatePlan(plan.plan)}>
-                Ativar plano
+                Migrar para este plano
               </button>
             </article>
           ))}
@@ -1811,6 +1820,7 @@ function LeadsPage() {
         </div>
         {error ? <div className="error-box">{error}</div> : null}
         <div className="list-grid">
+          {leads.length === 0 ? <p className="meta-copy">Nenhum lead captado ainda.</p> : null}
           {leads.map((lead) => (
             <article className="list-card" key={lead.id}>
               <strong>{lead.name}</strong>
@@ -2055,7 +2065,7 @@ function OpponentsPage() {
               <button className="card-link" type="button" onClick={() => setSelectedId(opponent.id)}>
                 <strong>{opponent.name}</strong>
                 <span>{opponent.context}</span>
-                <span>{opponent.stance} · {opponent.watch_level}</span>
+                <span>{opponent.stance} - {opponent.watch_level}</span>
                 <span>{opponent.tags.join(", ") || "Sem tags"}</span>
               </button>
               <button className="inline-button" type="button" onClick={() => handleDelete(opponent.id)}>
@@ -2068,12 +2078,15 @@ function OpponentsPage() {
           <h2>Watchlist comparativa</h2>
         </div>
         <div className="list-grid">
+          {(summary?.top_watchlist ?? []).length === 0 ? (
+            <p className="meta-copy">A watchlist comparativa aparece assim que houver monitorados com eventos.</p>
+          ) : null}
           {(summary?.top_watchlist ?? []).map((item) => (
             <article className="list-card" key={item.opponent_id}>
               <strong>{item.name}</strong>
-              <span>{item.stance} · {item.watch_level}</span>
+              <span>{item.stance} - {item.watch_level}</span>
               <span>{item.total_events} evento(s) no total</span>
-              <span>{item.critical_events} critico(s) · {item.recent_events} recentes</span>
+              <span>{item.critical_events} critico(s) - {item.recent_events} recentes</span>
               <span>{item.last_event_date ? new Date(item.last_event_date).toLocaleDateString("pt-BR") : "Sem eventos"}</span>
             </article>
           ))}
@@ -2105,7 +2118,7 @@ function OpponentsPage() {
           <article className="list-card onboarding-guidance">
             <strong>Classificacao</strong>
             <span>
-              {selectedOpponent ? `${selectedOpponent.stance} · ${selectedOpponent.watch_level}` : "Sem selecao"}
+              {selectedOpponent ? `${selectedOpponent.stance} - ${selectedOpponent.watch_level}` : "Sem selecao"}
             </span>
           </article>
           <article className="list-card onboarding-guidance">
@@ -2182,7 +2195,7 @@ function AppShell() {
           <NavLink to="/app/tasks">Tarefas</NavLink>
           <NavLink to="/app/opponents">Adversarios</NavLink>
           <NavLink to="/app/reports">Relatorios</NavLink>
-          <NavLink to="/app/billing">Billing</NavLink>
+          <NavLink to="/app/billing">Assinatura</NavLink>
           <NavLink to="/app/leads">Leads</NavLink>
           <NavLink to="/app/audit">Auditoria</NavLink>
         </nav>
