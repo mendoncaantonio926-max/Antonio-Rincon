@@ -354,6 +354,12 @@ async function main() {
     await page.locator(".info-box").waitFor();
     checks.push("acoes_de_billing_responderam");
 
+    await page.getByRole("link", { name: "Auditoria" }).click();
+    await page.waitForURL("**/app/audit");
+    await page.getByRole("heading", { name: "Auditoria" }).waitFor();
+    await page.locator(".audit-card, .summary-tile").first().waitFor();
+    checks.push("auditoria_renderizada");
+
     const severeMessages = browserMessages.filter((item) =>
       item.type === "pageerror" || item.type === "requestfailed" || item.type === "response" || item.type === "console:error",
     );

@@ -29,6 +29,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard autenticado e assinatura passaram a usar composicao executiva mais densa e menos generica, com hierarquia visual mais premium
 - contatos, adversarios e relatorios agora seguem a mesma linha premium nas telas autenticadas, com resumo melhor, blocos mais editoriais e leitura mais clara
 - equipe e tarefas agora usam leitura operacional mais refinada, com cards, board mais legivel e hierarquia visual alinhada ao restante do produto
+- auditoria agora apresenta leitura de governanca mais clara e tambem entra na auditoria real de navegador
 
 ### Fixed
 

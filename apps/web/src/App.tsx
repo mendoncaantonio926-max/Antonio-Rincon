@@ -1611,6 +1611,9 @@ function AuditPage() {
   const { tokens } = useAuth();
   const [logs, setLogs] = useState<Array<{ id: string; action: string; resource_type: string; created_at: string }>>([]);
   const [error, setError] = useState<string | null>(null);
+  const uniqueResources = new Set(logs.map((log) => log.resource_type)).size;
+  const latestLog = logs[0] ?? null;
+  const recentLogs = logs.filter((log) => Date.now() - new Date(log.created_at).getTime() <= 1000 * 60 * 60 * 24).length;
 
   useEffect(() => {
     if (!tokens?.access_token) return;
@@ -1623,19 +1626,56 @@ function AuditPage() {
   }, [tokens]);
 
   return (
-    <section className="app-section">
-      <div className="panel">
+    <section className="app-section audit-layout">
+      <div className="panel audit-stage">
         <div className="section-header">
-          <h2>Auditoria</h2>
+          <div>
+            <p className="eyebrow">Governanca e rastreabilidade</p>
+            <h2>Auditoria</h2>
+          </div>
           <span>{logs.length} eventos</span>
         </div>
         {error ? <div className="error-box">{error}</div> : null}
-        <div className="list-grid">
+        <div className="list-grid onboarding-guidance-grid summary-grid">
+          <article className="summary-tile">
+            <strong>Eventos totais</strong>
+            <span>{logs.length}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Recursos rastreados</strong>
+            <span>{uniqueResources}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Ultimas 24h</strong>
+            <span>{recentLogs}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Ultimo sinal</strong>
+            <span>{latestLog ? new Date(latestLog.created_at).toLocaleDateString("pt-BR") : "Sem logs"}</span>
+          </article>
+        </div>
+        <div className="audit-intro">
+          <p className="meta-copy">
+            Cada movimento relevante do workspace fica registrado para sustentar continuidade, leitura de risco e rastreabilidade operacional.
+          </p>
+        </div>
+        <div className="list-grid audit-records">
+          {logs.length === 0 ? (
+            <article className="list-card audit-card">
+              <strong>Nenhum evento registrado ainda</strong>
+              <p>Assim que contatos, tarefas, billing ou equipe forem movimentados, os sinais aparecem aqui.</p>
+            </article>
+          ) : null}
           {logs.map((log) => (
-            <article className="list-card" key={log.id}>
-              <strong>{log.action}</strong>
-              <span>{log.resource_type}</span>
-              <span>{new Date(log.created_at).toLocaleString("pt-BR")}</span>
+            <article className="list-card audit-card" key={log.id}>
+              <div className="section-header">
+                <strong>{log.action}</strong>
+                <Badge tone="neutral">{log.resource_type}</Badge>
+              </div>
+              <div className="audit-card__meta">
+                <span>Recurso: {log.resource_type}</span>
+                <span>{new Date(log.created_at).toLocaleString("pt-BR")}</span>
+              </div>
             </article>
           ))}
         </div>
