@@ -31,9 +31,12 @@ echo   scripts\smoke-web.cmd
 echo   scripts\smoke-web.cmd --json
 echo   scripts\smoke-all.cmd
 echo   scripts\smoke-all.cmd --json
+echo   scripts\browser-audit.cmd
+echo   scripts\browser-audit.cmd --skip-build
 echo   npm run smoke:api
 echo   npm run smoke:web
 echo   npm run smoke
+echo   npm run browser:audit
 echo.
 echo Verificacao:
 echo   scripts\verify-all.cmd
@@ -80,8 +83,10 @@ echo   scripts\verify-release.cmd vX.Y.Z --json
 echo   scripts\release-local.cmd --dry-run
 echo   scripts\release-local.cmd --dry-run --json
 echo   scripts\release-local.cmd
+echo   scripts\release-local.cmd --with-browser-audit
 echo   scripts\release-local.cmd vX.Y.Z --dry-run
 echo   scripts\release-local.cmd vX.Y.Z
+echo   scripts\release-local.cmd vX.Y.Z --with-browser-audit
 echo   npm run release:local
 echo   npm run version:show
 echo   npm run release:local -- vX.Y.Z

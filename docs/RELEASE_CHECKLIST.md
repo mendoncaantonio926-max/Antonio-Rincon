@@ -15,6 +15,7 @@
 - confirmar smoke da API em `/health`
 - opcionalmente simular artefatos e colisoes com `scripts\release-local.cmd --dry-run`
 - opcionalmente gerar zip local com `scripts\release-local.cmd vX.Y.Z`
+- opcionalmente exigir browser audit real junto da release com `scripts\release-local.cmd vX.Y.Z --with-browser-audit`
 - opcionalmente gerar zip local com `npm run release:local -- vX.Y.Z`
 - os scripts locais de release e verificacao tambem aceitam `X.Y.Z` sem o prefixo `v`
 - registrar checksum, manifesto e notas de release gerados em `release/`
@@ -36,5 +37,6 @@
 - apontar rollback ou mitigacao, quando houver
 
 Se `VERSION` ja estiver correta, `scripts\release-local.cmd` ou `npm run release:local` podem ser executados sem argumento.
+Quando quiser endurecer a entrega final, prefira `scripts\release-local.cmd --with-browser-audit`.
 O workflow manual do GitHub tambem pode usar `VERSION` se o campo `version` for deixado em branco, mas a publicacao so executa quando o branch ja estiver preparado para a versao alvo.
 Use `npm run verify:version` para confirmar esse alinhamento antes da tag.

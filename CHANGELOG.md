@@ -18,6 +18,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - lint automatizado com Biome para frontend, componentes compartilhados e scripts web do monorepo
 - testes automatizados de frontend com Vitest e Testing Library cobrindo autenticacao e protecao de rota
 - testes automatizados de fluxos autenticados cobrindo dashboard, onboarding, equipe, contatos, tarefas, relatorios, adversarios, leads, auditoria e acoes comerciais de billing, incluindo filtros, estados vazios e tratamento de erro
+- alias `npm run browser:audit` e flag `--with-browser-audit` no fluxo de `release-local`
 
 ### Changed
 

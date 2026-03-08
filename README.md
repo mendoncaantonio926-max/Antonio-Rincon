@@ -6,7 +6,7 @@ Repositorio publico:
 - `https://github.com/mendoncaantonio926-max/Antonio-Rincon`
 
 Release publicada mais recente:
-- `https://github.com/mendoncaantonio926-max/Antonio-Rincon/releases/tag/v0.1.5`
+- `https://github.com/mendoncaantonio926-max/Antonio-Rincon/releases/tag/v0.1.6`
 
 ## Estrutura
 
@@ -81,6 +81,22 @@ npm run test:web
 
 - `npm run test:web` roda Vitest com Testing Library sobre fluxos criticos do app web
 
+Para validar o app em navegador real:
+
+```bat
+scripts\browser-audit.cmd
+scripts\browser-audit.cmd --skip-build
+```
+
+Ou:
+
+```bash
+npm run browser:audit
+```
+
+- `scripts\browser-audit.cmd` executa auditoria real com Chrome local, API local e frontend buildado
+- `--skip-build` reaproveita o `dist` atual quando voce ja acabou de rodar `build` ou `rebuild`
+
 Para obter um relatorio estruturado da verificacao ponta a ponta:
 
 ```bat
@@ -116,6 +132,7 @@ Para preparar artefato local de release:
 
 ```bat
 scripts\release-local.cmd
+scripts\release-local.cmd --with-browser-audit
 ```
 
 Para simular a geracao sem rebuild nem escrita:
@@ -129,7 +146,10 @@ Ou:
 
 ```bash
 npm run release:local
+npm run release:local -- --with-browser-audit
 ```
+
+- `--with-browser-audit` exige que a release rode a auditoria real de navegador antes de zipar os artefatos
 
 Para informar uma versao explicitamente:
 

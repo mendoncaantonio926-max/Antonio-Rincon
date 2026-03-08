@@ -44,11 +44,13 @@
 - o status de release tambem indica se cada proxima versao esta executavel, preparavel ou bloqueada
 - o status e o planejamento de release tambem apontam se ja existem artefatos locais para o alvo
 - preparar release local usando `VERSION`: `scripts\release-local.cmd`
+- preparar release local com auditoria real: `scripts\release-local.cmd --with-browser-audit`
 - simular release local sem escrita: `scripts\release-local.cmd --dry-run`
 - `scripts\release-local.cmd --dry-run --json` e `scripts\prepare-release.cmd patch --dry-run --json` tambem geram saida estruturada
 - preparar release local usando `VERSION` por npm: `npm run release:local`
 - preparar nova release com bump + changelog + validacao: `scripts\prepare-release.cmd X.Y.Z`
 - preparar release local: `scripts\release-local.cmd vX.Y.Z`
+- preparar release local com auditoria real explicita: `scripts\release-local.cmd vX.Y.Z --with-browser-audit`
 - preparar release local por npm: `npm run release:local -- vX.Y.Z`
 - validar release local: `scripts\verify-release.cmd vX.Y.Z`
 - a validacao final do artefato tambem aceita `--json`
@@ -64,11 +66,14 @@
 - metadados estruturados do build do frontend: `scripts\build-web.cmd --json`
 - smoke de app inteiro: `scripts\smoke-all.cmd`
 - `scripts\smoke-all.cmd --json` exporta o smoke agregado em formato estruturado, com detalhes dos smokes de API e frontend
+- auditoria real de navegador: `scripts\browser-audit.cmd`
+- `scripts\browser-audit.cmd --skip-build` reaproveita o `dist` ja existente
 
 Aliases via `npm`:
 
 - backend: `npm run start:api`
 - frontend: `npm run start:web`
+- browser audit: `npm run browser:audit`
 - smoke API: `npm run smoke:api`
 - smoke frontend: `npm run smoke:web`
 - smoke completo: `npm run smoke`
@@ -92,6 +97,7 @@ Para preparar artefato de release local:
 
 1. `scripts\release-local.cmd`
 1. `scripts\release-local.cmd vX.Y.Z`
+1. quando quiser endurecer a entrega final, `scripts\release-local.cmd --with-browser-audit`
 
 ## Observacoes
 
@@ -102,3 +108,4 @@ Para preparar artefato de release local:
 - `scripts\clean.cmd` tambem remove artefatos gerados em `release/`
 - `scripts\clean.cmd` tambem remove `doctor-report.json`, `doctor-report.md`, `verify-report.json` e `verify-report.md`
 - `scripts\release-local.cmd` preserva `release/` durante o rebuild para nao perder artefatos anteriores
+- `scripts\release-local.cmd --with-browser-audit` reaproveita o build ja feito no rebuild e exige que a auditoria real passe antes de zipar a release

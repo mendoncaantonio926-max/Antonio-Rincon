@@ -1,7 +1,8 @@
 param(
     [string]$Version,
     [switch]$DryRun,
-    [switch]$Json
+    [switch]$Json,
+    [switch]$WithBrowserAudit
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,6 +63,7 @@ try {
             versao = $Version
             release_pronta = $status
             motivo_prontidao = $(if (-not $isReady) { $readinessMessage } else { "" })
+            browser_audit = $(if ($WithBrowserAudit) { 'sim' } else { 'nao' })
             zip_path = $zipPath
             zip_existente = $(if (Test-Path $zipPath) { 'sim' } else { 'nao' })
             manifesto_path = $manifestPath
@@ -86,6 +88,7 @@ try {
         if (-not $isReady) {
             Write-Output "motivo_prontidao=$readinessMessage"
         }
+        Write-Output "browser_audit=$(if ($WithBrowserAudit) { 'sim' } else { 'nao' })"
         Write-Output "zip_path=$zipPath"
         Write-Output "zip_existente=$(if (Test-Path $zipPath) { 'sim' } else { 'nao' })"
         Write-Output "manifesto_path=$manifestPath"
@@ -114,6 +117,13 @@ try {
         throw "Falha no rebuild completo."
     }
 
+    if ($WithBrowserAudit) {
+        cmd /c scripts\browser-audit.cmd --skip-build
+        if ($LASTEXITCODE -ne 0) {
+            throw "Falha na auditoria real de navegador."
+        }
+    }
+
     if (-not (Test-Path $releaseDir)) {
         New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
     }
@@ -127,6 +137,7 @@ try {
         [ordered]@{
             dry_run = 'nao'
             versao = $Version
+            browser_audit = $(if ($WithBrowserAudit) { 'sim' } else { 'nao' })
             zip_path = $zipPath
             manifesto_path = $manifestPath
             notas_path = $notesPath

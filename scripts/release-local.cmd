@@ -4,6 +4,7 @@ set "SCRIPT_DIR=%~dp0"
 set "VERSION_ARG="
 set "DRY_RUN_FLAG="
 set "JSON_FLAG="
+set "BROWSER_AUDIT_FLAG="
 set "POSITIONAL_VERSION="
 
 :parse_args
@@ -12,6 +13,8 @@ if /I "%~1"=="--dry-run" (
   set "DRY_RUN_FLAG=-DryRun"
 ) else if /I "%~1"=="--json" (
   set "JSON_FLAG=-Json"
+) else if /I "%~1"=="--with-browser-audit" (
+  set "BROWSER_AUDIT_FLAG=-WithBrowserAudit"
 ) else if not defined POSITIONAL_VERSION (
   set "POSITIONAL_VERSION=%~1"
   set "VERSION_ARG=-Version ""%~1"""
@@ -21,4 +24,4 @@ goto parse_args
 
 :run_command
 
-powershell -ExecutionPolicy Bypass -File "%SCRIPT_DIR%release-local.ps1" %VERSION_ARG% %DRY_RUN_FLAG% %JSON_FLAG%
+powershell -ExecutionPolicy Bypass -File "%SCRIPT_DIR%release-local.ps1" %VERSION_ARG% %DRY_RUN_FLAG% %JSON_FLAG% %BROWSER_AUDIT_FLAG%

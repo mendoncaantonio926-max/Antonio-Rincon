@@ -93,7 +93,7 @@ async function loadPlaywright() {
     return await import("playwright-core");
   } catch (error) {
     throw new Error(
-      `playwright-core nao encontrado. Rode "npm.cmd install --no-save playwright-core". ${error instanceof Error ? error.message : String(error)}`,
+      `playwright-core nao encontrado no workspace. Rode "npm.cmd install" ou "npm.cmd install -D playwright-core". ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
