@@ -326,7 +326,28 @@ const {
   const apiMock = {
     login: vi.fn(),
     register: vi.fn(),
-    listContacts: vi.fn(async () => contactsState.items),
+    listContacts: vi.fn(
+      async (
+        _token: string,
+        params?: { query?: string; kind?: string; status?: string; city?: string; tag?: string },
+      ) => {
+        return contactsState.items.filter((item) => {
+          const query = params?.query?.toLowerCase();
+          const city = params?.city?.toLowerCase();
+          const tag = params?.tag?.toLowerCase();
+          const haystack =
+            `${item.name} ${item.city ?? ""} ${item.email ?? ""} ${item.phone ?? ""} ${item.tags.join(" ")} ${item.note_history.map((note) => note.content).join(" ")}`.toLowerCase();
+          const matchesQuery = query ? haystack.includes(query) : true;
+          const matchesKind = params?.kind ? item.kind === params.kind : true;
+          const matchesStatus = params?.status ? item.status === params.status : true;
+          const matchesCity = city ? (item.city ?? "").toLowerCase().includes(city) : true;
+          const matchesTag = tag
+            ? item.tags.some((itemTag) => itemTag.toLowerCase().includes(tag))
+            : true;
+          return matchesQuery && matchesKind && matchesStatus && matchesCity && matchesTag;
+        });
+      },
+    ),
     createContact: vi.fn(async (_token: string, body: Record<string, unknown>) => {
       const created = {
         id: `contact-${contactsState.items.length + 1}`,
@@ -838,6 +859,73 @@ describe("App authenticated flows", () => {
     });
   });
 
+  it("aplica e limpa filtros na tela de contatos", async () => {
+    const user = userEvent.setup();
+    contactsState.items = [
+      {
+        id: "contact-1",
+        name: "Lideranca Centro",
+        kind: "leadership",
+        status: "priority",
+        email: "centro@pulso.local",
+        phone: "11999990000",
+        city: "Sao Paulo",
+        tags: ["centro", "bairro"],
+        note_history: [],
+        created_at: "2026-03-08T10:00:00Z",
+        updated_at: "2026-03-08T10:00:00Z",
+      },
+      {
+        id: "contact-2",
+        name: "Imprensa Litoral",
+        kind: "press",
+        status: "contacted",
+        email: "litoral@pulso.local",
+        phone: "21999990000",
+        city: "Santos",
+        tags: ["imprensa"],
+        note_history: [],
+        created_at: "2026-03-08T10:00:00Z",
+        updated_at: "2026-03-08T10:00:00Z",
+      },
+    ];
+
+    renderAuthenticatedApp("/app/contacts");
+
+    await screen.findByRole("heading", { name: "Contatos" });
+    await user.type(
+      screen.getByPlaceholderText("Buscar por nome, cidade, tag, email, telefone ou historico"),
+      "Centro",
+    );
+    await user.type(screen.getByPlaceholderText("Filtrar por tag"), "bairro");
+    await user.type(screen.getByPlaceholderText("Filtrar por cidade"), "Sao Paulo");
+
+    await waitFor(() => {
+      expect(apiMock.listContacts).toHaveBeenLastCalledWith("token-valido", {
+        query: "Centro",
+        kind: "",
+        status: "",
+        tag: "bairro",
+        city: "Sao Paulo",
+      });
+      expect(screen.getByText("Lideranca Centro")).toBeInTheDocument();
+      expect(screen.queryByText("Imprensa Litoral")).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Limpar filtros" }));
+
+    await waitFor(() => {
+      expect(apiMock.listContacts).toHaveBeenLastCalledWith("token-valido", {
+        query: "",
+        kind: "",
+        status: "",
+        tag: "",
+        city: "",
+      });
+      expect(screen.getByText("Imprensa Litoral")).toBeInTheDocument();
+    });
+  });
+
   it("avanca uma tarefa no board autenticado", async () => {
     const user = userEvent.setup();
     renderAuthenticatedApp("/app/tasks");
@@ -890,6 +978,57 @@ describe("App authenticated flows", () => {
       expect(apiMock.exportReport).toHaveBeenCalledWith("token-valido", "report-1", "csv");
       expect(screen.getByText(/Radar semanal\.csv/)).toBeInTheDocument();
       expect(screen.getByText(/Export csv de Radar semanal/)).toBeInTheDocument();
+    });
+  });
+
+  it("filtra relatorios por tipo na area autenticada", async () => {
+    const user = userEvent.setup();
+    reportsState.items = [
+      {
+        id: "report-1",
+        title: "Radar executivo",
+        report_type: "executive",
+        summary: "Leitura executiva.",
+        created_at: "2026-03-08T13:00:00Z",
+        created_by: "Antonio Rincon",
+        metrics: {
+          contacts_count: 3,
+          priority_contacts_count: 1,
+          open_tasks_count: 2,
+          overdue_tasks_count: 0,
+          opponents_count: 1,
+          opponent_events_count: 0,
+        },
+      },
+      {
+        id: "report-2",
+        title: "Radar comparativo",
+        report_type: "comparative",
+        summary: "Leitura comparativa.",
+        created_at: "2026-03-08T13:00:00Z",
+        created_by: "Antonio Rincon",
+        metrics: {
+          contacts_count: 5,
+          priority_contacts_count: 2,
+          open_tasks_count: 4,
+          overdue_tasks_count: 1,
+          opponents_count: 2,
+          opponent_events_count: 3,
+        },
+      },
+    ];
+
+    renderAuthenticatedApp("/app/reports");
+
+    await screen.findByRole("heading", { name: "Relatorios" });
+    await user.selectOptions(screen.getByDisplayValue("Todos os tipos"), "comparative");
+
+    await waitFor(() => {
+      expect(apiMock.listReports).toHaveBeenLastCalledWith("token-valido", {
+        report_type: "comparative",
+      });
+      expect(screen.getByText("Radar comparativo")).toBeInTheDocument();
+      expect(screen.queryByText("Radar executivo")).not.toBeInTheDocument();
     });
   });
 
@@ -1051,6 +1190,29 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("contacts.created")).toBeInTheDocument();
       expect(screen.getByText("billing.subscription_updated")).toBeInTheDocument();
       expect(screen.getByText("Recurso: contact")).toBeInTheDocument();
+    });
+  });
+
+  it("mostra estado vazio em leads quando nao ha captacao", async () => {
+    leadsState.items = [];
+    renderAuthenticatedApp("/app/leads");
+
+    await screen.findByRole("heading", { name: "Leads captados" });
+
+    await waitFor(() => {
+      expect(screen.getByText("Nenhum lead captado ainda.")).toBeInTheDocument();
+      expect(screen.getByText("Total captado")).toBeInTheDocument();
+    });
+  });
+
+  it("mostra erro na auditoria quando a carga falha", async () => {
+    apiMock.listAuditLogs.mockRejectedValueOnce(new Error("Auditoria indisponivel."));
+    renderAuthenticatedApp("/app/audit");
+
+    await screen.findByRole("heading", { name: "Auditoria" });
+
+    await waitFor(() => {
+      expect(screen.getByText("Auditoria indisponivel.")).toBeInTheDocument();
     });
   });
 });
