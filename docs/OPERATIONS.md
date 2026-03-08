@@ -20,6 +20,8 @@
 - validar qualidade de codigo: `scripts\check-quality.cmd`
 - `scripts\check-quality.cmd --json` exporta o resultado estruturado da checagem de qualidade
 - `npm run verify:quality` expoe o mesmo fluxo por alias
+- `scripts\ensure-api-dev-tools.cmd` garante Ruff e demais ferramentas de desenvolvimento do backend na venv local
+- `npm run backend:dev-tools` expoe o mesmo bootstrap por alias
 - `npm run lint` valida frontend, UI compartilhada e scripts web com Biome
 - `npm run lint:write` aplica os ajustes seguros do Biome no mesmo escopo
 - `npm run test:web` roda a cobertura automatizada de frontend com Vitest e Testing Library
@@ -103,6 +105,7 @@ Para preparar artefato de release local:
 
 - neste ambiente Windows, o `python` do PATH pode apontar para o alias da Microsoft Store
 - o backend contorna isso com bootstrap de runtime local
+- o bootstrap local agora tambem garante as ferramentas de desenvolvimento do backend exigidas pela etapa de qualidade
 - o frontend prioriza `npm ci --ignore-scripts`, com fallback para `npm install --ignore-scripts` se o Windows bloquear limpeza de `node_modules`
 - neste workspace, o diretorio pode estar aninhado em um repo Git maior; nesse caso `verify:changelog` informa que a validacao local foi ignorada
 - `scripts\clean.cmd` tambem remove artefatos gerados em `release/`

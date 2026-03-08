@@ -19,6 +19,7 @@
     "setup": "scripts\\setup.cmd",
     "clean": "scripts\\clean.cmd",
     "rebuild": "scripts\\rebuild.cmd",
+    "backend:dev-tools": "scripts\\ensure-api-dev-tools.cmd",
     "doctor": "scripts\\doctor.cmd",
     "doctor:summary": "scripts\\write-doctor-summary.cmd",
     "verify:version": "scripts\\verify-version.cmd",

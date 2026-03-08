@@ -3,8 +3,6 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import UTC, datetime
 
-from fastapi import HTTPException, status
-
 from app.domain.models import AuditLog, Campaign, OnboardingState
 from app.services.store import store
 

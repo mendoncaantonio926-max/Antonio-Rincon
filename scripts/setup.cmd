@@ -9,6 +9,7 @@ if errorlevel 1 exit /b %ERRORLEVEL%
 echo [2/2] Preparando backend
 cmd /c scripts\run-api.cmd --setup-only
 if errorlevel 1 exit /b %ERRORLEVEL%
+cmd /c scripts\ensure-api-dev-tools.cmd
+if errorlevel 1 exit /b %ERRORLEVEL%
 
 echo Ambiente local preparado.
-

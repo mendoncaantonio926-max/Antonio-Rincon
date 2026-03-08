@@ -20,8 +20,15 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest>=8.3.0",
-  "httpx>=0.28.0"
+  "httpx>=0.28.0",
+  "ruff>=0.15.2"
 ]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["F"]
 
 [build-system]
 requires = ["setuptools>=68"]

@@ -8,7 +8,7 @@
 
 ## Engenharia
 
-- ampliar o lint/padrao automatizado para backend e outras rotas do monorepo alem do escopo atual em Biome
+- ampliar o lint/padrao automatizado para backend alem do baseline inicial de Ruff (`F`), avancando depois para regras mais profundas sem misturar refactor massivo agora
 - ampliar cobertura automatizada para fluxos frontend alem de autenticacao/protecao de rota, build, lint e browser audit atual
 - preparar estrategia de migracao futura de SQLite local para banco dedicado
 

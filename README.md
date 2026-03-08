@@ -70,8 +70,21 @@ npm run lint:write
 Onde:
 
 - `scripts\check-quality.cmd` agora inclui typecheck do frontend, lint com Biome e compilacao estrutural do backend
+- `scripts\check-quality.cmd` agora inclui tambem lint do backend com Ruff
 - `npm run lint` valida frontend, componentes compartilhados e scripts web com Biome
 - `npm run lint:write` aplica os ajustes seguros do Biome no mesmo escopo
+
+Para garantir as ferramentas de desenvolvimento do backend na venv local:
+
+```bat
+scripts\ensure-api-dev-tools.cmd
+```
+
+Ou:
+
+```bash
+npm run backend:dev-tools
+```
 
 Para validar a cobertura automatizada de frontend:
 

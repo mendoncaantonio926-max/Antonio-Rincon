@@ -6,7 +6,6 @@ from app.api.deps import CurrentContextDep
 from app.api.permissions import require_min_role
 from app.domain.models import to_dict
 from app.schemas.opponents import (
-    OpponentComparisonItemResponse,
     OpponentCreateRequest,
     OpponentEventCreateRequest,
     OpponentEventResponse,

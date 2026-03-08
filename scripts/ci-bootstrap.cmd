@@ -22,7 +22,7 @@ if errorlevel 1 exit /b %ERRORLEVEL%
 
 echo [CI bootstrap] Backend bootstrap dependencies
 "%PYTHON_BIN%" -c "import fastapi, pytest, uvicorn" >nul 2>nul
-if not errorlevel 1 (
+if not errorlevel 1 if exist "apps\api\.venv\Scripts\ruff.exe" (
   echo [CI bootstrap] Dependencias de backend ja disponiveis.
   echo [CI bootstrap] Ambiente pronto.
   exit /b 0

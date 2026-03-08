@@ -8,6 +8,8 @@ echo   scripts\setup.cmd
 echo   npm run setup
 echo   scripts\rebuild.cmd
 echo   npm run rebuild
+echo   scripts\ensure-api-dev-tools.cmd
+echo   npm run backend:dev-tools
 echo.
 echo Diagnostico:
 echo   scripts\doctor.cmd
