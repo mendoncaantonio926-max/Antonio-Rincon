@@ -26,6 +26,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - sumarizacao de IA agora prioriza a proxima acao contextual em vez de apenas listar observacoes gerais
 - experiencia do frontend deixou de ser scaffold visual basico e passou a usar linguagem editorial mais forte, distinta e menos generica
 - build operacional do frontend agora usa um builder deterministico proprio em vez do encadeamento anterior do workspace
+- dashboard autenticado e assinatura passaram a usar composicao executiva mais densa e menos generica, com hierarquia visual mais premium
 
 ### Fixed
 

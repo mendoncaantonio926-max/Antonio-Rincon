@@ -391,6 +391,11 @@ h3,
   align-items: stretch;
 }
 
+.app-content {
+  display: grid;
+  gap: 1.25rem;
+}
+
 .dashboard-card {
   display: grid;
   gap: 0.55rem;
@@ -801,16 +806,271 @@ h3,
 
 .topbar-actions {
   margin-bottom: 1rem;
-  padding: 1rem 1.2rem;
-  border-radius: 24px;
-  background: rgba(255, 250, 242, 0.72);
-  border: 1px solid rgba(120, 87, 45, 0.14);
+  padding: 1.15rem 1.35rem;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 246, 0.92), rgba(247, 239, 226, 0.8)),
+    radial-gradient(circle at top right, rgba(196, 141, 72, 0.12), transparent 34%);
+  border: 1px solid rgba(120, 87, 45, 0.16);
   box-shadow: var(--shadow-soft);
 }
 
 .topbar-title {
   margin: 0.18rem 0 0;
   font-size: 2rem;
+}
+
+.dashboard-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.9fr);
+  gap: 1rem;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at top right, rgba(196, 141, 72, 0.16), transparent 24%),
+    linear-gradient(145deg, rgba(255, 251, 244, 0.96), rgba(243, 234, 219, 0.86));
+}
+
+.dashboard-hero__copy {
+  display: grid;
+  align-content: start;
+}
+
+.dashboard-hero__rail {
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  justify-items: start;
+}
+
+.signal-chip {
+  width: 100%;
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  background: rgba(18, 31, 51, 0.04);
+  border: 1px solid rgba(18, 31, 51, 0.08);
+}
+
+.signal-chip span,
+.metric-tile span,
+.stat-tile strong,
+.brief-card strong,
+.billing-plan-meta span,
+.timeline-card__content span,
+.snapshot-list article span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.signal-chip strong,
+.metric-tile strong,
+.stat-tile span {
+  color: var(--ink-strong);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.metric-tile {
+  display: grid;
+  gap: 0.55rem;
+  min-height: 160px;
+  padding: 1.15rem;
+  border-radius: 24px;
+  background: rgba(255, 252, 247, 0.82);
+  border: 1px solid rgba(120, 87, 45, 0.14);
+  box-shadow: 0 16px 36px rgba(20, 30, 48, 0.06);
+}
+
+.metric-tile p,
+.dashboard-ai-summary,
+.dashboard-ai-callout p,
+.billing-plan-card p,
+.timeline-card__content p,
+.snapshot-list article strong {
+  margin: 0;
+}
+
+.metric-tile p {
+  color: var(--ink-soft);
+}
+
+.dashboard-focus-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+  gap: 1rem;
+}
+
+.dashboard-ai-panel,
+.dashboard-snapshot {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-ai-summary {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.dashboard-ai-callout {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem 1.05rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(18, 31, 51, 0.06), rgba(196, 141, 72, 0.08));
+  border: 1px solid rgba(18, 31, 51, 0.08);
+}
+
+.dashboard-ai-callout strong {
+  font-size: 1.2rem;
+  color: var(--ink-strong);
+}
+
+.dashboard-ai-callout span {
+  width: fit-content;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(18, 31, 51, 0.08);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.dashboard-recommendations--grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.snapshot-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.snapshot-list article {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(120, 87, 45, 0.12);
+}
+
+.billing-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.92fr) minmax(0, 1.28fr);
+  gap: 1.25rem;
+}
+
+.billing-overview,
+.billing-strategy {
+  display: grid;
+  gap: 1rem;
+}
+
+.billing-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.stat-tile {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(120, 87, 45, 0.12);
+}
+
+.billing-brief-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.brief-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(247, 240, 228, 0.9));
+  border: 1px solid rgba(120, 87, 45, 0.13);
+}
+
+.brief-card span {
+  color: var(--ink);
+}
+
+.brief-card--wide {
+  grid-column: 1 / -1;
+}
+
+.billing-actions {
+  gap: 0.7rem 1rem;
+}
+
+.billing-plan-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.billing-plan-card {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1.15rem;
+  border-radius: 20px;
+  background: rgba(255, 252, 247, 0.76);
+  border: 1px solid rgba(120, 87, 45, 0.14);
+  box-shadow: 0 16px 34px rgba(20, 30, 48, 0.05);
+}
+
+.billing-plan-card strong {
+  font-size: 1.05rem;
+  color: var(--ink-strong);
+  text-transform: lowercase;
+}
+
+.billing-plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+}
+
+.billing-event-timeline {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.timeline-card {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  margin-top: 0.4rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--clay), var(--brass));
+  box-shadow: 0 0 0 6px rgba(196, 141, 72, 0.12);
+}
+
+.timeline-card__content {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(120, 87, 45, 0.12);
 }
 
 .feature-grid article {
@@ -830,7 +1090,10 @@ ul {
   .auth-stage,
   .app-shell,
   .split-layout,
-  .wide-layout {
+  .wide-layout,
+  .dashboard-hero,
+  .dashboard-focus-grid,
+  .billing-layout {
     grid-template-columns: 1fr;
   }
 
@@ -841,6 +1104,12 @@ ul {
 
   .hero-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-metrics,
+  .billing-stat-grid,
+  .billing-brief-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -867,7 +1136,10 @@ ul {
   .toolbar,
   .toolbar-wide,
   .contact-toolbar,
-  .kanban-grid {
+  .kanban-grid,
+  .dashboard-metrics,
+  .billing-stat-grid,
+  .billing-brief-grid {
     grid-template-columns: 1fr;
   }
 

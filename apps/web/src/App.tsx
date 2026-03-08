@@ -401,50 +401,71 @@ function DashboardPage() {
           <p className="meta-copy">{user?.full_name ?? "Usuario"}</p>
         </div>
       </header>
-      <div className="panel">
-        <div className="section-header">
-          <div>
+      <div className="dashboard-hero panel">
+        <div className="dashboard-hero__copy">
+          <div className="section-heading">
             <p className="eyebrow">Proximo movimento</p>
             <h2>Prioridade da coordenacao</h2>
+            <p className="meta-copy">{summary?.next_action ?? "Carregando recomendacao operacional..."}</p>
           </div>
+        </div>
+        <div className="dashboard-hero__rail">
           <Badge tone={summary?.overdue_tasks_count ? "warning" : "info"}>
             {summary?.trial_status ?? "trialing"}
           </Badge>
+          <article className="signal-chip">
+            <span>Plano atual</span>
+            <strong>{summary?.plan ?? "carregando"}</strong>
+          </article>
+          <article className="signal-chip">
+            <span>Equipe ativa</span>
+            <strong>{summary?.memberships_count ?? 0}</strong>
+          </article>
+          <article className="signal-chip">
+            <span>Relatorios</span>
+            <strong>{summary?.reports_count ?? 0}</strong>
+          </article>
         </div>
-        <p className="meta-copy">{summary?.next_action ?? "Carregando recomendacao operacional..."}</p>
       </div>
-      <div className="dashboard-grid">
-        <div className="dashboard-card">
+      <div className="dashboard-metrics">
+        <article className="metric-tile">
           <span>Contatos</span>
           <strong>{summary?.contacts_count ?? 0}</strong>
-        </div>
-        <div className="dashboard-card">
-          <span>Contatos prioritarios</span>
+          <p>Base ativa no workspace.</p>
+        </article>
+        <article className="metric-tile">
+          <span>Prioritarios</span>
           <strong>{summary?.priority_contacts_count ?? 0}</strong>
-        </div>
-        <div className="dashboard-card">
+          <p>Leitura de calor para coordenacao.</p>
+        </article>
+        <article className="metric-tile">
           <span>Tarefas em aberto</span>
           <strong>{summary?.open_tasks_count ?? 0}</strong>
-        </div>
-        <div className="dashboard-card">
+          <p>Frente operacional em execucao.</p>
+        </article>
+        <article className="metric-tile">
           <span>Tarefas vencidas</span>
           <strong>{summary?.overdue_tasks_count ?? 0}</strong>
-        </div>
-        <div className="dashboard-card">
+          <p>{summary?.overdue_tasks_count ? "Ha pontos atrasados exigindo resposta." : "Sem atraso critico agora."}</p>
+        </article>
+        <article className="metric-tile">
           <span>Adversarios ativos</span>
           <strong>{summary?.opponents_count ?? 0}</strong>
-        </div>
-        <div className="dashboard-card">
+          <p>Monitoramento politico vivo.</p>
+        </article>
+        <article className="metric-tile">
           <span>Equipe ativa</span>
           <strong>{summary?.memberships_count ?? 0}</strong>
-        </div>
-        <div className="dashboard-card">
-          <span>Relatorios gerados</span>
-          <strong>{summary?.reports_count ?? 0}</strong>
-        </div>
-        <div className="dashboard-card">
+          <p>Capacidade atual de execucao.</p>
+        </article>
+      </div>
+      <div className="dashboard-focus-grid">
+        <section className="panel dashboard-ai-panel">
           <div className="section-header">
-            <span>{aiSummary?.headline ?? "Resumo IA"}</span>
+            <div>
+              <p className="eyebrow">Leitura contextual</p>
+              <h2>{aiSummary?.headline ?? "Resumo IA"}</h2>
+            </div>
             <select value={aiModule} onChange={(event) => setAiModule(event.target.value)}>
               <option value="dashboard">Workspace</option>
               <option value="contacts">Contatos</option>
@@ -452,24 +473,40 @@ function DashboardPage() {
               <option value="opponents">Adversarios</option>
             </select>
           </div>
-          <strong>{aiSummary?.summary ?? "Carregando recomendacoes..."}</strong>
-          <div className="dashboard-recommendations">
-            <span>{aiSummary?.next_action ?? "Definindo proxima acao..."}</span>
-            <span>{aiSummary?.action_reason ?? "Lendo o contexto operacional do workspace."}</span>
-            <span>Urgencia: {aiSummary?.urgency ?? "normal"}</span>
+          <p className="dashboard-ai-summary">{aiSummary?.summary ?? "Carregando recomendacoes..."}</p>
+          <div className="dashboard-ai-callout">
+            <strong>{aiSummary?.next_action ?? "Definindo proxima acao..."}</strong>
+            <p>{aiSummary?.action_reason ?? "Lendo o contexto operacional do workspace."}</p>
+            <span>Urgencia {aiSummary?.urgency ?? "normal"}</span>
           </div>
           {aiSummary?.recommendations?.length ? (
-            <div className="dashboard-recommendations">
+            <div className="dashboard-recommendations dashboard-recommendations--grid">
               {aiSummary.recommendations.map((item) => (
                 <span key={item}>{item}</span>
               ))}
             </div>
           ) : null}
-        </div>
-        <div className="dashboard-card">
-          <span>Plano atual</span>
-          <strong>{summary?.plan ?? "carregando"}</strong>
-        </div>
+        </section>
+        <section className="panel dashboard-snapshot">
+          <div className="section-heading">
+            <p className="eyebrow">Panorama executivo</p>
+            <h2>Onde a energia deve entrar</h2>
+          </div>
+          <div className="snapshot-list">
+            <article>
+              <span>Base politica</span>
+              <strong>{summary?.contacts_count ?? 0} contato(s) sustentam a operacao atual.</strong>
+            </article>
+            <article>
+              <span>Coordenacao</span>
+              <strong>{summary?.open_tasks_count ?? 0} frente(s) abertas pedem acompanhamento de rotina.</strong>
+            </article>
+            <article>
+              <span>Monitoramento</span>
+              <strong>{summary?.opponents_count ?? 0} adversario(s) seguem no radar do workspace.</strong>
+            </article>
+          </div>
+        </section>
       </div>
     </section>
   );
@@ -1673,68 +1710,74 @@ function BillingPage() {
   }
 
   return (
-    <section className="app-section split-layout">
-      <div className="panel">
+    <section className="app-section billing-layout">
+      <div className="panel billing-overview">
         <div className="section-header">
-          <h2>Assinatura</h2>
+          <div>
+            <p className="eyebrow">Leitura comercial</p>
+            <h2>Assinatura</h2>
+          </div>
+          <Badge tone={subscription?.status === "past_due" ? "warning" : "success"}>
+            {subscription?.commercial_status ?? "carregando"}
+          </Badge>
         </div>
-        <div className="list-grid">
-          <article className="list-card">
+        <div className="billing-stat-grid">
+          <article className="stat-tile">
             <strong>Plano</strong>
             <span>{subscription?.plan ?? "-"}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Status</strong>
             <span>{subscription?.status ?? "-"}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Leitura comercial</strong>
             <span>{subscription?.commercial_status ?? "-"}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Ciclo</strong>
             <span>{subscription?.billing_cycle ?? "-"}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Trial ate</strong>
             <span>{subscription?.trial_ends_at ?? "-"}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Proxima referencia</strong>
             <span>{subscription?.next_billing_at ?? "-"}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Dias restantes</strong>
             <span>{subscription?.trial_days_remaining ?? 0}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Exportacoes restantes</strong>
             <span>{subscription?.report_exports_limit ?? 0}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Usuarios incluidos</strong>
             <span>{subscription?.seats_included ?? 0}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Plano sugerido</strong>
             <span>{subscription?.suggested_plan ?? "-"}</span>
           </article>
-          <article className="list-card">
+          <article className="stat-tile">
             <strong>Cancelamento agendado</strong>
             <span>{subscription?.cancel_at_period_end ? "Sim" : "Nao"}</span>
           </article>
         </div>
         {message ? <div className="info-box">{message}</div> : null}
-        <div className="list-grid onboarding-guidance-grid">
-          <article className="list-card onboarding-guidance">
+        <div className="billing-brief-grid">
+          <article className="brief-card">
             <strong>Uso de IA</strong>
             <span>{subscription?.ai_requests_limit ?? 0} requisicoes</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="brief-card">
             <strong>Exportacao</strong>
             <span>{subscription?.can_export_reports ? "Disponivel" : "Bloqueada"}</span>
           </article>
-          <article className="list-card onboarding-guidance">
+          <article className="brief-card brief-card--wide">
             <strong>Leitura comercial</strong>
             <span>
               {subscription?.cancel_at_period_end
@@ -1747,7 +1790,7 @@ function BillingPage() {
             </span>
           </article>
         </div>
-        <div className="inline-actions">
+        <div className="inline-actions billing-actions">
           <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("renew_trial")}>
             Renovar trial
           </button>
@@ -1766,17 +1809,20 @@ function BillingPage() {
         </div>
       </div>
 
-      <div className="panel">
-        <div className="section-header">
+      <div className="panel billing-strategy">
+        <div className="section-heading">
+          <p className="eyebrow">Escala comercial</p>
           <h2>Planos</h2>
         </div>
-        <div className="list-grid">
+        <div className="billing-plan-grid">
           {plans.map((plan) => (
-            <article className="list-card" key={plan.plan}>
+            <article className="billing-plan-card" key={plan.plan}>
               <strong>{plan.plan}</strong>
-              <span>{plan.seats_included} usuario(s)</span>
-              <span>{plan.report_exports_limit} exportacao(oes)</span>
-              <span>{plan.ai_requests_limit} requisicao(oes) IA</span>
+              <div className="billing-plan-meta">
+                <span>{plan.seats_included} usuario(s)</span>
+                <span>{plan.report_exports_limit} exportacao(oes)</span>
+                <span>{plan.ai_requests_limit} requisicao(oes) IA</span>
+              </div>
               <p>{plan.recommended_for}</p>
               <button className="inline-button" type="button" onClick={() => activatePlan(plan.plan)}>
                 Migrar para este plano
@@ -1787,15 +1833,18 @@ function BillingPage() {
         <div className="section-header">
           <h2>Historico comercial</h2>
         </div>
-        <div className="list-grid">
+        <div className="billing-event-timeline">
           {events.length === 0 ? (
             <p className="meta-copy">Nenhum evento comercial registrado ainda.</p>
           ) : (
             events.slice(0, 6).map((event) => (
-              <article className="list-card" key={event.id}>
-                <strong>{event.title}</strong>
-                <span>{new Date(event.created_at).toLocaleString("pt-BR")}</span>
-                <p>{event.detail}</p>
+              <article className="timeline-card" key={event.id}>
+                <div className="timeline-dot" />
+                <div className="timeline-card__content">
+                  <strong>{event.title}</strong>
+                  <span>{new Date(event.created_at).toLocaleString("pt-BR")}</span>
+                  <p>{event.detail}</p>
+                </div>
               </article>
             ))
           )}
