@@ -6,14 +6,19 @@ import App from "./App";
 
 const {
   apiMock,
+  auditLogsState,
   billingState,
+  campaignsState,
   contactsState,
   leadsState,
+  membershipsState,
+  onboardingState,
   opponentEventsState,
   opponentsState,
   reportsState,
   sessionPayload,
   tasksState,
+  tenantState,
 } = vi.hoisted(() => {
   const sessionPayload = {
     tokens: {
@@ -155,6 +160,111 @@ const {
       challenge?: string | null;
       created_at: string;
     }>,
+  };
+
+  const tenantState = {
+    tenant: {
+      id: "tenant-1",
+      name: "Pulso Workspace",
+    },
+    role: "owner",
+  };
+
+  const membershipsState = {
+    items: [
+      {
+        id: "membership-1",
+        user_id: "user-1",
+        tenant_id: "tenant-1",
+        role: "owner" as const,
+        email: "antonio@pulso.local",
+        full_name: "Antonio Rincon",
+        created_at: "2026-03-01T10:00:00Z",
+      },
+    ] as Array<{
+      id: string;
+      user_id: string;
+      tenant_id: string;
+      role: "owner" | "admin" | "coordinator" | "analyst" | "viewer";
+      email: string;
+      full_name: string;
+      created_at: string;
+    }>,
+  };
+
+  const campaignsState = {
+    items: [] as Array<{
+      id: string;
+      tenant_id: string;
+      name: string;
+      office: string;
+      city?: string | null;
+      state?: string | null;
+      phase: string;
+    }>,
+  };
+
+  const onboardingState = {
+    value: {
+      id: "onboarding-1",
+      tenant_id: "tenant-1",
+      profile_type: "campaign",
+      objective: "ativar workspace",
+      campaign_id: null as string | null,
+      team_configured: false,
+      first_opponent_created: false,
+      completed: false,
+    },
+  };
+
+  const auditLogsState = {
+    items: [
+      {
+        id: "audit-1",
+        action: "contacts.created",
+        resource_type: "contact",
+        created_at: "2026-03-08T12:00:00Z",
+      },
+      {
+        id: "audit-2",
+        action: "billing.subscription_updated",
+        resource_type: "billing",
+        created_at: "2026-03-08T08:00:00Z",
+      },
+    ],
+  };
+
+  const aiState = {
+    summaries: {
+      dashboard: {
+        headline: "Resumo operacional",
+        module: "dashboard",
+        summary: "A coordenacao precisa fechar as prioridades abertas do workspace.",
+        next_action: "Atacar tarefas vencidas.",
+        action_reason: "Ha frentes abertas e sinais suficientes para acelerar a execucao.",
+        urgency: "alta",
+        focus_area: "operacao",
+        suggested_owner: "Coordenacao",
+        due_window: "Hoje",
+        blockers: ["Poucos analistas ativos"],
+        supporting_signals: ["3 tarefas abertas", "2 contatos prioritarios"],
+        recommendations: ["Revisar backlog", "Atualizar equipe"],
+      },
+      billing: {
+        headline: "Assinatura sob atencao",
+        module: "billing",
+        summary: "A leitura comercial pede acompanhamento da assinatura.",
+        next_action: "Revisar status comercial.",
+        action_reason: "O ciclo atual exige decisao sobre continuidade e uso.",
+        urgency: "media",
+        focus_area: "receita",
+        suggested_owner: "Financeiro",
+        due_window: "Esta semana",
+        blockers: ["Sem dono comercial claro"],
+        supporting_signals: ["Plano pro", "Trial ativo"],
+        recommendations: ["Verificar uso", "Ajustar plano"],
+      },
+    },
   };
 
   function buildOpponentsSummary() {
@@ -399,6 +509,14 @@ const {
         tags: (body.tags as string[]) ?? [],
       };
       opponentsState.items = [created, ...opponentsState.items];
+      onboardingState.value = {
+        ...onboardingState.value,
+        first_opponent_created: opponentsState.items.length > 0,
+        completed:
+          Boolean(onboardingState.value.campaign_id) &&
+          membershipsState.items.length > 1 &&
+          opponentsState.items.length > 0,
+      };
       return created;
     }),
     deleteOpponent: vi.fn(async (_token: string, opponentId: string) => {
@@ -431,18 +549,133 @@ const {
       },
     ),
     listLeads: vi.fn(async () => leadsState.items),
+    currentTenant: vi.fn(async () => tenantState),
+    updateCurrentTenant: vi.fn(async (_token: string, body: Record<string, unknown>) => {
+      tenantState.tenant = {
+        ...tenantState.tenant,
+        name: String(body.name ?? tenantState.tenant.name),
+      };
+      return tenantState.tenant;
+    }),
+    listMemberships: vi.fn(async () => membershipsState.items),
+    inviteMember: vi.fn(async (_token: string, body: Record<string, unknown>) => {
+      const created = {
+        id: `membership-${membershipsState.items.length + 1}`,
+        user_id: `user-${membershipsState.items.length + 1}`,
+        tenant_id: "tenant-1",
+        role: body.role as "admin" | "coordinator" | "analyst" | "viewer",
+        email: String(body.email),
+        full_name: String(body.full_name),
+        created_at: "2026-03-08T14:00:00Z",
+      };
+      membershipsState.items = [...membershipsState.items, created];
+      onboardingState.value = {
+        ...onboardingState.value,
+        team_configured: membershipsState.items.length > 1,
+        completed:
+          Boolean(onboardingState.value.campaign_id) &&
+          membershipsState.items.length > 1 &&
+          onboardingState.value.first_opponent_created,
+      };
+      return created;
+    }),
+    updateMembershipRole: vi.fn(
+      async (_token: string, membershipId: string, body: Record<string, unknown>) => {
+        membershipsState.items = membershipsState.items.map((item) =>
+          item.id === membershipId
+            ? {
+                ...item,
+                role: body.role as "owner" | "admin" | "coordinator" | "analyst" | "viewer",
+              }
+            : item,
+        );
+        return membershipsState.items.find((item) => item.id === membershipId);
+      },
+    ),
+    deleteMembership: vi.fn(async (_token: string, membershipId: string) => {
+      membershipsState.items = membershipsState.items.filter((item) => item.id !== membershipId);
+      onboardingState.value = {
+        ...onboardingState.value,
+        team_configured: membershipsState.items.length > 1,
+        completed:
+          Boolean(onboardingState.value.campaign_id) &&
+          membershipsState.items.length > 1 &&
+          onboardingState.value.first_opponent_created,
+      };
+    }),
+    dashboardSummary: vi.fn(async () => ({
+      tenant_name: tenantState.tenant.name,
+      contacts_count: contactsState.items.length,
+      priority_contacts_count: contactsState.items.filter((item) => item.status === "priority")
+        .length,
+      open_tasks_count: tasksState.items.filter((item) => item.status !== "done").length,
+      overdue_tasks_count: 1,
+      opponents_count: opponentsState.items.length,
+      reports_count: reportsState.items.length,
+      memberships_count: membershipsState.items.length,
+      plan: billingState.subscription.plan,
+      trial_status: billingState.subscription.status,
+      next_action: "Fechar as pendencias operacionais.",
+    })),
+    getAiSummary: vi.fn(async (_token: string, module = "dashboard") => {
+      return (
+        aiState.summaries[module as keyof typeof aiState.summaries] ?? aiState.summaries.dashboard
+      );
+    }),
+    getOnboarding: vi.fn(async () => onboardingState.value),
+    updateOnboarding: vi.fn(async (_token: string, body: Record<string, unknown>) => {
+      onboardingState.value = {
+        ...onboardingState.value,
+        profile_type: (body.profile_type as string | null) ?? onboardingState.value.profile_type,
+        objective: (body.objective as string | null) ?? onboardingState.value.objective,
+        campaign_id:
+          (body.campaign_id as string | null) === undefined
+            ? onboardingState.value.campaign_id
+            : ((body.campaign_id as string | null) ?? null),
+      };
+      onboardingState.value = {
+        ...onboardingState.value,
+        team_configured: membershipsState.items.length > 1,
+        first_opponent_created: opponentsState.items.length > 0,
+        completed:
+          Boolean(onboardingState.value.campaign_id) &&
+          membershipsState.items.length > 1 &&
+          opponentsState.items.length > 0,
+      };
+      return onboardingState.value;
+    }),
+    listCampaigns: vi.fn(async () => campaignsState.items),
+    createCampaign: vi.fn(async (_token: string, body: Record<string, unknown>) => {
+      const created = {
+        id: `campaign-${campaignsState.items.length + 1}`,
+        tenant_id: "tenant-1",
+        name: String(body.name),
+        office: String(body.office),
+        city: (body.city as string | null) ?? null,
+        state: (body.state as string | null) ?? null,
+        phase: String(body.phase),
+      };
+      campaignsState.items = [created, ...campaignsState.items];
+      return created;
+    }),
+    listAuditLogs: vi.fn(async () => auditLogsState.items),
   };
 
   return {
     apiMock,
+    auditLogsState,
     billingState,
+    campaignsState,
     contactsState,
     leadsState,
+    membershipsState,
+    onboardingState,
     opponentEventsState,
     opponentsState,
     reportsState,
     sessionPayload,
     tasksState,
+    tenantState,
   };
 });
 
@@ -485,6 +718,46 @@ describe("App authenticated flows", () => {
     reportsState.items = [];
     opponentsState.items = [];
     opponentEventsState.items = [];
+    campaignsState.items = [];
+    membershipsState.items = [
+      {
+        id: "membership-1",
+        user_id: "user-1",
+        tenant_id: "tenant-1",
+        role: "owner",
+        email: "antonio@pulso.local",
+        full_name: "Antonio Rincon",
+        created_at: "2026-03-01T10:00:00Z",
+      },
+    ];
+    tenantState.tenant = {
+      id: "tenant-1",
+      name: "Pulso Workspace",
+    };
+    onboardingState.value = {
+      id: "onboarding-1",
+      tenant_id: "tenant-1",
+      profile_type: "campaign",
+      objective: "ativar workspace",
+      campaign_id: null,
+      team_configured: false,
+      first_opponent_created: false,
+      completed: false,
+    };
+    auditLogsState.items = [
+      {
+        id: "audit-1",
+        action: "contacts.created",
+        resource_type: "contact",
+        created_at: "2026-03-08T12:00:00Z",
+      },
+      {
+        id: "audit-2",
+        action: "billing.subscription_updated",
+        resource_type: "billing",
+        created_at: "2026-03-08T08:00:00Z",
+      },
+    ];
     leadsState.items = [
       {
         id: "lead-1",
@@ -531,6 +804,19 @@ describe("App authenticated flows", () => {
     apiMock.listOpponentEvents.mockClear();
     apiMock.createOpponentEvent.mockClear();
     apiMock.listLeads.mockClear();
+    apiMock.currentTenant.mockClear();
+    apiMock.updateCurrentTenant.mockClear();
+    apiMock.listMemberships.mockClear();
+    apiMock.inviteMember.mockClear();
+    apiMock.updateMembershipRole.mockClear();
+    apiMock.deleteMembership.mockClear();
+    apiMock.dashboardSummary.mockClear();
+    apiMock.getAiSummary.mockClear();
+    apiMock.getOnboarding.mockClear();
+    apiMock.updateOnboarding.mockClear();
+    apiMock.listCampaigns.mockClear();
+    apiMock.createCampaign.mockClear();
+    apiMock.listAuditLogs.mockClear();
   });
 
   it("cria um contato pelo fluxo autenticado", async () => {
@@ -655,6 +941,116 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Carlos Lima")).toBeInTheDocument();
       expect(screen.getByText("Coordenadora local")).toBeInTheDocument();
       expect(screen.getByText("Sem WhatsApp")).toBeInTheDocument();
+    });
+  });
+
+  it("atualiza a leitura do dashboard ao trocar o modulo de IA", async () => {
+    const user = userEvent.setup();
+    renderAuthenticatedApp("/app");
+
+    await screen.findByRole("heading", { name: "Visao geral" });
+
+    await waitFor(() => {
+      expect(apiMock.dashboardSummary).toHaveBeenCalledWith("token-valido");
+      expect(apiMock.getAiSummary).toHaveBeenCalledWith("token-valido", "dashboard");
+      expect(screen.getByText("Atacar tarefas vencidas.")).toBeInTheDocument();
+    });
+
+    await user.selectOptions(screen.getByDisplayValue("Workspace"), "billing");
+
+    await waitFor(() => {
+      expect(apiMock.getAiSummary).toHaveBeenCalledWith("token-valido", "billing");
+      expect(screen.getByText("Revisar status comercial.")).toBeInTheDocument();
+      expect(screen.getByText("Assinatura sob atencao")).toBeInTheDocument();
+    });
+  });
+
+  it("configura a campanha inicial no onboarding", async () => {
+    const user = userEvent.setup();
+    renderAuthenticatedApp("/app/onboarding");
+
+    await screen.findByRole("heading", { name: "Ative o workspace sem sair do fluxo" });
+    await user.selectOptions(screen.getByDisplayValue("Campanha"), "mandate");
+    await user.clear(screen.getByDisplayValue("ativar workspace"));
+    await user.type(screen.getByLabelText("Objetivo inicial"), "organizar base territorial");
+    await user.type(screen.getByLabelText("Nome da campanha"), "Mandato Centro");
+    await user.type(screen.getByLabelText("Cargo"), "Vereador");
+    await user.type(screen.getByLabelText("Cidade"), "Sao Paulo");
+    await user.type(screen.getByLabelText("Estado"), "SP");
+    await user.selectOptions(screen.getByDisplayValue("Pre-campanha"), "mandate");
+    await user.click(screen.getByRole("button", { name: "Salvar campanha inicial" }));
+
+    await waitFor(() => {
+      expect(apiMock.createCampaign).toHaveBeenCalledWith("token-valido", {
+        name: "Mandato Centro",
+        office: "Vereador",
+        city: "Sao Paulo",
+        state: "SP",
+        phase: "mandate",
+      });
+      expect(apiMock.updateOnboarding).toHaveBeenCalledWith("token-valido", {
+        profile_type: "mandate",
+        objective: "organizar base territorial",
+        campaign_id: "campaign-1",
+      });
+      expect(screen.getByText("Campanha inicial registrada.")).toBeInTheDocument();
+      expect(screen.getByText("Mandato Centro · Vereador")).toBeInTheDocument();
+    });
+  });
+
+  it("gerencia identidade e time na tela de equipe", async () => {
+    const user = userEvent.setup();
+    renderAuthenticatedApp("/app/team");
+
+    await screen.findByRole("heading", { name: "Equipe" });
+    const workspaceInput = screen.getByLabelText("Nome do workspace");
+    await user.clear(workspaceInput);
+    await user.type(workspaceInput, "Pulso Premium");
+    await user.click(screen.getByRole("button", { name: "Atualizar identidade" }));
+
+    await waitFor(() => {
+      expect(apiMock.updateCurrentTenant).toHaveBeenCalledWith("token-valido", {
+        name: "Pulso Premium",
+      });
+      expect(screen.getByText("Workspace atualizado.")).toBeInTheDocument();
+      expect(screen.getAllByText("Pulso Premium").length).toBeGreaterThan(0);
+    });
+
+    await user.type(screen.getByLabelText("Nome completo"), "Marina Operacoes");
+    await user.type(screen.getByLabelText("Email"), "marina@pulso.local");
+    await user.selectOptions(screen.getByDisplayValue("Analise"), "coordinator");
+    await user.click(screen.getByRole("button", { name: "Enviar convite" }));
+
+    await waitFor(() => {
+      expect(apiMock.inviteMember).toHaveBeenCalledWith("token-valido", {
+        email: "marina@pulso.local",
+        full_name: "Marina Operacoes",
+        role: "coordinator",
+      });
+      expect(screen.getByText("Membro adicionado ao workspace.")).toBeInTheDocument();
+      expect(screen.getByText("Marina Operacoes")).toBeInTheDocument();
+    });
+
+    await user.selectOptions(screen.getByDisplayValue("Coordenacao"), "admin");
+
+    await waitFor(() => {
+      expect(apiMock.updateMembershipRole).toHaveBeenCalledWith("token-valido", "membership-2", {
+        role: "admin",
+      });
+      expect(screen.getByText("Role atualizada.")).toBeInTheDocument();
+    });
+  });
+
+  it("renderiza a trilha de auditoria autenticada", async () => {
+    renderAuthenticatedApp("/app/audit");
+
+    await screen.findByRole("heading", { name: "Auditoria" });
+
+    await waitFor(() => {
+      expect(apiMock.listAuditLogs).toHaveBeenCalledWith("token-valido");
+      expect(screen.getByText("contacts.created")).toBeInTheDocument();
+      expect(screen.getByText("billing.subscription_updated")).toBeInTheDocument();
+      expect(screen.getByText("Recurso: contact")).toBeInTheDocument();
     });
   });
 });
