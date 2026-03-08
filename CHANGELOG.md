@@ -16,7 +16,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 - IA agora expone foco sugerido, dono recomendado, janela de resposta, bloqueadores e sinais de contexto por modulo, incluindo billing
 - lint automatizado com Biome para frontend, componentes compartilhados e scripts web do monorepo
-- lint automatizado do backend com Ruff, integrado ao `verify:quality`
+- lint automatizado do backend com Ruff, integrado ao `verify:quality`, agora com baseline `E` e `F` e excecao temporaria para `E501`
 - testes automatizados de frontend com Vitest e Testing Library cobrindo autenticacao e protecao de rota
 - testes automatizados de fluxos autenticados cobrindo dashboard, onboarding, equipe, contatos, tarefas, relatorios, adversarios, leads, auditoria e acoes comerciais de billing, incluindo filtros, estados vazios e tratamento de erro
 - alias `npm run browser:audit` e flag `--with-browser-audit` no fluxo de `release-local`
