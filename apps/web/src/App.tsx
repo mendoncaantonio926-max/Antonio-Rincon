@@ -63,7 +63,8 @@ function LandingPage() {
 
   async function handleLeadSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     setLeadPending(true);
     try {
       await api.createLead({
@@ -74,7 +75,7 @@ function LandingPage() {
         city: String(formData.get("city") ?? "") || null,
         challenge: String(formData.get("challenge") ?? "") || null,
       });
-      event.currentTarget.reset();
+      form.reset();
       setLeadMessage("Lead enviado com sucesso.");
     } catch (error) {
       setLeadMessage(error instanceof Error ? error.message : "Falha ao enviar lead.");
@@ -504,14 +505,15 @@ function TeamPage() {
   async function handleInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tokens?.access_token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     try {
       await api.inviteMember(tokens.access_token, {
         email: String(formData.get("email") ?? ""),
         full_name: String(formData.get("full_name") ?? ""),
         role: String(formData.get("role") ?? "analyst"),
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadMembers();
       setMessage("Membro adicionado ao workspace.");
     } catch (error) {
@@ -684,7 +686,8 @@ function OnboardingPage() {
   async function handleCampaignSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tokens?.access_token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     try {
       const campaign = await api.createCampaign(tokens.access_token, {
         name: String(formData.get("name") ?? ""),
@@ -698,7 +701,7 @@ function OnboardingPage() {
         objective,
         campaign_id: campaign.id,
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadData();
       setMessage("Campanha inicial registrada.");
     } catch (error) {
@@ -709,14 +712,15 @@ function OnboardingPage() {
   async function handleInviteSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tokens?.access_token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     try {
       await api.inviteMember(tokens.access_token, {
         email: String(formData.get("email") ?? ""),
         full_name: String(formData.get("full_name") ?? ""),
         role: String(formData.get("role") ?? "analyst"),
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadData();
       setMessage("Equipe inicial configurada.");
     } catch (error) {
@@ -727,7 +731,8 @@ function OnboardingPage() {
   async function handleOpponentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tokens?.access_token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     try {
       await api.createOpponent(tokens.access_token, {
         name: String(formData.get("name") ?? ""),
@@ -742,7 +747,7 @@ function OnboardingPage() {
           .map((item) => item.trim())
           .filter(Boolean),
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadData();
       setMessage("Primeiro adversario registrado.");
     } catch (error) {
@@ -1014,7 +1019,8 @@ function ContactsPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tokens?.access_token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     try {
       await api.createContact(tokens.access_token, {
         name: String(formData.get("name") ?? ""),
@@ -1029,7 +1035,7 @@ function ContactsPage() {
           .map((item) => item.trim())
           .filter(Boolean),
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadContacts();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Falha ao criar contato.");
@@ -1059,13 +1065,14 @@ function ContactsPage() {
   async function handleAddNote(event: FormEvent<HTMLFormElement>, contactId: string) {
     event.preventDefault();
     if (!tokens?.access_token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const content = String(formData.get("content") ?? "").trim();
     if (!content) return;
 
     try {
       await api.addContactNote(tokens.access_token, contactId, { content });
-      event.currentTarget.reset();
+      form.reset();
       await loadContacts();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Falha ao registrar nota.");
@@ -1284,7 +1291,8 @@ function TasksPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tokens?.access_token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     try {
       await api.createTask(tokens.access_token, {
         title: String(formData.get("title") ?? ""),
@@ -1294,7 +1302,7 @@ function TasksPage() {
         assignee_name: String(formData.get("assignee_name") ?? "") || null,
         due_date: String(formData.get("due_date") ?? "") || null,
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadTasks();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Falha ao criar tarefa.");
@@ -1491,13 +1499,14 @@ function ReportsPage() {
   async function handleCreateReport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tokens?.access_token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     try {
       await api.createReport(tokens.access_token, {
         title: String(formData.get("title") ?? ""),
         report_type: String(formData.get("report_type") ?? "operational"),
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadReports();
       setMessage("Relatorio gerado.");
     } catch (error) {
@@ -1894,7 +1903,8 @@ function OpponentsPage() {
   async function handleCreateOpponent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tokens?.access_token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     try {
       await api.createOpponent(tokens.access_token, {
         name: String(formData.get("name") ?? ""),
@@ -1911,7 +1921,7 @@ function OpponentsPage() {
           .map((item) => item.trim())
           .filter(Boolean),
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadOpponents();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Falha ao criar adversario.");
@@ -1933,7 +1943,8 @@ function OpponentsPage() {
   async function handleCreateEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tokens?.access_token || !selectedId) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     try {
       await api.createOpponentEvent(tokens.access_token, selectedId, {
         title: String(formData.get("title") ?? ""),
@@ -1941,7 +1952,7 @@ function OpponentsPage() {
         event_date: String(formData.get("event_date") ?? ""),
         severity: String(formData.get("severity") ?? "info"),
       });
-      event.currentTarget.reset();
+      form.reset();
       await loadEvents(selectedId);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Falha ao criar evento.");

@@ -28,7 +28,7 @@
     "start:api": "scripts\\run-api.cmd",
     "start:web": "scripts\\run-web.cmd",
     "dev:web": "npm --workspace apps/web run dev",
-    "build:web": "npm --workspace apps/web run build",
+    "build:web": "node scripts/build-web.mjs apps/web",
     "smoke:api": "scripts\\smoke-api.cmd",
     "smoke:web": "scripts\\smoke-web.cmd",
     "smoke": "scripts\\smoke-all.cmd",

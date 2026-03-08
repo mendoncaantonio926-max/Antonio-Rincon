@@ -1,4 +1,20 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+function resolveApiUrl() {
+  if (typeof window !== "undefined") {
+    const runtimeWindow = window as Window & { __PULSO_API_URL__?: string };
+    if (typeof runtimeWindow.__PULSO_API_URL__ === "string" && runtimeWindow.__PULSO_API_URL__.length > 0) {
+      return runtimeWindow.__PULSO_API_URL__;
+    }
+
+    const metaApiUrl = document.querySelector('meta[name="pulso-api-url"]')?.getAttribute("content");
+    if (typeof metaApiUrl === "string" && metaApiUrl.length > 0) {
+      return metaApiUrl;
+    }
+  }
+
+  return "http://localhost:8000";
+}
+
+const API_URL = resolveApiUrl();
 
 export type AuthResponse = {
   tokens: {

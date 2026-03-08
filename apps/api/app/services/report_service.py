@@ -8,6 +8,18 @@ from app.services.plan_service import consume_report_export
 from app.services.store import store
 
 
+def normalize_report_metrics(metrics: dict[str, int] | None) -> dict[str, int]:
+    payload = metrics or {}
+    return {
+        "contacts_count": int(payload.get("contacts_count", 0)),
+        "priority_contacts_count": int(payload.get("priority_contacts_count", 0)),
+        "open_tasks_count": int(payload.get("open_tasks_count", 0)),
+        "overdue_tasks_count": int(payload.get("overdue_tasks_count", 0)),
+        "opponents_count": int(payload.get("opponents_count", 0)),
+        "opponent_events_count": int(payload.get("opponent_events_count", 0)),
+    }
+
+
 def build_report_metrics(tenant_id: str) -> dict[str, int]:
     contacts = list_contacts(tenant_id)
     tasks = list_tasks(tenant_id)
@@ -44,7 +56,7 @@ def build_report_summary(report_type: str, metrics: dict[str, int]) -> str:
 
 
 def create_report(tenant_id: str, actor_user_id: str, title: str, report_type: str) -> Report:
-    metrics = build_report_metrics(tenant_id)
+    metrics = normalize_report_metrics(build_report_metrics(tenant_id))
     report = Report(
         tenant_id=tenant_id,
         title=title,
@@ -71,6 +83,8 @@ def list_reports(tenant_id: str, report_type: str | None = None) -> list[Report]
     reports = [report for report in store.reports.values() if report.tenant_id == tenant_id]
     if report_type:
         reports = [report for report in reports if report.report_type == report_type]
+    for report in reports:
+        report.metrics = normalize_report_metrics(report.metrics)
     reports.sort(key=lambda item: item.created_at, reverse=True)
     return reports
 
@@ -82,6 +96,7 @@ def export_report(tenant_id: str, actor_user_id: str, report_id: str, export_for
     )
     if report is None:
         raise ValueError("Relatorio nao encontrado.")
+    report.metrics = normalize_report_metrics(report.metrics)
     consume_report_export(tenant_id)
     watermark = f"tenant={tenant_id} user={actor_user_id} report={report_id}"
     if export_format == "csv":

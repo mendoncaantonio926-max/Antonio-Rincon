@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit -p tsconfig.json --pretty false",
-    "build": "tsc -b && if not exist dist mkdir dist && ..\\..\\node_modules\\@esbuild\\win32-x64\\esbuild.exe src/main.tsx --bundle --format=esm --target=es2020 --outdir=dist --entry-names=assets/[name]-[hash] --asset-names=assets/[name]-[hash] --loader:.css=css --jsx=automatic --metafile=dist/meta.json && node ../../scripts/write-web-html.mjs apps/web",
+    "build": "node ../../scripts/build-web.mjs apps/web",
     "preview": "vite preview"
   },
   "dependencies": {

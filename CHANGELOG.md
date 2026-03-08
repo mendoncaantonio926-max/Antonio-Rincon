@@ -18,17 +18,23 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - IA com acao recomendada, motivo e urgencia por modulo no dashboard
 - resumo historico de adversarios com watchlist comparativa, eventos recentes e leitura temporal da timeline
 - nova direcao visual premium para landing, auth, shell autenticado e componentes compartilhados
+- auditoria real de navegador com Playwright, API dedicada e validacao ponta a ponta dos fluxos centrais do frontend
 
 ### Changed
 
 - transicoes de billing/trial agora refletem melhor o fluxo comercial local, incluindo pendencia financeira e reativacao operacional
 - sumarizacao de IA agora prioriza a proxima acao contextual em vez de apenas listar observacoes gerais
 - experiencia do frontend deixou de ser scaffold visual basico e passou a usar linguagem editorial mais forte, distinta e menos generica
+- build operacional do frontend agora usa um builder deterministico proprio em vez do encadeamento anterior do workspace
 
 ### Fixed
 
 - restauracao de sessao no frontend agora lida com `localStorage` corrompido sem quebrar o carregamento
 - captura de lead passou a indicar estado de envio para evitar submissao repetida
+- frontend estatico deixou de quebrar no runtime por dependencia fragil de `import.meta.env`
+- formularios assincronos do frontend agora preservam a referencia do elemento antes de `await`, evitando falhas apos submit bem-sucedido
+- API agora aceita CORS local para os ambientes web de auditoria e desenvolvimento
+- listagem de relatorios agora normaliza metricas legadas em vez de falhar com erro 500
 
 ### Docs
 

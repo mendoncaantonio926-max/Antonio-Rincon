@@ -70,13 +70,20 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
             {mode === "register" ? (
               <>
-                <Input label="Nome completo" name="full_name" required minLength={3} />
-                <Input label="Nome do workspace" name="tenant_name" required minLength={3} />
+                <Input label="Nome completo" name="full_name" required minLength={3} autoComplete="name" />
+                <Input label="Nome do workspace" name="tenant_name" required minLength={3} autoComplete="organization" />
               </>
             ) : null}
 
-            <Input label="Email" name="email" type="email" required />
-            <Input label="Senha" name="password" type="password" required minLength={8} />
+            <Input label="Email" name="email" type="email" required autoComplete="email" />
+            <Input
+              label="Senha"
+              name="password"
+              type="password"
+              required
+              minLength={8}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+            />
 
             {error ? <div className="error-box">{error}</div> : null}
 
