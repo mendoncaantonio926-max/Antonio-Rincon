@@ -1077,6 +1077,11 @@ h3,
   align-content: start;
 }
 
+.team-layout,
+.tasks-layout {
+  grid-template-columns: minmax(300px, 360px) 1fr;
+}
+
 .summary-grid {
   gap: 0.8rem;
 }
@@ -1111,7 +1116,9 @@ h3,
 .contacts-stage,
 .reports-stage,
 .opponents-stage,
-.timeline-stage {
+.timeline-stage,
+.team-stage,
+.tasks-stage {
   display: grid;
   gap: 1rem;
 }
@@ -1120,7 +1127,9 @@ h3,
 .report-records,
 .opponent-records,
 .watchlist-records,
-.timeline-records {
+.timeline-records,
+.member-records,
+.task-column-records {
   gap: 1rem;
 }
 
@@ -1128,7 +1137,9 @@ h3,
 .report-card,
 .opponent-card,
 .watchlist-card,
-.timeline-record {
+.timeline-record,
+.member-card,
+.task-card {
   padding: 1.1rem;
   border-radius: 22px;
   background: rgba(255, 252, 247, 0.84);
@@ -1145,6 +1156,42 @@ h3,
 
 .report-records {
   align-content: start;
+}
+
+.member-card {
+  gap: 0.95rem;
+}
+
+.member-card__header,
+.member-card__meta,
+.task-card__meta {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.member-card__header span,
+.member-card__note,
+.task-card p,
+.task-card__meta span {
+  color: var(--ink-soft);
+}
+
+.member-card__meta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.member-card__meta .summary-tile span {
+  font-size: 0.98rem;
+}
+
+.member-card__actions {
+  justify-content: space-between;
+  align-items: end;
+}
+
+.member-card__note,
+.task-card p {
+  margin: 0;
 }
 
 .reports-layout {
@@ -1182,6 +1229,42 @@ h3,
 .watchlist-card,
 .timeline-record {
   gap: 0.5rem;
+}
+
+.task-board-grid {
+  align-items: start;
+}
+
+.task-board-column .section-header span {
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.task-card {
+  gap: 0.75rem;
+  min-height: 210px;
+}
+
+.task-card strong {
+  color: var(--ink-strong);
+}
+
+.task-card__meta {
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  background: rgba(18, 31, 51, 0.04);
+  border: 1px solid rgba(18, 31, 51, 0.06);
+}
+
+.task-card__actions {
+  justify-content: space-between;
+}
+
+.task-card--empty {
+  min-height: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(247, 240, 228, 0.72));
 }
 
 .timeline-record {
@@ -1239,6 +1322,10 @@ ul {
   .billing-stat-grid,
   .billing-brief-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .member-card__meta {
+    grid-template-columns: 1fr;
   }
 }
 

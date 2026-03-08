@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, NavLink, Route, Routes } from "react-router-dom";
-import { Badge, Button, Card, Input, Table } from "@pulso/ui";
+import { Badge, Button, Card, Input } from "@pulso/ui";
 import { AuthPage } from "./AuthPage";
 import {
   api,
@@ -524,6 +524,11 @@ function TeamPage() {
     analyst: "Analise",
     viewer: "Leitura",
   };
+  const operationalMembers = members.filter((member) => member.role !== "viewer").length;
+  const leadershipMembers = members.filter(
+    (member) => member.role === "owner" || member.role === "admin" || member.role === "coordinator",
+  ).length;
+  const analysts = members.filter((member) => member.role === "analyst").length;
 
   async function loadMembers() {
     if (!tokens?.access_token) return;
@@ -596,19 +601,41 @@ function TeamPage() {
   }
 
   return (
-    <section className="app-section split-layout wide-layout">
-      <form className="panel form-panel" onSubmit={handleTenantUpdate}>
-        <h2>Identidade do workspace</h2>
+    <section className="app-section split-layout wide-layout team-layout">
+      <form className="panel form-panel entity-form" onSubmit={handleTenantUpdate}>
+        <div className="section-heading">
+          <p className="eyebrow">Governanca</p>
+          <h2>Identidade do workspace</h2>
+          <p className="meta-copy">
+            Ajuste o nome institucional e mantenha a frente operacional com leitura clara para equipe,
+            coordenacao e parceiros.
+          </p>
+        </div>
         <label>
           Nome do workspace
           <input name="tenant_name" defaultValue={tenantName} required minLength={3} />
         </label>
-        {message ? <div className="info-box">{message}</div> : null}
+        <div className="list-grid summary-grid">
+          <article className="summary-tile">
+            <strong>Workspace ativo</strong>
+            <span>{tenantName}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Lideranca</strong>
+            <span>{leadershipMembers}</span>
+          </article>
+        </div>
         <Button type="submit" label="Atualizar identidade" />
       </form>
 
-      <form className="panel form-panel" onSubmit={handleInvite}>
-        <h2>Convidar membro</h2>
+      <form className="panel form-panel entity-form" onSubmit={handleInvite}>
+        <div className="section-heading">
+          <p className="eyebrow">Expansao do time</p>
+          <h2>Convidar membro</h2>
+          <p className="meta-copy">
+            Traga novas pessoas com o papel certo para manter rastreabilidade e ritmo operacional desde o primeiro dia.
+          </p>
+        </div>
         <label>
           Nome completo
           <input name="full_name" required minLength={3} />
@@ -626,42 +653,68 @@ function TeamPage() {
             <option value="viewer">Leitura</option>
           </select>
         </label>
+        <div className="list-grid summary-grid">
+          <article className="summary-tile">
+            <strong>Operacao ativa</strong>
+            <span>{operationalMembers}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Analistas</strong>
+            <span>{analysts}</span>
+          </article>
+        </div>
         <Button type="submit" label="Enviar convite" />
       </form>
 
-      <div className="panel">
+      <div className="panel team-stage">
         <div className="section-header">
-          <h2>Equipe</h2>
+          <div>
+            <p className="eyebrow">Leitura de equipe</p>
+            <h2>Equipe</h2>
+          </div>
           <span>{members.length}</span>
         </div>
-        <Table
-          rows={members}
-          columns={[
-            {
-              key: "full_name",
-              header: "Nome",
-              render: (member) => member.full_name,
-            },
-            {
-              key: "email",
-              header: "Email",
-              render: (member) => member.email,
-            },
-            {
-              key: "role",
-              header: "Role",
-              render: (member) => (
+        {message ? <div className="info-box">{message}</div> : null}
+        <div className="list-grid onboarding-guidance-grid summary-grid">
+          <article className="summary-tile">
+            <strong>Membros totais</strong>
+            <span>{members.length}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Lideranca ativa</strong>
+            <span>{leadershipMembers}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Operacao</strong>
+            <span>{operationalMembers}</span>
+          </article>
+        </div>
+        <div className="list-grid member-records">
+          {members.map((member) => (
+            <article className="list-card member-card" key={member.id}>
+              <div className="section-header">
+                <div className="member-card__header">
+                  <strong>{member.full_name}</strong>
+                  <span>{member.email}</span>
+                </div>
                 <Badge tone={member.role === "owner" ? "info" : "neutral"}>{roleLabels[member.role]}</Badge>
-              ),
-            },
-            {
-              key: "actions",
-              header: "Acoes",
-              render: (member) =>
-                member.role === "owner" ? (
-                  "Responsavel principal"
-                ) : (
-                  <div className="inline-actions">
+              </div>
+              <div className="member-card__meta">
+                <article className="summary-tile">
+                  <strong>Escopo</strong>
+                  <span>{member.role === "viewer" ? "Leitura" : "Operacao"}</span>
+                </article>
+                <article className="summary-tile">
+                  <strong>Responsabilidade</strong>
+                  <span>{member.role === "owner" ? "Principal" : roleLabels[member.role]}</span>
+                </article>
+              </div>
+              {member.role === "owner" ? (
+                <p className="member-card__note">Responsavel principal pelo workspace.</p>
+              ) : (
+                <div className="inline-actions member-card__actions">
+                  <label className="inline-select">
+                    Papel
                     <select
                       value={member.role}
                       onChange={(event) =>
@@ -673,18 +726,15 @@ function TeamPage() {
                       <option value="analyst">Analise</option>
                       <option value="viewer">Leitura</option>
                     </select>
-                    <button
-                      className="inline-button"
-                      type="button"
-                      onClick={() => handleRemoveMember(member.id)}
-                    >
-                      Remover
-                    </button>
-                  </div>
-                ),
-            },
-          ]}
-        />
+                  </label>
+                  <button className="inline-button" type="button" onClick={() => handleRemoveMember(member.id)}>
+                    Remover
+                  </button>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -1311,6 +1361,24 @@ function TasksPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
+  const statusLabels: Record<Task["status"], string> = {
+    backlog: "Backlog",
+    in_progress: "Em andamento",
+    waiting_review: "Em validacao",
+    done: "Concluido",
+  };
+  const priorityLabels: Record<Task["priority"], string> = {
+    low: "Baixa",
+    medium: "Media",
+    high: "Alta",
+    urgent: "Urgente",
+  };
+  const openTasks = tasks.filter((task) => task.status !== "done").length;
+  const overdueTasks = tasks.filter(
+    (task) => task.due_date && task.status !== "done" && new Date(task.due_date) < new Date(),
+  ).length;
+  const urgentTasks = tasks.filter((task) => task.priority === "urgent" && task.status !== "done").length;
+  const assignedTasks = tasks.filter((task) => Boolean(task.assignee_name)).length;
 
   async function loadTasks() {
     if (!tokens?.access_token) return;
@@ -1382,9 +1450,15 @@ function TasksPage() {
   }
 
   return (
-    <section className="app-section split-layout">
-      <form className="panel form-panel" onSubmit={handleSubmit}>
-        <h2>Nova tarefa</h2>
+    <section className="app-section split-layout tasks-layout">
+      <form className="panel form-panel entity-form" onSubmit={handleSubmit}>
+        <div className="section-heading">
+          <p className="eyebrow">Ritmo operacional</p>
+          <h2>Nova tarefa</h2>
+          <p className="meta-copy">
+            Registre entregas com dono, prazo e prioridade para manter o board com leitura executiva, e nao so lista solta.
+          </p>
+        </div>
         <label>
           Titulo
           <input name="title" required minLength={3} />
@@ -1420,13 +1494,44 @@ function TasksPage() {
           <input name="due_date" type="date" />
         </label>
         {error ? <div className="error-box">{error}</div> : null}
+        <div className="list-grid summary-grid">
+          <article className="summary-tile">
+            <strong>Tarefas abertas</strong>
+            <span>{openTasks}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Urgentes</strong>
+            <span>{urgentTasks}</span>
+          </article>
+        </div>
         <Button type="submit" label="Salvar tarefa" />
       </form>
 
-      <div className="panel">
+      <div className="panel tasks-stage">
         <div className="section-header">
-          <h2>Tarefas</h2>
+          <div>
+            <p className="eyebrow">Board operacional</p>
+            <h2>Tarefas</h2>
+          </div>
           <span>{tasks.length} registros</span>
+        </div>
+        <div className="list-grid onboarding-guidance-grid summary-grid">
+          <article className="summary-tile">
+            <strong>Abertas</strong>
+            <span>{openTasks}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Vencidas</strong>
+            <span>{overdueTasks}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Com responsavel</strong>
+            <span>{assignedTasks}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Urgentes</strong>
+            <span>{urgentTasks}</span>
+          </article>
         </div>
         <div className="toolbar toolbar-wide">
           <input
@@ -1449,27 +1554,53 @@ function TasksPage() {
             <option value="urgent">Urgente</option>
           </select>
         </div>
-        <div className="kanban-grid">
-          {["backlog", "in_progress", "waiting_review", "done"].map((status) => (
-            <div key={status} className="kanban-column">
-              <h3>{status}</h3>
-              {tasks
-                .filter((task) => task.status === status)
-                .map((task) => (
-                  <article className="list-card" key={task.id}>
-                    <strong>{task.title}</strong>
-                    <span>{task.priority}</span>
-                    <span>{task.assignee_name || "Sem responsavel"}</span>
-                    <button className="inline-button" type="button" onClick={() => moveTask(task.id, task.status)}>
-                      Avancar
-                    </button>
-                    <button className="inline-button" type="button" onClick={() => handleDelete(task.id)}>
-                      Remover
-                    </button>
-                  </article>
-                ))}
-            </div>
-          ))}
+        <div className="kanban-grid task-board-grid">
+          {(["backlog", "in_progress", "waiting_review", "done"] as Task["status"][]).map((status) => {
+            const tasksByStatus = tasks.filter((task) => task.status === status);
+            return (
+              <div key={status} className="kanban-column task-board-column">
+                <div className="section-header">
+                  <h3>{statusLabels[status]}</h3>
+                  <span>{tasksByStatus.length}</span>
+                </div>
+                <div className="list-grid task-column-records">
+                  {tasksByStatus.length === 0 ? (
+                    <article className="list-card task-card task-card--empty">
+                      <strong>Sem tarefas nesta etapa</strong>
+                      <p>Mantenha esta coluna vazia ou puxe uma entrega para seguir o fluxo.</p>
+                    </article>
+                  ) : null}
+                  {tasksByStatus.map((task) => (
+                    <article className="list-card task-card" key={task.id}>
+                      <div className="section-header">
+                        <strong>{task.title}</strong>
+                        <Badge tone={task.priority === "urgent" ? "warning" : "neutral"}>
+                          {priorityLabels[task.priority]}
+                        </Badge>
+                      </div>
+                      <p>{task.description || "Sem descricao adicional."}</p>
+                      <div className="task-card__meta">
+                        <span>{task.assignee_name || "Sem responsavel"}</span>
+                        <span>
+                          {task.due_date
+                            ? `Entrega ${new Date(task.due_date).toLocaleDateString("pt-BR")}`
+                            : "Sem vencimento"}
+                        </span>
+                      </div>
+                      <div className="inline-actions task-card__actions">
+                        <button className="inline-button" type="button" onClick={() => moveTask(task.id, task.status)}>
+                          {task.status === "done" ? "Reabrir" : "Avancar etapa"}
+                        </button>
+                        <button className="inline-button" type="button" onClick={() => handleDelete(task.id)}>
+                          Remover
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
