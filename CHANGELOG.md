@@ -15,9 +15,11 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 ### Added
 
 - IA agora expone foco sugerido, dono recomendado, janela de resposta, bloqueadores e sinais de contexto por modulo, incluindo billing
+- lint automatizado com Biome para frontend, componentes compartilhados e scripts web do monorepo
 
 ### Changed
 
+- `verify:quality` agora inclui lint alem de typecheck e compilacao estrutural
 ### Fixed
 
 ### Docs

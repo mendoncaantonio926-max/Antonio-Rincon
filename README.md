@@ -63,7 +63,15 @@ Ou:
 
 ```bash
 npm run verify:quality
+npm run lint
+npm run lint:write
 ```
+
+Onde:
+
+- `scripts\check-quality.cmd` agora inclui typecheck do frontend, lint com Biome e compilacao estrutural do backend
+- `npm run lint` valida frontend, componentes compartilhados e scripts web com Biome
+- `npm run lint:write` aplica os ajustes seguros do Biome no mesmo escopo
 
 Para obter um relatorio estruturado da verificacao ponta a ponta:
 

@@ -1,24 +1,24 @@
-import { FormEvent, useEffect, useState } from "react";
-import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { Badge, Button, Card, Input } from "@pulso/ui";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { AuthPage } from "./AuthPage";
 import {
+  type AiSummary,
   api,
-  BillingEvent,
-  Campaign,
-  Contact,
-  DashboardSummary,
-  Lead,
-  Membership,
-  OnboardingState,
-  Opponent,
-  OpponentEvent,
-  OpponentSummary,
-  Report,
-  BillingPlan,
-  Subscription,
-  Task,
-  AiSummary,
+  type BillingEvent,
+  type BillingPlan,
+  type Campaign,
+  type Contact,
+  type DashboardSummary,
+  type Lead,
+  type Membership,
+  type OnboardingState,
+  type Opponent,
+  type OpponentEvent,
+  type OpponentSummary,
+  type Report,
+  type Subscription,
+  type Task,
 } from "./api";
 import { AuthProvider, useAuth } from "./auth";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -169,13 +169,18 @@ function LandingPage() {
         </div>
         <div className="feature-grid">
           <Card title="Workspace por operacao">
-            <p>Tenant proprio, memberships e roles para separar dados, acessos e responsabilidade.</p>
+            <p>
+              Tenant proprio, memberships e roles para separar dados, acessos e responsabilidade.
+            </p>
           </Card>
           <Card title="Execucao visivel">
             <p>Kanban, tarefas recentes, alertas e dashboard para leitura rapida do dia.</p>
           </Card>
           <Card title="Memoria institucional">
-            <p>Relatorios, auditoria e acompanhamento de adversarios para sustentar decisao e continuidade.</p>
+            <p>
+              Relatorios, auditoria e acompanhamento de adversarios para sustentar decisao e
+              continuidade.
+            </p>
           </Card>
         </div>
       </section>
@@ -250,7 +255,11 @@ function LandingPage() {
           <Input label="Principal desafio" name="challenge" multiline rows={4} />
           {leadMessage ? <div className="info-box">{leadMessage}</div> : null}
           <div className="cta-actions">
-            <Button type="submit" label={leadPending ? "Enviando..." : "Enviar lead"} disabled={leadPending} />
+            <Button
+              type="submit"
+              label={leadPending ? "Enviando..." : "Enviar lead"}
+              disabled={leadPending}
+            />
             <a href="https://wa.me/5511999999999" target="_blank" rel="noreferrer">
               <Button type="button" label="Chamar no WhatsApp" variant="secondary" />
             </a>
@@ -384,12 +393,13 @@ function DashboardPage() {
       return;
     }
 
-    void Promise.all([api.dashboardSummary(tokens.access_token), api.getAiSummary(tokens.access_token, aiModule)]).then(
-      ([dashboardPayload, aiPayload]) => {
-        setSummary(dashboardPayload);
-        setAiSummary(aiPayload);
-      },
-    );
+    void Promise.all([
+      api.dashboardSummary(tokens.access_token),
+      api.getAiSummary(tokens.access_token, aiModule),
+    ]).then(([dashboardPayload, aiPayload]) => {
+      setSummary(dashboardPayload);
+      setAiSummary(aiPayload);
+    });
   }, [tokens, aiModule]);
 
   return (
@@ -406,7 +416,9 @@ function DashboardPage() {
           <div className="section-heading">
             <p className="eyebrow">Proximo movimento</p>
             <h2>Prioridade da coordenacao</h2>
-            <p className="meta-copy">{summary?.next_action ?? "Carregando recomendacao operacional..."}</p>
+            <p className="meta-copy">
+              {summary?.next_action ?? "Carregando recomendacao operacional..."}
+            </p>
           </div>
         </div>
         <div className="dashboard-hero__rail">
@@ -446,7 +458,11 @@ function DashboardPage() {
         <article className="metric-tile">
           <span>Tarefas vencidas</span>
           <strong>{summary?.overdue_tasks_count ?? 0}</strong>
-          <p>{summary?.overdue_tasks_count ? "Ha pontos atrasados exigindo resposta." : "Sem atraso critico agora."}</p>
+          <p>
+            {summary?.overdue_tasks_count
+              ? "Ha pontos atrasados exigindo resposta."
+              : "Sem atraso critico agora."}
+          </p>
         </article>
         <article className="metric-tile">
           <span>Adversarios ativos</span>
@@ -474,7 +490,9 @@ function DashboardPage() {
               <option value="billing">Assinatura</option>
             </select>
           </div>
-          <p className="dashboard-ai-summary">{aiSummary?.summary ?? "Carregando recomendacoes..."}</p>
+          <p className="dashboard-ai-summary">
+            {aiSummary?.summary ?? "Carregando recomendacoes..."}
+          </p>
           <div className="dashboard-ai-callout">
             <strong>{aiSummary?.next_action ?? "Definindo proxima acao..."}</strong>
             <p>{aiSummary?.action_reason ?? "Lendo o contexto operacional do workspace."}</p>
@@ -505,13 +523,17 @@ function DashboardPage() {
             <article className="dashboard-ai-list">
               <span>Sinais que sustentam a leitura</span>
               <div className="dashboard-recommendations">
-                {aiSummary?.supporting_signals?.map((item) => <span key={item}>{item}</span>)}
+                {aiSummary?.supporting_signals?.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
               </div>
             </article>
             <article className="dashboard-ai-list">
               <span>Bloqueadores atuais</span>
               <div className="dashboard-recommendations">
-                {aiSummary?.blockers?.map((item) => <span key={item}>{item}</span>)}
+                {aiSummary?.blockers?.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
               </div>
             </article>
           </div>
@@ -528,11 +550,15 @@ function DashboardPage() {
             </article>
             <article>
               <span>Coordenacao</span>
-              <strong>{summary?.open_tasks_count ?? 0} frente(s) abertas pedem acompanhamento de rotina.</strong>
+              <strong>
+                {summary?.open_tasks_count ?? 0} frente(s) abertas pedem acompanhamento de rotina.
+              </strong>
             </article>
             <article>
               <span>Monitoramento</span>
-              <strong>{summary?.opponents_count ?? 0} adversario(s) seguem no radar do workspace.</strong>
+              <strong>
+                {summary?.opponents_count ?? 0} adversario(s) seguem no radar do workspace.
+              </strong>
             </article>
           </div>
         </section>
@@ -559,7 +585,7 @@ function TeamPage() {
   ).length;
   const analysts = members.filter((member) => member.role === "analyst").length;
 
-  async function loadMembers() {
+  const loadMembers = useCallback(async () => {
     if (!tokens?.access_token) return;
     const [membershipList, tenant] = await Promise.all([
       api.listMemberships(tokens.access_token),
@@ -567,11 +593,11 @@ function TeamPage() {
     ]);
     setMembers(membershipList);
     setTenantName(tenant.tenant.name);
-  }
+  }, [tokens]);
 
   useEffect(() => {
     void loadMembers();
-  }, [tokens]);
+  }, [loadMembers]);
 
   async function handleInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -636,8 +662,8 @@ function TeamPage() {
           <p className="eyebrow">Governanca</p>
           <h2>Identidade do workspace</h2>
           <p className="meta-copy">
-            Ajuste o nome institucional e mantenha a frente operacional com leitura clara para equipe,
-            coordenacao e parceiros.
+            Ajuste o nome institucional e mantenha a frente operacional com leitura clara para
+            equipe, coordenacao e parceiros.
           </p>
         </div>
         <label>
@@ -662,7 +688,8 @@ function TeamPage() {
           <p className="eyebrow">Expansao do time</p>
           <h2>Convidar membro</h2>
           <p className="meta-copy">
-            Traga novas pessoas com o papel certo para manter rastreabilidade e ritmo operacional desde o primeiro dia.
+            Traga novas pessoas com o papel certo para manter rastreabilidade e ritmo operacional
+            desde o primeiro dia.
           </p>
         </div>
         <label>
@@ -726,7 +753,9 @@ function TeamPage() {
                   <strong>{member.full_name}</strong>
                   <span>{member.email}</span>
                 </div>
-                <Badge tone={member.role === "owner" ? "info" : "neutral"}>{roleLabels[member.role]}</Badge>
+                <Badge tone={member.role === "owner" ? "info" : "neutral"}>
+                  {roleLabels[member.role]}
+                </Badge>
               </div>
               <div className="member-card__meta">
                 <article className="summary-tile">
@@ -756,7 +785,11 @@ function TeamPage() {
                       <option value="viewer">Leitura</option>
                     </select>
                   </label>
-                  <button className="inline-button" type="button" onClick={() => handleRemoveMember(member.id)}>
+                  <button
+                    className="inline-button"
+                    type="button"
+                    onClick={() => handleRemoveMember(member.id)}
+                  >
                     Remover
                   </button>
                 </div>
@@ -779,7 +812,7 @@ function OnboardingPage() {
   const [profileType, setProfileType] = useState("campaign");
   const [objective, setObjective] = useState("ativar workspace");
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     if (!tokens?.access_token) return;
     const [onboardingState, campaignList, membershipList, opponentList] = await Promise.all([
       api.getOnboarding(tokens.access_token),
@@ -793,11 +826,11 @@ function OnboardingPage() {
     setOpponents(opponentList);
     setProfileType(onboardingState.profile_type ?? "campaign");
     setObjective(onboardingState.objective ?? "ativar workspace");
-  }
+  }, [tokens]);
 
   useEffect(() => {
     void loadData();
-  }, [tokens]);
+  }, [loadData]);
 
   async function handleCampaignSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -876,7 +909,9 @@ function OnboardingPage() {
       id: "campaign",
       label: "Campanha inicial",
       done: Boolean(state?.campaign_id),
-      detail: state?.campaign_id ? `${campaigns.length} campanha(s) cadastrada(s)` : "Crie a primeira campanha",
+      detail: state?.campaign_id
+        ? `${campaigns.length} campanha(s) cadastrada(s)`
+        : "Crie a primeira campanha",
     },
     {
       id: "team",
@@ -891,7 +926,9 @@ function OnboardingPage() {
       id: "opponent",
       label: "Primeiro adversario",
       done: Boolean(state?.first_opponent_created),
-      detail: opponents.length ? `${opponents.length} adversario(s) mapeado(s)` : "Registre um primeiro monitorado",
+      detail: opponents.length
+        ? `${opponents.length} adversario(s) mapeado(s)`
+        : "Registre um primeiro monitorado",
     },
   ];
   const completedSteps = checklist.filter((item) => item.done).length;
@@ -945,7 +982,9 @@ function OnboardingPage() {
             <article className="list-card onboarding-step" key={item.id}>
               <div className="section-header">
                 <strong>{item.label}</strong>
-                <Badge tone={item.done ? "success" : "neutral"}>{item.done ? "feito" : "pendente"}</Badge>
+                <Badge tone={item.done ? "success" : "neutral"}>
+                  {item.done ? "feito" : "pendente"}
+                </Badge>
               </div>
               <span>{item.detail}</span>
             </article>
@@ -988,7 +1027,12 @@ function OnboardingPage() {
           </label>
           <label>
             Objetivo inicial
-            <input value={objective} onChange={(event) => setObjective(event.target.value)} required minLength={3} />
+            <input
+              value={objective}
+              onChange={(event) => setObjective(event.target.value)}
+              required
+              minLength={3}
+            />
           </label>
           <label>
             Nome da campanha
@@ -1073,13 +1117,22 @@ function OnboardingPage() {
           <article className="list-card">
             <strong>Campanhas</strong>
             <span>{campaigns.length}</span>
-            <span>{campaigns[0] ? `${campaigns[0].name} · ${campaigns[0].office}` : "Nenhuma campanha criada"}</span>
+            <span>
+              {campaigns[0]
+                ? `${campaigns[0].name} · ${campaigns[0].office}`
+                : "Nenhuma campanha criada"}
+            </span>
           </article>
           <article className="list-card">
             <strong>Equipe</strong>
             <span>{memberships.length} membro(s)</span>
             <span>
-              {memberships.length > 1 ? memberships.slice(1).map((member) => member.full_name).join(", ") : "Somente owner"}
+              {memberships.length > 1
+                ? memberships
+                    .slice(1)
+                    .map((member) => member.full_name)
+                    .join(", ")
+                : "Somente owner"}
             </span>
           </article>
           <article className="list-card">
@@ -1111,7 +1164,7 @@ function ContactsPage() {
     inactive: "Inativo",
   };
 
-  async function loadContacts() {
+  const loadContacts = useCallback(async () => {
     if (!tokens?.access_token) return;
     try {
       setContacts(
@@ -1126,11 +1179,11 @@ function ContactsPage() {
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Falha ao carregar contatos.");
     }
-  }
+  }, [cityFilter, kindFilter, search, statusFilter, tagFilter, tokens]);
 
   useEffect(() => {
     void loadContacts();
-  }, [tokens, search, kindFilter, statusFilter, tagFilter, cityFilter]);
+  }, [loadContacts]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1164,7 +1217,11 @@ function ContactsPage() {
       await api.updateContact(tokens.access_token, contactId, { status });
       await loadContacts();
     } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : "Falha ao atualizar status do contato.");
+      setError(
+        updateError instanceof Error
+          ? updateError.message
+          : "Falha ao atualizar status do contato.",
+      );
     }
   }
 
@@ -1298,7 +1355,11 @@ function ContactsPage() {
             <option value="priority">Prioritario</option>
             <option value="inactive">Inativo</option>
           </select>
-          <input value={tagFilter} onChange={(event) => setTagFilter(event.target.value)} placeholder="Filtrar por tag" />
+          <input
+            value={tagFilter}
+            onChange={(event) => setTagFilter(event.target.value)}
+            placeholder="Filtrar por tag"
+          />
           <input
             value={cityFilter}
             onChange={(event) => setCityFilter(event.target.value)}
@@ -1332,7 +1393,15 @@ function ContactsPage() {
                 </div>
                 <div className="contact-badges">
                   <Badge tone="neutral">{contact.kind}</Badge>
-                  <Badge tone={contact.status === "priority" ? "warning" : contact.status === "qualified" ? "success" : "info"}>
+                  <Badge
+                    tone={
+                      contact.status === "priority"
+                        ? "warning"
+                        : contact.status === "qualified"
+                          ? "success"
+                          : "info"
+                    }
+                  >
                     {statusLabels[contact.status]}
                   </Badge>
                 </div>
@@ -1345,7 +1414,9 @@ function ContactsPage() {
                   Status
                   <select
                     value={contact.status}
-                    onChange={(event) => handleStatusChange(contact.id, event.target.value as Contact["status"])}
+                    onChange={(event) =>
+                      handleStatusChange(contact.id, event.target.value as Contact["status"])
+                    }
                   >
                     <option value="new">Novo</option>
                     <option value="contacted">Contatado</option>
@@ -1372,7 +1443,11 @@ function ContactsPage() {
                 <Input label="Nova nota" name="content" multiline rows={3} />
                 <Button type="submit" label="Adicionar nota" variant="secondary" />
               </form>
-              <button className="inline-button" type="button" onClick={() => handleDelete(contact.id)}>
+              <button
+                className="inline-button"
+                type="button"
+                onClick={() => handleDelete(contact.id)}
+              >
                 Remover
               </button>
             </article>
@@ -1406,10 +1481,12 @@ function TasksPage() {
   const overdueTasks = tasks.filter(
     (task) => task.due_date && task.status !== "done" && new Date(task.due_date) < new Date(),
   ).length;
-  const urgentTasks = tasks.filter((task) => task.priority === "urgent" && task.status !== "done").length;
+  const urgentTasks = tasks.filter(
+    (task) => task.priority === "urgent" && task.status !== "done",
+  ).length;
   const assignedTasks = tasks.filter((task) => Boolean(task.assignee_name)).length;
 
-  async function loadTasks() {
+  const loadTasks = useCallback(async () => {
     if (!tokens?.access_token) return;
     try {
       setTasks(
@@ -1422,11 +1499,11 @@ function TasksPage() {
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Falha ao carregar tarefas.");
     }
-  }
+  }, [priorityFilter, search, statusFilter, tokens]);
 
   useEffect(() => {
     void loadTasks();
-  }, [tokens, search, statusFilter, priorityFilter]);
+  }, [loadTasks]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1485,7 +1562,8 @@ function TasksPage() {
           <p className="eyebrow">Ritmo operacional</p>
           <h2>Nova tarefa</h2>
           <p className="meta-copy">
-            Registre entregas com dono, prazo e prioridade para manter o board com leitura executiva, e nao so lista solta.
+            Registre entregas com dono, prazo e prioridade para manter o board com leitura
+            executiva, e nao so lista solta.
           </p>
         </div>
         <label>
@@ -1575,7 +1653,10 @@ function TasksPage() {
             <option value="waiting_review">Aguardando validacao</option>
             <option value="done">Concluido</option>
           </select>
-          <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}>
+          <select
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value)}
+          >
             <option value="">Todas prioridades</option>
             <option value="low">Baixa</option>
             <option value="medium">Media</option>
@@ -1584,52 +1665,62 @@ function TasksPage() {
           </select>
         </div>
         <div className="kanban-grid task-board-grid">
-          {(["backlog", "in_progress", "waiting_review", "done"] as Task["status"][]).map((status) => {
-            const tasksByStatus = tasks.filter((task) => task.status === status);
-            return (
-              <div key={status} className="kanban-column task-board-column">
-                <div className="section-header">
-                  <h3>{statusLabels[status]}</h3>
-                  <span>{tasksByStatus.length}</span>
+          {(["backlog", "in_progress", "waiting_review", "done"] as Task["status"][]).map(
+            (status) => {
+              const tasksByStatus = tasks.filter((task) => task.status === status);
+              return (
+                <div key={status} className="kanban-column task-board-column">
+                  <div className="section-header">
+                    <h3>{statusLabels[status]}</h3>
+                    <span>{tasksByStatus.length}</span>
+                  </div>
+                  <div className="list-grid task-column-records">
+                    {tasksByStatus.length === 0 ? (
+                      <article className="list-card task-card task-card--empty">
+                        <strong>Sem tarefas nesta etapa</strong>
+                        <p>Mantenha esta coluna vazia ou puxe uma entrega para seguir o fluxo.</p>
+                      </article>
+                    ) : null}
+                    {tasksByStatus.map((task) => (
+                      <article className="list-card task-card" key={task.id}>
+                        <div className="section-header">
+                          <strong>{task.title}</strong>
+                          <Badge tone={task.priority === "urgent" ? "warning" : "neutral"}>
+                            {priorityLabels[task.priority]}
+                          </Badge>
+                        </div>
+                        <p>{task.description || "Sem descricao adicional."}</p>
+                        <div className="task-card__meta">
+                          <span>{task.assignee_name || "Sem responsavel"}</span>
+                          <span>
+                            {task.due_date
+                              ? `Entrega ${new Date(task.due_date).toLocaleDateString("pt-BR")}`
+                              : "Sem vencimento"}
+                          </span>
+                        </div>
+                        <div className="inline-actions task-card__actions">
+                          <button
+                            className="inline-button"
+                            type="button"
+                            onClick={() => moveTask(task.id, task.status)}
+                          >
+                            {task.status === "done" ? "Reabrir" : "Avancar etapa"}
+                          </button>
+                          <button
+                            className="inline-button"
+                            type="button"
+                            onClick={() => handleDelete(task.id)}
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
                 </div>
-                <div className="list-grid task-column-records">
-                  {tasksByStatus.length === 0 ? (
-                    <article className="list-card task-card task-card--empty">
-                      <strong>Sem tarefas nesta etapa</strong>
-                      <p>Mantenha esta coluna vazia ou puxe uma entrega para seguir o fluxo.</p>
-                    </article>
-                  ) : null}
-                  {tasksByStatus.map((task) => (
-                    <article className="list-card task-card" key={task.id}>
-                      <div className="section-header">
-                        <strong>{task.title}</strong>
-                        <Badge tone={task.priority === "urgent" ? "warning" : "neutral"}>
-                          {priorityLabels[task.priority]}
-                        </Badge>
-                      </div>
-                      <p>{task.description || "Sem descricao adicional."}</p>
-                      <div className="task-card__meta">
-                        <span>{task.assignee_name || "Sem responsavel"}</span>
-                        <span>
-                          {task.due_date
-                            ? `Entrega ${new Date(task.due_date).toLocaleDateString("pt-BR")}`
-                            : "Sem vencimento"}
-                        </span>
-                      </div>
-                      <div className="inline-actions task-card__actions">
-                        <button className="inline-button" type="button" onClick={() => moveTask(task.id, task.status)}>
-                          {task.status === "done" ? "Reabrir" : "Avancar etapa"}
-                        </button>
-                        <button className="inline-button" type="button" onClick={() => handleDelete(task.id)}>
-                          Remover
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+              );
+            },
+          )}
         </div>
       </div>
     </section>
@@ -1638,11 +1729,15 @@ function TasksPage() {
 
 function AuditPage() {
   const { tokens } = useAuth();
-  const [logs, setLogs] = useState<Array<{ id: string; action: string; resource_type: string; created_at: string }>>([]);
+  const [logs, setLogs] = useState<
+    Array<{ id: string; action: string; resource_type: string; created_at: string }>
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const uniqueResources = new Set(logs.map((log) => log.resource_type)).size;
   const latestLog = logs[0] ?? null;
-  const recentLogs = logs.filter((log) => Date.now() - new Date(log.created_at).getTime() <= 1000 * 60 * 60 * 24).length;
+  const recentLogs = logs.filter(
+    (log) => Date.now() - new Date(log.created_at).getTime() <= 1000 * 60 * 60 * 24,
+  ).length;
 
   useEffect(() => {
     if (!tokens?.access_token) return;
@@ -1680,19 +1775,25 @@ function AuditPage() {
           </article>
           <article className="summary-tile">
             <strong>Ultimo sinal</strong>
-            <span>{latestLog ? new Date(latestLog.created_at).toLocaleDateString("pt-BR") : "Sem logs"}</span>
+            <span>
+              {latestLog ? new Date(latestLog.created_at).toLocaleDateString("pt-BR") : "Sem logs"}
+            </span>
           </article>
         </div>
         <div className="audit-intro">
           <p className="meta-copy">
-            Cada movimento relevante do workspace fica registrado para sustentar continuidade, leitura de risco e rastreabilidade operacional.
+            Cada movimento relevante do workspace fica registrado para sustentar continuidade,
+            leitura de risco e rastreabilidade operacional.
           </p>
         </div>
         <div className="list-grid audit-records">
           {logs.length === 0 ? (
             <article className="list-card audit-card">
               <strong>Nenhum evento registrado ainda</strong>
-              <p>Assim que contatos, tarefas, billing ou equipe forem movimentados, os sinais aparecem aqui.</p>
+              <p>
+                Assim que contatos, tarefas, billing ou equipe forem movimentados, os sinais
+                aparecem aqui.
+              </p>
             </article>
           ) : null}
           {logs.map((log) => (
@@ -1720,14 +1821,16 @@ function ReportsPage() {
   const [exportPreview, setExportPreview] = useState<string | null>(null);
   const [reportTypeFilter, setReportTypeFilter] = useState("");
 
-  async function loadReports() {
+  const loadReports = useCallback(async () => {
     if (!tokens?.access_token) return;
-    setReports(await api.listReports(tokens.access_token, { report_type: reportTypeFilter || undefined }));
-  }
+    setReports(
+      await api.listReports(tokens.access_token, { report_type: reportTypeFilter || undefined }),
+    );
+  }, [reportTypeFilter, tokens]);
 
   useEffect(() => {
     void loadReports();
-  }, [tokens, reportTypeFilter]);
+  }, [loadReports]);
 
   const totals = reports.reduce(
     (accumulator, report) => {
@@ -1816,7 +1919,10 @@ function ReportsPage() {
           </article>
         </div>
         <div className="toolbar">
-          <select value={reportTypeFilter} onChange={(event) => setReportTypeFilter(event.target.value)}>
+          <select
+            value={reportTypeFilter}
+            onChange={(event) => setReportTypeFilter(event.target.value)}
+          >
             <option value="">Todos os tipos</option>
             <option value="operational">Operacional</option>
             <option value="executive">Executivo</option>
@@ -1852,10 +1958,18 @@ function ReportsPage() {
                 </article>
               </div>
               <div className="inline-actions">
-                <button className="inline-button" type="button" onClick={() => handleExport(report.id, "pdf")}>
+                <button
+                  className="inline-button"
+                  type="button"
+                  onClick={() => handleExport(report.id, "pdf")}
+                >
                   Exportar PDF
                 </button>
-                <button className="inline-button" type="button" onClick={() => handleExport(report.id, "csv")}>
+                <button
+                  className="inline-button"
+                  type="button"
+                  onClick={() => handleExport(report.id, "csv")}
+                >
                   Exportar CSV
                 </button>
               </div>
@@ -1881,7 +1995,7 @@ function BillingPage() {
   const [events, setEvents] = useState<BillingEvent[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
-  async function loadSubscription() {
+  const loadSubscription = useCallback(async () => {
     if (!tokens?.access_token) return;
     const [subscriptionPayload, plansPayload, eventsPayload] = await Promise.all([
       api.getSubscription(tokens.access_token),
@@ -1891,11 +2005,11 @@ function BillingPage() {
     setSubscription(subscriptionPayload);
     setPlans(plansPayload);
     setEvents(eventsPayload);
-  }
+  }, [tokens]);
 
   useEffect(() => {
     void loadSubscription();
-  }, [tokens]);
+  }, [loadSubscription]);
 
   async function activatePlan(plan: Subscription["plan"]) {
     if (!tokens?.access_token) return;
@@ -2003,19 +2117,39 @@ function BillingPage() {
           </article>
         </div>
         <div className="inline-actions billing-actions">
-          <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("renew_trial")}>
+          <button
+            className="inline-button"
+            type="button"
+            onClick={() => handleSubscriptionAction("renew_trial")}
+          >
             Renovar trial
           </button>
-          <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("mark_past_due")}>
+          <button
+            className="inline-button"
+            type="button"
+            onClick={() => handleSubscriptionAction("mark_past_due")}
+          >
             Marcar pendencia
           </button>
-          <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("resolve_past_due")}>
+          <button
+            className="inline-button"
+            type="button"
+            onClick={() => handleSubscriptionAction("resolve_past_due")}
+          >
             Resolver pendencia
           </button>
-          <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("reactivate")}>
+          <button
+            className="inline-button"
+            type="button"
+            onClick={() => handleSubscriptionAction("reactivate")}
+          >
             Reativar
           </button>
-          <button className="inline-button" type="button" onClick={() => handleSubscriptionAction("cancel")}>
+          <button
+            className="inline-button"
+            type="button"
+            onClick={() => handleSubscriptionAction("cancel")}
+          >
             Cancelar
           </button>
         </div>
@@ -2036,7 +2170,11 @@ function BillingPage() {
                 <span>{plan.ai_requests_limit} requisicao(oes) IA</span>
               </div>
               <p>{plan.recommended_for}</p>
-              <button className="inline-button" type="button" onClick={() => activatePlan(plan.plan)}>
+              <button
+                className="inline-button"
+                type="button"
+                onClick={() => activatePlan(plan.plan)}
+              >
                 Migrar para este plano
               </button>
             </article>
@@ -2070,7 +2208,9 @@ function LeadsPage() {
   const { tokens } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const recentLeads = leads.filter((lead) => Date.now() - new Date(lead.created_at).getTime() <= 1000 * 60 * 60 * 24 * 7).length;
+  const recentLeads = leads.filter(
+    (lead) => Date.now() - new Date(lead.created_at).getTime() <= 1000 * 60 * 60 * 24 * 7,
+  ).length;
   const leadsWithPhone = leads.filter((lead) => Boolean(lead.phone)).length;
   const leadsWithCity = leads.filter((lead) => Boolean(lead.city)).length;
 
@@ -2115,7 +2255,8 @@ function LeadsPage() {
         </div>
         <div className="leads-intro">
           <p className="meta-copy">
-            Este painel mostra a qualidade da entrada comercial e ajuda a separar interesse raso de oportunidade com contexto suficiente para abordagem.
+            Este painel mostra a qualidade da entrada comercial e ajuda a separar interesse raso de
+            oportunidade com contexto suficiente para abordagem.
           </p>
         </div>
         <div className="list-grid lead-records">
@@ -2154,7 +2295,7 @@ function OpponentsPage() {
   const [watchLevelFilter, setWatchLevelFilter] = useState("");
   const [severityFilter, setSeverityFilter] = useState("");
 
-  async function loadOpponents() {
+  const loadOpponents = useCallback(async () => {
     if (!tokens?.access_token) return;
     try {
       const response = await api.listOpponents(tokens.access_token, {
@@ -2174,29 +2315,32 @@ function OpponentsPage() {
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Falha ao carregar adversarios.");
     }
-  }
+  }, [search, selectedId, stanceFilter, tagFilter, tokens, watchLevelFilter]);
 
-  async function loadEvents(opponentId: string) {
-    if (!tokens?.access_token) return;
-    try {
-      setEvents(
-        await api.listOpponentEvents(tokens.access_token, opponentId, {
-          severity: severityFilter || undefined,
-        }),
-      );
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Falha ao carregar eventos.");
-    }
-  }
+  const loadEvents = useCallback(
+    async (opponentId: string) => {
+      if (!tokens?.access_token) return;
+      try {
+        setEvents(
+          await api.listOpponentEvents(tokens.access_token, opponentId, {
+            severity: severityFilter || undefined,
+          }),
+        );
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Falha ao carregar eventos.");
+      }
+    },
+    [severityFilter, tokens],
+  );
 
   useEffect(() => {
     void loadOpponents();
-  }, [tokens, search, tagFilter, stanceFilter, watchLevelFilter]);
+  }, [loadOpponents]);
 
   useEffect(() => {
     if (!selectedId) return;
     void loadEvents(selectedId);
-  }, [selectedId, tokens, severityFilter]);
+  }, [loadEvents, selectedId]);
 
   async function handleCreateOpponent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -2266,10 +2410,15 @@ function OpponentsPage() {
   }).length;
   const lastEventDate = events[0]?.event_date ?? null;
   const comparison = {
-    critical: summary?.critical_watch_count ?? opponents.filter((item) => item.watch_level === "critical").length,
-    incumbent: summary?.stance_distribution?.incumbent ?? opponents.filter((item) => item.stance === "incumbent").length,
+    critical:
+      summary?.critical_watch_count ??
+      opponents.filter((item) => item.watch_level === "critical").length,
+    incumbent:
+      summary?.stance_distribution?.incumbent ??
+      opponents.filter((item) => item.stance === "incumbent").length,
     challenger:
-      summary?.stance_distribution?.challenger ?? opponents.filter((item) => item.stance === "challenger").length,
+      summary?.stance_distribution?.challenger ??
+      opponents.filter((item) => item.stance === "challenger").length,
   };
 
   return (
@@ -2356,7 +2505,11 @@ function OpponentsPage() {
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Buscar por nome, contexto ou observacoes"
           />
-          <input value={tagFilter} onChange={(event) => setTagFilter(event.target.value)} placeholder="Filtrar por tag" />
+          <input
+            value={tagFilter}
+            onChange={(event) => setTagFilter(event.target.value)}
+            placeholder="Filtrar por tag"
+          />
           <select value={stanceFilter} onChange={(event) => setStanceFilter(event.target.value)}>
             <option value="">Todas as classificacoes</option>
             <option value="challenger">Desafiante</option>
@@ -2364,7 +2517,10 @@ function OpponentsPage() {
             <option value="ally_risk">Risco aliado</option>
             <option value="local_force">Forca local</option>
           </select>
-          <select value={watchLevelFilter} onChange={(event) => setWatchLevelFilter(event.target.value)}>
+          <select
+            value={watchLevelFilter}
+            onChange={(event) => setWatchLevelFilter(event.target.value)}
+          >
             <option value="">Todos os niveis</option>
             <option value="observe">Observar</option>
             <option value="attention">Atencao</option>
@@ -2377,13 +2533,23 @@ function OpponentsPage() {
               className={`list-card opponent-card ${selectedId === opponent.id ? "list-card--selected" : ""}`}
               key={opponent.id}
             >
-              <button className="card-link" type="button" onClick={() => setSelectedId(opponent.id)}>
+              <button
+                className="card-link"
+                type="button"
+                onClick={() => setSelectedId(opponent.id)}
+              >
                 <strong>{opponent.name}</strong>
                 <span>{opponent.context}</span>
-                <span>{opponent.stance} - {opponent.watch_level}</span>
+                <span>
+                  {opponent.stance} - {opponent.watch_level}
+                </span>
                 <span>{opponent.tags.join(", ") || "Sem tags"}</span>
               </button>
-              <button className="inline-button" type="button" onClick={() => handleDelete(opponent.id)}>
+              <button
+                className="inline-button"
+                type="button"
+                onClick={() => handleDelete(opponent.id)}
+              >
                 Remover
               </button>
             </article>
@@ -2394,15 +2560,25 @@ function OpponentsPage() {
         </div>
         <div className="list-grid watchlist-records">
           {(summary?.top_watchlist ?? []).length === 0 ? (
-            <p className="meta-copy">A watchlist comparativa aparece assim que houver monitorados com eventos.</p>
+            <p className="meta-copy">
+              A watchlist comparativa aparece assim que houver monitorados com eventos.
+            </p>
           ) : null}
           {(summary?.top_watchlist ?? []).map((item) => (
             <article className="list-card watchlist-card" key={item.opponent_id}>
               <strong>{item.name}</strong>
-              <span>{item.stance} - {item.watch_level}</span>
+              <span>
+                {item.stance} - {item.watch_level}
+              </span>
               <span>{item.total_events} evento(s) no total</span>
-              <span>{item.critical_events} critico(s) - {item.recent_events} recentes</span>
-              <span>{item.last_event_date ? new Date(item.last_event_date).toLocaleDateString("pt-BR") : "Sem eventos"}</span>
+              <span>
+                {item.critical_events} critico(s) - {item.recent_events} recentes
+              </span>
+              <span>
+                {item.last_event_date
+                  ? new Date(item.last_event_date).toLocaleDateString("pt-BR")
+                  : "Sem eventos"}
+              </span>
             </article>
           ))}
         </div>
@@ -2428,21 +2604,30 @@ function OpponentsPage() {
           </article>
           <article className="summary-tile">
             <strong>Contexto</strong>
-            <span>{selectedOpponent?.context ?? "Selecione um adversario para detalhar a timeline"}</span>
+            <span>
+              {selectedOpponent?.context ?? "Selecione um adversario para detalhar a timeline"}
+            </span>
           </article>
           <article className="summary-tile">
             <strong>Classificacao</strong>
             <span>
-              {selectedOpponent ? `${selectedOpponent.stance} - ${selectedOpponent.watch_level}` : "Sem selecao"}
+              {selectedOpponent
+                ? `${selectedOpponent.stance} - ${selectedOpponent.watch_level}`
+                : "Sem selecao"}
             </span>
           </article>
           <article className="summary-tile">
             <strong>Ultimo sinal</strong>
-            <span>{lastEventDate ? new Date(lastEventDate).toLocaleDateString("pt-BR") : "Sem eventos"}</span>
+            <span>
+              {lastEventDate ? new Date(lastEventDate).toLocaleDateString("pt-BR") : "Sem eventos"}
+            </span>
           </article>
         </div>
         <div className="toolbar">
-          <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)}>
+          <select
+            value={severityFilter}
+            onChange={(event) => setSeverityFilter(event.target.value)}
+          >
             <option value="">Todas as severidades</option>
             <option value="info">Info</option>
             <option value="warning">Aviso</option>
@@ -2473,12 +2658,22 @@ function OpponentsPage() {
           <Button type="submit" label="Adicionar evento" />
         </form>
         <div className="list-grid timeline-records">
-          {events.length === 0 ? <p className="meta-copy">Nenhum evento registrado para o filtro atual.</p> : null}
+          {events.length === 0 ? (
+            <p className="meta-copy">Nenhum evento registrado para o filtro atual.</p>
+          ) : null}
           {events.map((item) => (
             <article className="list-card timeline-record" key={item.id}>
               <div className="section-header">
                 <strong>{item.title}</strong>
-                <Badge tone={item.severity === "critical" ? "warning" : item.severity === "warning" ? "info" : "neutral"}>
+                <Badge
+                  tone={
+                    item.severity === "critical"
+                      ? "warning"
+                      : item.severity === "warning"
+                        ? "info"
+                        : "neutral"
+                  }
+                >
                   {item.severity}
                 </Badge>
               </div>

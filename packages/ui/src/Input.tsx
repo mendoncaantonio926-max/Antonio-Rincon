@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { type InputHTMLAttributes, type TextareaHTMLAttributes, useId } from "react";
 import "./field.css";
 
 type BaseFieldProps = {
@@ -21,22 +21,30 @@ type InputProps = SingleLineInputProps | MultiLineInputProps;
 
 export function Input(props: InputProps) {
   const { label, hint, error, multiline = false, ...rest } = props;
+  const generatedId = useId();
+  const fieldId = rest.id ?? generatedId;
 
   return (
-    <label className="pulso-field">
+    <label className="pulso-field" htmlFor={fieldId}>
       <span className="pulso-field__label">{label}</span>
       {multiline ? (
         <textarea
+          id={fieldId}
           className="pulso-field__control pulso-field__control--textarea"
           {...(rest as TextareaHTMLAttributes<HTMLTextAreaElement>)}
         />
       ) : (
         <input
+          id={fieldId}
           className="pulso-field__control"
           {...(rest as InputHTMLAttributes<HTMLInputElement>)}
         />
       )}
-      {error ? <span className="pulso-field__error">{error}</span> : hint ? <span className="pulso-field__hint">{hint}</span> : null}
+      {error ? (
+        <span className="pulso-field__error">{error}</span>
+      ) : hint ? (
+        <span className="pulso-field__hint">{hint}</span>
+      ) : null}
     </label>
   );
 }

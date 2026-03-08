@@ -1,4 +1,4 @@
-import { PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import "./modal.css";
 
 type ModalProps = PropsWithChildren<{
@@ -13,14 +13,8 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
   }
 
   return (
-    <div className="pulso-modal-backdrop" role="presentation" onClick={onClose}>
-      <section
-        className="pulso-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(event) => event.stopPropagation()}
-      >
+    <div className="pulso-modal-backdrop">
+      <section className="pulso-modal" role="dialog" aria-modal="true" aria-label={title}>
         <header className="pulso-modal__header">
           {title ? <h2>{title}</h2> : null}
           {onClose ? (

@@ -33,6 +33,12 @@ try {
     }
     $results.frontend_typecheck = "sim"
 
+    & cmd /c "npm run lint"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Falha no lint do monorepo."
+    }
+    $results.monorepo_lint = "sim"
+
     & $pythonCommand -m compileall -q $apiDir\app $apiDir\tests
     if ($LASTEXITCODE -ne 0) {
         throw "Falha na compilacao estrutural do backend."
@@ -43,12 +49,14 @@ try {
         [ordered]@{
             ok = "sim"
             frontend_typecheck = $results.frontend_typecheck
+            monorepo_lint = $results.monorepo_lint
             backend_compile = $results.backend_compile
         } | ConvertTo-Json -Depth 4
         return
     }
 
     Write-Output "frontend_typecheck=sim"
+    Write-Output "monorepo_lint=sim"
     Write-Output "backend_compile=sim"
 }
 catch {
@@ -57,6 +65,7 @@ catch {
             ok = "nao"
             error = $_.Exception.Message
             frontend_typecheck = $(if ($results.frontend_typecheck) { $results.frontend_typecheck } else { "nao" })
+            monorepo_lint = $(if ($results.monorepo_lint) { $results.monorepo_lint } else { "nao" })
             backend_compile = $(if ($results.backend_compile) { $results.backend_compile } else { "nao" })
         } | ConvertTo-Json -Depth 4
         exit 1

@@ -1,5 +1,5 @@
 import { createReadStream, existsSync } from "node:fs";
-import { stat, readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
 
@@ -69,7 +69,12 @@ const server = http.createServer(async (request, response) => {
 server.listen(port, "127.0.0.1", async () => {
   const indexPath = path.join(rootDir, "index.html");
   const hasIndex = existsSync(indexPath);
-  const title = hasIndex ? String(await readFile(indexPath, "utf-8").then((data) => data.match(/<title>(.*?)<\/title>/i)?.[1] ?? "Pulso Politico")) : "Pulso Politico";
+  const title = hasIndex
+    ? String(
+        await readFile(indexPath, "utf-8").then(
+          (data) => data.match(/<title>(.*?)<\/title>/i)?.[1] ?? "Pulso Politico",
+        ),
+      )
+    : "Pulso Politico";
   console.log(`${title} em http://127.0.0.1:${port}`);
 });
-

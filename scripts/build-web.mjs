@@ -1,13 +1,15 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
 import { spawn } from "node:child_process";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 
-const appArg = process.argv.find((item) => !item.startsWith("--") && item !== process.argv[0] && item !== process.argv[1]);
+const appArg = process.argv.find(
+  (item) => !item.startsWith("--") && item !== process.argv[0] && item !== process.argv[1],
+);
 const appRelativePath = appArg ?? "apps/web";
 const skipTypecheck = process.argv.includes("--skip-typecheck");
 const appDir = path.resolve(repoRoot, appRelativePath);
@@ -35,7 +37,11 @@ function run(command, args, cwd) {
 }
 
 if (!skipTypecheck) {
-  await run(process.execPath, [path.join(repoRoot, "node_modules", "typescript", "bin", "tsc"), "-b"], appDir);
+  await run(
+    process.execPath,
+    [path.join(repoRoot, "node_modules", "typescript", "bin", "tsc"), "-b"],
+    appDir,
+  );
 }
 
 rmSync(distDir, { recursive: true, force: true });
@@ -59,4 +65,8 @@ await run(
 );
 
 writeFileSync(path.join(distDir, ".build-marker"), new Date().toISOString());
-await run(process.execPath, [path.join(repoRoot, "scripts", "write-web-html.mjs"), appRelativePath], repoRoot);
+await run(
+  process.execPath,
+  [path.join(repoRoot, "scripts", "write-web-html.mjs"), appRelativePath],
+  repoRoot,
+);

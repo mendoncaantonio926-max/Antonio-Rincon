@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import "./table.css";
 
 type Column<T> = {
@@ -13,7 +13,11 @@ type TableProps<T> = {
   emptyMessage?: string;
 };
 
-export function Table<T>({ columns, rows, emptyMessage = "Nenhum registro encontrado." }: TableProps<T>) {
+export function Table<T>({
+  columns,
+  rows,
+  emptyMessage = "Nenhum registro encontrado.",
+}: TableProps<T>) {
   return (
     <div className="pulso-table-shell">
       <table className="pulso-table">

@@ -1,11 +1,16 @@
 function resolveApiUrl() {
   if (typeof window !== "undefined") {
     const runtimeWindow = window as Window & { __PULSO_API_URL__?: string };
-    if (typeof runtimeWindow.__PULSO_API_URL__ === "string" && runtimeWindow.__PULSO_API_URL__.length > 0) {
+    if (
+      typeof runtimeWindow.__PULSO_API_URL__ === "string" &&
+      runtimeWindow.__PULSO_API_URL__.length > 0
+    ) {
       return runtimeWindow.__PULSO_API_URL__;
     }
 
-    const metaApiUrl = document.querySelector('meta[name="pulso-api-url"]')?.getAttribute("content");
+    const metaApiUrl = document
+      .querySelector('meta[name="pulso-api-url"]')
+      ?.getAttribute("content");
     if (typeof metaApiUrl === "string" && metaApiUrl.length > 0) {
       return metaApiUrl;
     }
@@ -284,7 +289,10 @@ export const api = {
   dashboardSummary(token: string) {
     return request<DashboardSummary>("/dashboard/summary", { token });
   },
-  listContacts(token: string, params?: { query?: string; kind?: string; status?: string; city?: string; tag?: string }) {
+  listContacts(
+    token: string,
+    params?: { query?: string; kind?: string; status?: string; city?: string; tag?: string },
+  ) {
     const search = new URLSearchParams();
     if (params?.query) search.set("query", params.query);
     if (params?.kind) search.set("kind", params.kind);
@@ -321,13 +329,18 @@ export const api = {
   deleteTask(token: string, taskId: string) {
     return request<void>(`/tasks/${taskId}`, { method: "DELETE", token });
   },
-  listOpponents(token: string, params?: { query?: string; tag?: string; stance?: string; watch_level?: string }) {
+  listOpponents(
+    token: string,
+    params?: { query?: string; tag?: string; stance?: string; watch_level?: string },
+  ) {
     const search = new URLSearchParams();
     if (params?.query) search.set("query", params.query);
     if (params?.tag) search.set("tag", params.tag);
     if (params?.stance) search.set("stance", params.stance);
     if (params?.watch_level) search.set("watch_level", params.watch_level);
-    return request<Opponent[]>(`/opponents${search.size ? `?${search.toString()}` : ""}`, { token });
+    return request<Opponent[]>(`/opponents${search.size ? `?${search.toString()}` : ""}`, {
+      token,
+    });
   },
   getOpponentsSummary(token: string) {
     return request<OpponentSummary>("/opponents/summary", { token });
@@ -341,9 +354,12 @@ export const api = {
   listOpponentEvents(token: string, opponentId: string, params?: { severity?: string }) {
     const search = new URLSearchParams();
     if (params?.severity) search.set("severity", params.severity);
-    return request<OpponentEvent[]>(`/opponents/${opponentId}/events${search.size ? `?${search.toString()}` : ""}`, {
-      token,
-    });
+    return request<OpponentEvent[]>(
+      `/opponents/${opponentId}/events${search.size ? `?${search.toString()}` : ""}`,
+      {
+        token,
+      },
+    );
   },
   createOpponentEvent(token: string, opponentId: string, body: Record<string, unknown>) {
     return request<OpponentEvent>(`/opponents/${opponentId}/events`, {
@@ -353,16 +369,18 @@ export const api = {
     });
   },
   listAuditLogs(token: string) {
-    return request<Array<{ id: string; action: string; resource_type: string; created_at: string }>>(
-      "/audit",
-      { token },
-    );
+    return request<
+      Array<{ id: string; action: string; resource_type: string; created_at: string }>
+    >("/audit", { token });
   },
   createLead(body: Record<string, unknown>) {
-    return request<{ id: string; name: string; email: string; created_at: string }>("/public/leads", {
-      method: "POST",
-      body,
-    });
+    return request<{ id: string; name: string; email: string; created_at: string }>(
+      "/public/leads",
+      {
+        method: "POST",
+        body,
+      },
+    );
   },
   listLeads(token: string) {
     return request<Lead[]>("/leads", { token });
@@ -417,7 +435,10 @@ export const api = {
       body,
     });
   },
-  subscriptionAction(token: string, action: "cancel" | "reactivate" | "renew_trial" | "mark_past_due" | "resolve_past_due") {
+  subscriptionAction(
+    token: string,
+    action: "cancel" | "reactivate" | "renew_trial" | "mark_past_due" | "resolve_past_due",
+  ) {
     return request<{ message: string }>("/billing/subscription/action", {
       method: "POST",
       token,

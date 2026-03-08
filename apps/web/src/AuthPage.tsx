@@ -1,6 +1,6 @@
-import { FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { Button, Card, Input } from "@pulso/ui";
+import { type FormEvent, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./auth";
 
 type Mode = "login" | "register";
@@ -44,7 +44,11 @@ export function AuthPage({ mode }: { mode: Mode }) {
       <section className="auth-stage">
         <div className="auth-aside">
           <p className="eyebrow">Pulso Politico</p>
-          <h1>{mode === "login" ? "Entre na sala de comando da operacao." : "Crie um workspace com presenca de produto real."}</h1>
+          <h1>
+            {mode === "login"
+              ? "Entre na sala de comando da operacao."
+              : "Crie um workspace com presenca de produto real."}
+          </h1>
           <p className="auth-copy">
             {mode === "login"
               ? "Acesse contatos, monitoramento, relatorios, billing e dashboard com leitura executiva unica."
@@ -70,8 +74,20 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
             {mode === "register" ? (
               <>
-                <Input label="Nome completo" name="full_name" required minLength={3} autoComplete="name" />
-                <Input label="Nome do workspace" name="tenant_name" required minLength={3} autoComplete="organization" />
+                <Input
+                  label="Nome completo"
+                  name="full_name"
+                  required
+                  minLength={3}
+                  autoComplete="name"
+                />
+                <Input
+                  label="Nome do workspace"
+                  name="tenant_name"
+                  required
+                  minLength={3}
+                  autoComplete="organization"
+                />
               </>
             ) : null}
 

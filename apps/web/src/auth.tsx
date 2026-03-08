@@ -1,19 +1,25 @@
 import {
   createContext,
-  ReactNode,
+  type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from "react";
-import { api, AuthResponse } from "./api";
+import { type AuthResponse, api } from "./api";
 
 type AuthState = {
   tokens: AuthResponse["tokens"] | null;
   user: AuthResponse["user"] | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (fullName: string, email: string, password: string, tenantName: string) => Promise<void>;
+  register: (
+    fullName: string,
+    email: string,
+    password: string,
+    tenantName: string,
+  ) => Promise<void>;
   logout: () => void;
 };
 
@@ -33,7 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const parsed = JSON.parse(stored) as { tokens: AuthResponse["tokens"]; user: AuthResponse["user"] };
+      const parsed = JSON.parse(stored) as {
+        tokens: AuthResponse["tokens"];
+        user: AuthResponse["user"];
+      };
       setTokens(parsed.tokens);
       setUser(parsed.user);
     } catch {
@@ -42,11 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const persistAuth = (response: AuthResponse) => {
+  const persistAuth = useCallback((response: AuthResponse) => {
     setTokens(response.tokens);
     setUser(response.user);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(response));
-  };
+  }, []);
 
   const value = useMemo<AuthState>(
     () => ({
@@ -67,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.localStorage.removeItem(STORAGE_KEY);
       },
     }),
-    [loading, tokens, user],
+    [loading, persistAuth, tokens, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

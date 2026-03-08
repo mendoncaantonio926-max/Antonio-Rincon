@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, openSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,7 +15,13 @@ const apiUrl = `http://127.0.0.1:${apiPort}`;
 
 const chromeCandidates = [
   path.join(process.env.ProgramFiles ?? "", "Google", "Chrome", "Application", "chrome.exe"),
-  path.join(process.env["ProgramFiles(x86)"] ?? "", "Google", "Chrome", "Application", "chrome.exe"),
+  path.join(
+    process.env["ProgramFiles(x86)"] ?? "",
+    "Google",
+    "Chrome",
+    "Application",
+    "chrome.exe",
+  ),
   path.join(process.env.LocalAppData ?? "", "Google", "Chrome", "Application", "chrome.exe"),
 ].filter(Boolean);
 
@@ -60,9 +66,7 @@ function runCommand(command, args, name) {
         return;
       }
       reject(
-        new Error(
-          `Falha no comando ${name} (exit ${code}). Veja ${stdoutPath} e ${stderrPath}.`,
-        ),
+        new Error(`Falha no comando ${name} (exit ${code}). Veja ${stdoutPath} e ${stderrPath}.`),
       );
     });
     child.on("error", reject);
@@ -154,7 +158,11 @@ async function main() {
       },
     },
   );
-  const web = spawnLogged("node.exe", ["scripts/serve-web-dist.mjs", "apps/web/dist", "4173"], "web-server");
+  const web = spawnLogged(
+    "node.exe",
+    ["scripts/serve-web-dist.mjs", "apps/web/dist", "4173"],
+    "web-server",
+  );
 
   let browser;
   let context;
@@ -225,12 +233,10 @@ async function main() {
       body_text: await page.locator("body").innerText(),
       html: await page.content(),
       resources: await page.evaluate(() =>
-        performance
-          .getEntriesByType("resource")
-          .map((entry) => ({
-            name: entry.name,
-            initiatorType: entry.initiatorType,
-          })),
+        performance.getEntriesByType("resource").map((entry) => ({
+          name: entry.name,
+          initiatorType: entry.initiatorType,
+        })),
       ),
     };
     const earlyLandingShot = path.join(logDir, "landing-early.png");
@@ -265,7 +271,9 @@ async function main() {
     await leadForm.locator('input[name="phone"]').fill("11999999999");
     await leadForm.locator('input[name="role"]').fill("coordenador");
     await leadForm.locator('input[name="city"]').fill("Sao Paulo");
-    await leadForm.locator('textarea[name="challenge"]').fill("Precisamos organizar a base e o monitoramento.");
+    await leadForm
+      .locator('textarea[name="challenge"]')
+      .fill("Precisamos organizar a base e o monitoramento.");
     await submitForm(leadForm);
     await page.getByText("Lead enviado com sucesso.").waitFor();
     checks.push("lead_capturado");
@@ -361,8 +369,12 @@ async function main() {
     await page.locator(".audit-card, .summary-tile").first().waitFor();
     checks.push("auditoria_renderizada");
 
-    const severeMessages = browserMessages.filter((item) =>
-      item.type === "pageerror" || item.type === "requestfailed" || item.type === "response" || item.type === "console:error",
+    const severeMessages = browserMessages.filter(
+      (item) =>
+        item.type === "pageerror" ||
+        item.type === "requestfailed" ||
+        item.type === "response" ||
+        item.type === "console:error",
     );
 
     const report = {
@@ -396,7 +408,9 @@ async function main() {
         `- finished_at: ${report.finished_at}`,
         `- severe_messages_count: ${report.severe_messages_count}`,
         ...report.checks.map((item) => `- check: ${item}`),
-        ...Object.entries(report.screenshots).map(([name, file]) => `- screenshot_${name}: ${file}`),
+        ...Object.entries(report.screenshots).map(
+          ([name, file]) => `- screenshot_${name}: ${file}`,
+        ),
       ].join("\n"),
     );
 
@@ -411,7 +425,10 @@ async function main() {
 
 main().catch((error) => {
   const failurePath = path.join(logDir, "browser-audit-failure.txt");
-  writeFileSync(failurePath, error instanceof Error ? error.stack ?? error.message : String(error));
+  writeFileSync(
+    failurePath,
+    error instanceof Error ? (error.stack ?? error.message) : String(error),
+  );
   console.error(error);
   process.exitCode = 1;
 });
