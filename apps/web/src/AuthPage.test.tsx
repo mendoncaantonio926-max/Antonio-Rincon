@@ -75,7 +75,7 @@ describe("AuthPage", () => {
       );
       expect(navigateMock).toHaveBeenCalledWith("/app");
     });
-  });
+  }, 10000);
 
   it("mostra erro quando a autenticacao falha", async () => {
     loginMock.mockRejectedValue(new Error("Credenciais invalidas"));

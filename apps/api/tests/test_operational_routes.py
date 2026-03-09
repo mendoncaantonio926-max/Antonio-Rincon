@@ -342,8 +342,11 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert "pending_leads_count" in dashboard_response.json()
     assert "overdue_followups_count" in dashboard_response.json()
     assert "critical_queue_count" in dashboard_response.json()
+    assert "priority_lead_id" in dashboard_response.json()
     assert "priority_lead_name" in dashboard_response.json()
     assert "priority_lead_owner_name" in dashboard_response.json()
+    assert isinstance(dashboard_response.json()["commercial_owner_groups"], list)
+    assert isinstance(dashboard_response.json()["commercial_window_groups"], list)
 
 
 def test_public_lead_capture() -> None:

@@ -289,12 +289,15 @@ async function main() {
     await page.getByText("Gatilho principal").waitFor();
     await page.getByText("Fila comercial priorizada").waitFor();
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
+    await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
+    await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();
     const dashboardShot = path.join(logDir, "dashboard.png");
     if (await safeScreenshot(page, dashboardShot, browserMessages)) {
       screenshots.dashboard = dashboardShot;
     }
     checks.push("login_funcionando");
     checks.push("dashboard_ai_priorizada");
+    checks.push("dashboard_comercial_acao_rapida");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");

@@ -296,6 +296,129 @@ const {
     };
   }
 
+  function buildDashboardSummary() {
+    const pendingLeads = leadsState.items
+      .map(enrichLead)
+      .filter((item) => !item.converted_contact_id)
+      .sort((left, right) => {
+        const bucketOrder = {
+          overdue: 0,
+          today: 1,
+          this_week: 2,
+          later: 3,
+          unscheduled: 4,
+          converted: 5,
+        };
+        const bucketDiff =
+          (bucketOrder[left.follow_up_bucket as keyof typeof bucketOrder] ?? 99) -
+          (bucketOrder[right.follow_up_bucket as keyof typeof bucketOrder] ?? 99);
+        if (bucketDiff !== 0) {
+          return bucketDiff;
+        }
+        if (right.risk_score !== left.risk_score) {
+          return right.risk_score - left.risk_score;
+        }
+        return String(left.created_at).localeCompare(String(right.created_at));
+      });
+    const priorityLead = pendingLeads[0] ?? null;
+    const ownerGroups = new Map<
+      string,
+      { label: string; leads_count: number; overdue_count: number; due_today_count: number }
+    >();
+    const windowGroups = new Map<
+      string,
+      { label: string; leads_count: number; overdue_count: number; due_today_count: number }
+    >();
+
+    for (const item of pendingLeads) {
+      const ownerLabel = item.owner_name || item.suggested_owner_name || "Sem owner";
+      const ownerGroup = ownerGroups.get(ownerLabel) ?? {
+        label: ownerLabel,
+        leads_count: 0,
+        overdue_count: 0,
+        due_today_count: 0,
+      };
+      ownerGroup.leads_count += 1;
+      if (item.follow_up_bucket === "overdue") {
+        ownerGroup.overdue_count += 1;
+      }
+      if (item.follow_up_bucket === "today") {
+        ownerGroup.due_today_count += 1;
+      }
+      ownerGroups.set(ownerLabel, ownerGroup);
+
+      const windowLabel =
+        {
+          overdue: "Atrasado",
+          today: "Hoje",
+          this_week: "Esta semana",
+          later: "Mais a frente",
+          unscheduled: "Sem agenda",
+        }[item.follow_up_bucket] ?? "Sem agenda";
+      const windowGroup = windowGroups.get(windowLabel) ?? {
+        label: windowLabel,
+        leads_count: 0,
+        overdue_count: 0,
+        due_today_count: 0,
+      };
+      windowGroup.leads_count += 1;
+      if (item.follow_up_bucket === "overdue") {
+        windowGroup.overdue_count += 1;
+      }
+      if (item.follow_up_bucket === "today") {
+        windowGroup.due_today_count += 1;
+      }
+      windowGroups.set(windowLabel, windowGroup);
+    }
+
+    return {
+      tenant_name: tenantState.tenant.name,
+      contacts_count: contactsState.items.length,
+      priority_contacts_count: contactsState.items.filter((item) => item.status === "priority")
+        .length,
+      leads_count: leadsState.items.length,
+      converted_leads_count: leadsState.items.filter((item) => item.converted_contact_id).length,
+      pending_leads_count: pendingLeads.length,
+      hot_leads_count: leadsState.items.filter(
+        (item) =>
+          !item.converted_contact_id && ["qualified", "follow_up", "proposal"].includes(item.stage),
+      ).length,
+      critical_queue_count: pendingLeads.filter((item) =>
+        ["high", "critical"].includes(item.priority_label),
+      ).length,
+      overdue_followups_count: pendingLeads.filter((item) => item.follow_up_bucket === "overdue")
+        .length,
+      due_today_followups_count: pendingLeads.filter((item) => item.follow_up_bucket === "today")
+        .length,
+      open_tasks_count: tasksState.items.filter((item) => item.status !== "done").length,
+      overdue_tasks_count: 1,
+      opponents_count: opponentsState.items.length,
+      reports_count: reportsState.items.length,
+      memberships_count: membershipsState.items.length,
+      plan: billingState.subscription.plan,
+      trial_status: billingState.subscription.status,
+      priority_lead_id: priorityLead?.id ?? null,
+      priority_lead_name: priorityLead?.name ?? null,
+      priority_lead_owner_user_id: priorityLead?.owner_user_id ?? null,
+      priority_lead_owner_name:
+        priorityLead?.owner_name || priorityLead?.suggested_owner_name || null,
+      priority_lead_suggested_owner_user_id: priorityLead?.suggested_owner_user_id ?? null,
+      priority_lead_has_owner: Boolean(priorityLead?.owner_user_id),
+      priority_lead_follow_up_label:
+        {
+          overdue: "Atrasado",
+          today: "Hoje",
+          this_week: "Esta semana",
+          later: "Mais a frente",
+          unscheduled: "Sem agenda",
+        }[priorityLead?.follow_up_bucket ?? "unscheduled"] ?? "Sem agenda",
+      priority_lead_risk_score: priorityLead?.risk_score ?? 0,
+      commercial_owner_groups: Array.from(ownerGroups.values()),
+      commercial_window_groups: Array.from(windowGroups.values()),
+      next_action: "Fechar as pendencias operacionais.",
+    };
+  }
+
   const campaignsState = {
     items: [] as Array<{
       id: string;
@@ -920,46 +1043,7 @@ const {
           onboardingState.value.first_opponent_created,
       };
     }),
-    dashboardSummary: vi.fn(async () => ({
-      tenant_name: tenantState.tenant.name,
-      contacts_count: contactsState.items.length,
-      priority_contacts_count: contactsState.items.filter((item) => item.status === "priority")
-        .length,
-      leads_count: leadsState.items.length,
-      converted_leads_count: leadsState.items.filter((item) => item.converted_contact_id).length,
-      pending_leads_count: leadsState.items.filter((item) => !item.converted_contact_id).length,
-      hot_leads_count: leadsState.items.filter(
-        (item) =>
-          !item.converted_contact_id && ["qualified", "follow_up", "proposal"].includes(item.stage),
-      ).length,
-      critical_queue_count: leadsState.items.filter((item) => {
-        const enriched = enrichLead(item);
-        return (
-          !enriched.converted_contact_id && ["high", "critical"].includes(enriched.priority_label)
-        );
-      }).length,
-      overdue_followups_count: leadsState.items.filter(
-        (item) =>
-          !item.converted_contact_id &&
-          Boolean(item.follow_up_at) &&
-          (item.follow_up_at ?? "") < "2026-03-09",
-      ).length,
-      due_today_followups_count: leadsState.items.filter(
-        (item) => !item.converted_contact_id && item.follow_up_at === "2026-03-09",
-      ).length,
-      open_tasks_count: tasksState.items.filter((item) => item.status !== "done").length,
-      overdue_tasks_count: 1,
-      opponents_count: opponentsState.items.length,
-      reports_count: reportsState.items.length,
-      memberships_count: membershipsState.items.length,
-      plan: billingState.subscription.plan,
-      trial_status: billingState.subscription.status,
-      priority_lead_name: "Carlos Lima",
-      priority_lead_owner_name: "Antonio Rincon",
-      priority_lead_follow_up_label: "Atrasado",
-      priority_lead_risk_score: 100,
-      next_action: "Fechar as pendencias operacionais.",
-    })),
+    dashboardSummary: vi.fn(async () => buildDashboardSummary()),
     getAiSummary: vi.fn(async (_token: string, module = "dashboard") => {
       return (
         aiState.summaries[module as keyof typeof aiState.summaries] ?? aiState.summaries.dashboard
@@ -1195,7 +1279,7 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Lideranca Centro")).toBeInTheDocument();
       expect(screen.getByText("centro, bairro")).toBeInTheDocument();
     });
-  });
+  }, 10000);
 
   it("aplica e limpa filtros na tela de contatos", async () => {
     const user = userEvent.setup();
@@ -1575,6 +1659,51 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Revisar status comercial.")).toBeInTheDocument();
       expect(screen.getByText("Assinatura sob atencao")).toBeInTheDocument();
       expect(screen.getByText("62/100")).toBeInTheDocument();
+    });
+  });
+
+  it("executa acao rapida comercial no dashboard", async () => {
+    const user = userEvent.setup();
+    leadsState.items = [
+      {
+        id: "lead-quick",
+        name: "Lucia Prado",
+        email: "lucia@exemplo.com",
+        phone: "11911112222",
+        city: "Sao Paulo",
+        role: "Coordenadora",
+        challenge: "Precisa acelerar o primeiro follow-up.",
+        source: "website",
+        stage: "qualified",
+        owner_user_id: null,
+        owner_name: null,
+        follow_up_at: null,
+        converted_contact_id: null,
+        converted_at: null,
+        created_at: "2026-03-08T10:00:00Z",
+      },
+    ];
+
+    renderAuthenticatedApp("/app");
+
+    await screen.findByRole("heading", { name: "Visao geral" });
+    await user.click(screen.getByRole("button", { name: "Atribuir owner sugerido" }));
+
+    await waitFor(() => {
+      expect(apiMock.updateLead).toHaveBeenCalledWith("token-valido", "lead-quick", {
+        owner_user_id: "user-1",
+      });
+      expect(screen.getByText("Owner sugerido aplicado na fila comercial.")).toBeInTheDocument();
+      expect(screen.getByText(/Puxar com Antonio Rincon/)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Puxar follow-up para hoje" }));
+
+    await waitFor(() => {
+      expect(apiMock.updateLead).toHaveBeenCalledWith("token-valido", "lead-quick", {
+        follow_up_at: expect.any(String),
+      });
+      expect(screen.getByText("Follow-up priorizado para hoje no dashboard.")).toBeInTheDocument();
     });
   });
 

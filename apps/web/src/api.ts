@@ -279,10 +279,26 @@ export type DashboardSummary = {
   memberships_count: number;
   plan: string;
   trial_status: string;
+  priority_lead_id?: string | null;
   priority_lead_name?: string | null;
+  priority_lead_owner_user_id?: string | null;
   priority_lead_owner_name?: string | null;
+  priority_lead_suggested_owner_user_id?: string | null;
+  priority_lead_has_owner: boolean;
   priority_lead_follow_up_label?: string | null;
   priority_lead_risk_score: number;
+  commercial_owner_groups: Array<{
+    label: string;
+    leads_count: number;
+    overdue_count: number;
+    due_today_count: number;
+  }>;
+  commercial_window_groups: Array<{
+    label: string;
+    leads_count: number;
+    overdue_count: number;
+    due_today_count: number;
+  }>;
   next_action: string;
 };
 

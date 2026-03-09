@@ -1,6 +1,6 @@
 import { Badge, Button, Card, Input } from "@pulso/ui";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { Link, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { AuthPage } from "./AuthPage";
 import {
   type AiSummary,
@@ -384,23 +384,57 @@ function TermsPage() {
 
 function DashboardPage() {
   const { tokens, user } = useAuth();
+  const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [aiSummary, setAiSummary] = useState<AiSummary | null>(null);
   const [aiModule, setAiModule] = useState("dashboard");
+  const [dashboardLeadPending, setDashboardLeadPending] = useState<string | null>(null);
+  const [dashboardLeadMessage, setDashboardLeadMessage] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadDashboard = useCallback(async () => {
     if (!tokens?.access_token) {
       return;
     }
 
-    void Promise.all([
+    const [dashboardPayload, aiPayload] = await Promise.all([
       api.dashboardSummary(tokens.access_token),
       api.getAiSummary(tokens.access_token, aiModule),
-    ]).then(([dashboardPayload, aiPayload]) => {
-      setSummary(dashboardPayload);
-      setAiSummary(aiPayload);
-    });
-  }, [tokens, aiModule]);
+    ]);
+    setSummary(dashboardPayload);
+    setAiSummary(aiPayload);
+  }, [aiModule, tokens]);
+
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
+
+  async function handleDashboardLeadAction(mode: "assign_owner" | "schedule_today") {
+    if (!tokens?.access_token || !summary?.priority_lead_id) {
+      return;
+    }
+
+    const updates =
+      mode === "assign_owner"
+        ? { owner_user_id: summary.priority_lead_suggested_owner_user_id || "" }
+        : { follow_up_at: new Date().toISOString().slice(0, 10) };
+    setDashboardLeadPending(mode);
+    setDashboardLeadMessage(null);
+    try {
+      await api.updateLead(tokens.access_token, summary.priority_lead_id, updates);
+      setDashboardLeadMessage(
+        mode === "assign_owner"
+          ? "Owner sugerido aplicado na fila comercial."
+          : "Follow-up priorizado para hoje no dashboard.",
+      );
+      await loadDashboard();
+    } catch (error) {
+      setDashboardLeadMessage(
+        error instanceof Error ? error.message : "Falha ao executar acao rapida do dashboard.",
+      );
+    } finally {
+      setDashboardLeadPending(null);
+    }
+  }
 
   return (
     <section className="app-section">
@@ -420,6 +454,7 @@ function DashboardPage() {
               {summary?.next_action ?? "Carregando recomendacao operacional..."}
             </p>
           </div>
+          {dashboardLeadMessage ? <div className="info-box">{dashboardLeadMessage}</div> : null}
         </div>
         <div className="dashboard-hero__rail">
           <Badge tone={summary?.overdue_tasks_count ? "warning" : "info"}>
@@ -588,6 +623,60 @@ function DashboardPage() {
                 ? `Puxar com ${summary.priority_lead_owner_name} na janela ${summary.priority_lead_follow_up_label ?? "definida"}.`
                 : "Sem prioridade comercial aberta neste momento."}
             </p>
+            <div className="dashboard-commercial-focus__actions">
+              {!summary?.priority_lead_has_owner &&
+              summary?.priority_lead_suggested_owner_user_id ? (
+                <Button
+                  label={
+                    dashboardLeadPending === "assign_owner"
+                      ? "Atribuindo owner..."
+                      : "Atribuir owner sugerido"
+                  }
+                  variant="secondary"
+                  onClick={() => void handleDashboardLeadAction("assign_owner")}
+                  disabled={dashboardLeadPending !== null}
+                />
+              ) : null}
+              {summary?.priority_lead_id ? (
+                <Button
+                  label={
+                    dashboardLeadPending === "schedule_today"
+                      ? "Priorizando hoje..."
+                      : "Puxar follow-up para hoje"
+                  }
+                  variant="secondary"
+                  onClick={() => void handleDashboardLeadAction("schedule_today")}
+                  disabled={dashboardLeadPending !== null}
+                />
+              ) : null}
+              <Button
+                label="Abrir fila comercial"
+                variant="secondary"
+                onClick={() => navigate("/app/leads")}
+              />
+            </div>
+            <div className="dashboard-commercial-groups">
+              <article className="dashboard-commercial-list">
+                <span>Owners puxando a fila</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.commercial_owner_groups ?? []).map((group) => (
+                    <span key={`owner-${group.label}`}>
+                      {group.label}: {group.leads_count} lead(s), {group.overdue_count} atrasado(s)
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Janelas de follow-up</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.commercial_window_groups ?? []).map((group) => (
+                    <span key={`window-${group.label}`}>
+                      {group.label}: {group.leads_count} lead(s)
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

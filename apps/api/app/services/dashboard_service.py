@@ -94,6 +94,50 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "later": "Mais a frente",
         "unscheduled": "Sem agenda",
     }
+    owner_groups: dict[str, dict[str, str | int]] = {}
+    for item in pending_leads:
+        owner_label = str(item["owner_name"] or item["suggested_owner_name"] or "Sem owner")
+        group = owner_groups.setdefault(
+            owner_label,
+            {
+                "label": owner_label,
+                "leads_count": 0,
+                "overdue_count": 0,
+                "due_today_count": 0,
+            },
+        )
+        group["leads_count"] = int(group["leads_count"]) + 1
+        if item["follow_up_bucket"] == "overdue":
+            group["overdue_count"] = int(group["overdue_count"]) + 1
+        if item["follow_up_bucket"] == "today":
+            group["due_today_count"] = int(group["due_today_count"]) + 1
+
+    window_groups: dict[str, dict[str, str | int]] = {}
+    for item in pending_leads:
+        window_label = follow_up_bucket_labels.get(str(item["follow_up_bucket"]), "Sem agenda")
+        group = window_groups.setdefault(
+            window_label,
+            {
+                "label": window_label,
+                "leads_count": 0,
+                "overdue_count": 0,
+                "due_today_count": 0,
+            },
+        )
+        group["leads_count"] = int(group["leads_count"]) + 1
+        if item["follow_up_bucket"] == "overdue":
+            group["overdue_count"] = int(group["overdue_count"]) + 1
+        if item["follow_up_bucket"] == "today":
+            group["due_today_count"] = int(group["due_today_count"]) + 1
+
+    commercial_owner_groups = sorted(
+        owner_groups.values(),
+        key=lambda item: (-int(item["overdue_count"]), -int(item["leads_count"]), str(item["label"])),
+    )
+    commercial_window_groups = sorted(
+        window_groups.values(),
+        key=lambda item: (-int(item["overdue_count"]), -int(item["due_today_count"]), -int(item["leads_count"])),
+    )
 
     return {
         "tenant_name": tenant.name,
@@ -113,17 +157,29 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "memberships_count": memberships_count,
         "plan": subscription.plan,
         "trial_status": subscription.status,
+        "priority_lead_id": str(priority_lead["id"]) if priority_lead else None,
         "priority_lead_name": str(priority_lead["name"]) if priority_lead else None,
+        "priority_lead_owner_user_id": (
+            str(priority_lead["owner_user_id"]) if priority_lead and priority_lead["owner_user_id"] else None
+        ),
         "priority_lead_owner_name": (
             str(priority_lead["owner_name"] or priority_lead["suggested_owner_name"])
             if priority_lead
             else None
         ),
+        "priority_lead_suggested_owner_user_id": (
+            str(priority_lead["suggested_owner_user_id"])
+            if priority_lead and priority_lead["suggested_owner_user_id"]
+            else None
+        ),
+        "priority_lead_has_owner": bool(priority_lead["owner_user_id"]) if priority_lead else False,
         "priority_lead_follow_up_label": (
             follow_up_bucket_labels.get(str(priority_lead["follow_up_bucket"]), "Sem agenda")
             if priority_lead
             else None
         ),
         "priority_lead_risk_score": int(priority_lead["risk_score"]) if priority_lead else 0,
+        "commercial_owner_groups": commercial_owner_groups[:4],
+        "commercial_window_groups": commercial_window_groups[:5],
         "next_action": next_action,
     }
