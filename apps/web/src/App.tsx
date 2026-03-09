@@ -392,10 +392,13 @@ function DashboardPage() {
   const [dashboardLeadMessage, setDashboardLeadMessage] = useState<string | null>(null);
   const [dashboardAiRunResult, setDashboardAiRunResult] = useState<{
     appliedCount: number;
+    ownersApplied: number;
+    followUpsApplied: number;
     remainingQueue: number;
     expectedGain: number;
     recoveredGap: number;
     reducedCriticalQueue: number;
+    reducedOverdueFollowups: number;
   } | null>(null);
 
   const loadDashboard = useCallback(async () => {
@@ -409,6 +412,7 @@ function DashboardPage() {
     ]);
     setSummary(dashboardPayload);
     setAiSummary(aiPayload);
+    return { dashboardPayload, aiPayload };
   }, [aiModule, tokens]);
 
   useEffect(() => {
@@ -477,7 +481,7 @@ function DashboardPage() {
   }
 
   async function handleDashboardAiAction() {
-    if (!tokens?.access_token || !aiSummary) {
+    if (!tokens?.access_token || !aiSummary || !summary) {
       return;
     }
 
@@ -485,7 +489,12 @@ function DashboardPage() {
     setDashboardLeadMessage(null);
     try {
       if (aiSummary.execution_mode === "update_lead_batch" && aiSummary.execution_batch?.length) {
+        const beforeSummary = summary;
+        const beforeLeads = await api.listLeads(tokens.access_token);
+        const beforeLeadMap = new Map(beforeLeads.map((item) => [item.id, item]));
         let appliedCount = 0;
+        let ownersApplied = 0;
+        let followUpsApplied = 0;
         for (const step of aiSummary.execution_batch) {
           const updates = Object.fromEntries(
             Object.entries({
@@ -498,19 +507,47 @@ function DashboardPage() {
           }
           await api.updateLead(tokens.access_token, step.lead_id, updates);
           appliedCount += 1;
+          const previousLead = beforeLeadMap.get(step.lead_id);
+          if (step.owner_user_id && previousLead?.owner_user_id !== step.owner_user_id) {
+            ownersApplied += 1;
+          }
+          if (step.follow_up_at && previousLead?.follow_up_at !== step.follow_up_at) {
+            followUpsApplied += 1;
+          }
         }
         if (!appliedCount) {
           return;
         }
+        const refreshed = await loadDashboard();
+        const refreshedSummary = refreshed?.dashboardPayload;
         setDashboardLeadMessage(`Regua da IA aplicada em ${appliedCount} lead(s).`);
         setDashboardAiRunResult({
           appliedCount,
+          ownersApplied,
+          followUpsApplied,
           remainingQueue:
+            refreshedSummary?.pending_leads_count ??
             aiSummary.execution_outlook?.remaining_queue ??
-            Math.max((summary?.pending_leads_count ?? appliedCount) - appliedCount, 0),
+            Math.max(beforeSummary.pending_leads_count - appliedCount, 0),
           expectedGain: aiSummary.execution_outlook?.expected_gain ?? appliedCount,
-          recoveredGap: aiSummary.execution_outlook?.recovered_gap ?? 0,
-          reducedCriticalQueue: aiSummary.execution_outlook?.reduced_critical_queue ?? appliedCount,
+          recoveredGap: refreshedSummary?.goal_risk
+            ? Math.max(
+                beforeSummary.goal_risk.gap_to_target - refreshedSummary.goal_risk.gap_to_target,
+                0,
+              )
+            : (aiSummary.execution_outlook?.recovered_gap ?? 0),
+          reducedCriticalQueue: refreshedSummary
+            ? Math.max(
+                beforeSummary.critical_queue_count - refreshedSummary.critical_queue_count,
+                0,
+              )
+            : (aiSummary.execution_outlook?.reduced_critical_queue ?? appliedCount),
+          reducedOverdueFollowups: refreshedSummary
+            ? Math.max(
+                beforeSummary.overdue_followups_count - refreshedSummary.overdue_followups_count,
+                0,
+              )
+            : 0,
         });
       } else if (
         summary?.priority_lead_id &&
@@ -525,17 +562,34 @@ function DashboardPage() {
         }
         await api.updateLead(tokens.access_token, summary.priority_lead_id, updates);
         setDashboardLeadMessage("Recomendacao da IA aplicada na fila comercial.");
+        const refreshed = await loadDashboard();
+        const refreshedSummary = refreshed?.dashboardPayload;
         setDashboardAiRunResult({
           appliedCount: 1,
-          remainingQueue: Math.max((summary?.pending_leads_count ?? 1) - 1, 0),
+          ownersApplied: updates.owner_user_id ? 1 : 0,
+          followUpsApplied: updates.follow_up_at ? 1 : 0,
+          remainingQueue:
+            refreshedSummary?.pending_leads_count ?? Math.max(summary.pending_leads_count - 1, 0),
           expectedGain: aiSummary.execution_outlook?.expected_gain ?? 1,
-          recoveredGap: aiSummary.execution_outlook?.recovered_gap ?? 1,
-          reducedCriticalQueue: aiSummary.execution_outlook?.reduced_critical_queue ?? 1,
+          recoveredGap: refreshedSummary?.goal_risk
+            ? Math.max(
+                summary.goal_risk.gap_to_target - refreshedSummary.goal_risk.gap_to_target,
+                0,
+              )
+            : (aiSummary.execution_outlook?.recovered_gap ?? 1),
+          reducedCriticalQueue: refreshedSummary
+            ? Math.max(summary.critical_queue_count - refreshedSummary.critical_queue_count, 0)
+            : (aiSummary.execution_outlook?.reduced_critical_queue ?? 1),
+          reducedOverdueFollowups: refreshedSummary
+            ? Math.max(
+                summary.overdue_followups_count - refreshedSummary.overdue_followups_count,
+                0,
+              )
+            : 0,
         });
       } else {
         return;
       }
-      await loadDashboard();
     } catch (error) {
       setDashboardLeadMessage(
         error instanceof Error ? error.message : "Falha ao executar a recomendacao da IA.",
@@ -706,9 +760,14 @@ function DashboardPage() {
             <div className="dashboard-ai-run-result">
               <strong>Lote aplicado</strong>
               <span>{dashboardAiRunResult.appliedCount} lead(s) atualizados</span>
+              <span>Owners aplicados: {dashboardAiRunResult.ownersApplied}</span>
+              <span>Follow-ups definidos: {dashboardAiRunResult.followUpsApplied}</span>
               <span>Ganho esperado: {dashboardAiRunResult.expectedGain}</span>
               <span>Gap recuperado: {dashboardAiRunResult.recoveredGap}</span>
               <span>Fila critica reduzida: {dashboardAiRunResult.reducedCriticalQueue}</span>
+              <span>
+                Backlog comercial reduzido: {dashboardAiRunResult.reducedOverdueFollowups}
+              </span>
               <span>Ainda faltam: {dashboardAiRunResult.remainingQueue}</span>
             </div>
           ) : null}

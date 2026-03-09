@@ -320,9 +320,18 @@ async function main() {
     await page
       .getByText(/Regua da IA aplicada em|Recomendacao da IA aplicada na fila comercial./)
       .waitFor();
-    await page.getByText("Lote aplicado").waitFor();
-    await page.getByText(/^Gap recuperado$/).waitFor();
-    await page.getByText(/^Fila critica reduzida$/).waitFor();
+    const aiRunResult = page.locator(".dashboard-ai-run-result");
+    await aiRunResult.waitFor();
+    await page.waitForFunction(() => {
+      const text = document.querySelector(".dashboard-ai-run-result")?.textContent ?? "";
+      return (
+        text.includes("Lote aplicado") &&
+        text.includes("Owners aplicados:") &&
+        text.includes("Backlog comercial reduzido:") &&
+        text.includes("Gap recuperado:") &&
+        text.includes("Fila critica reduzida:")
+      );
+    });
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
     await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();
     await page.getByRole("button", { name: "Aplicar Pressionado" }).click();
