@@ -418,6 +418,21 @@ export type DashboardSummary = {
     forecast_band: string;
     summary: string;
   };
+  owner_stage_mix: Array<{
+    owner_label: string;
+    captured_count: number;
+    qualified_count: number;
+    follow_up_count: number;
+    proposal_count: number;
+  }>;
+  forecast_confidence: {
+    score: number;
+    label: string;
+    committed_pipeline_count: number;
+    proposal_count: number;
+    overdue_risk_count: number;
+    summary: string;
+  };
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;

@@ -144,6 +144,23 @@ class DashboardConversionForecastResponse(BaseModel):
     summary: str
 
 
+class DashboardOwnerStageMixResponse(BaseModel):
+    owner_label: str
+    captured_count: int
+    qualified_count: int
+    follow_up_count: int
+    proposal_count: int
+
+
+class DashboardForecastConfidenceResponse(BaseModel):
+    score: int
+    label: str
+    committed_pipeline_count: int
+    proposal_count: int
+    overdue_risk_count: int
+    summary: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -189,6 +206,8 @@ class DashboardSummaryResponse(BaseModel):
     window_allocation_plan: list[DashboardWindowPlanResponse]
     stage_forecast: list[DashboardStageForecastResponse]
     conversion_forecast: DashboardConversionForecastResponse
+    owner_stage_mix: list[DashboardOwnerStageMixResponse]
+    forecast_confidence: DashboardForecastConfidenceResponse
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str

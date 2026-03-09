@@ -920,6 +920,28 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Mix por owner</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.owner_stage_mix ?? []).map((item) => (
+                    <span key={`owner-stage-mix-${item.owner_label}`}>
+                      {item.owner_label}: {item.proposal_count} proposta(s), {item.follow_up_count}{" "}
+                      em follow-up, {item.qualified_count} qualificado(s), {item.captured_count}{" "}
+                      captado(s)
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Confianca do forecast</span>
+                <div className="dashboard-recommendations">
+                  <span>{summary?.forecast_confidence.summary ?? "Confianca em leitura."}</span>
+                  <span>Score {summary?.forecast_confidence.score ?? 0}</span>
+                  <span>Label {summary?.forecast_confidence.label ?? "media"}</span>
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

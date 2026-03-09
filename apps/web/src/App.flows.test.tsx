@@ -698,6 +698,53 @@ const {
         expectedConversions >= 3 ? "forte" : expectedConversions <= 1 ? "contido" : "moderado",
       summary: `Janela dos proximos 7 dias com ${expectedConversions} fechamento(s) esperado(s) e ${committedPipelineCount} lead(s) no pipeline comprometido.`,
     };
+    const ownerStageMixMap = new Map<
+      string,
+      {
+        owner_label: string;
+        captured_count: number;
+        qualified_count: number;
+        follow_up_count: number;
+        proposal_count: number;
+      }
+    >();
+    for (const item of pendingLeads) {
+      const ownerLabel = item.owner_name || item.suggested_owner_name || "Sem owner";
+      const group = ownerStageMixMap.get(ownerLabel) ?? {
+        owner_label: ownerLabel,
+        captured_count: 0,
+        qualified_count: 0,
+        follow_up_count: 0,
+        proposal_count: 0,
+      };
+      if (item.stage === "proposal") {
+        group.proposal_count += 1;
+      } else if (item.stage === "follow_up") {
+        group.follow_up_count += 1;
+      } else if (item.stage === "qualified") {
+        group.qualified_count += 1;
+      } else {
+        group.captured_count += 1;
+      }
+      ownerStageMixMap.set(ownerLabel, group);
+    }
+    const ownerStageMix = Array.from(ownerStageMixMap.values());
+    const proposalCount = pendingLeads.filter((item) => item.stage === "proposal").length;
+    const overdueRiskCount = pendingLeads.filter(
+      (item) =>
+        item.follow_up_bucket === "overdue" && ["high", "critical"].includes(item.priority_label),
+    ).length;
+    let confidenceScore =
+      46 + proposalCount * 12 + committedPipelineCount * 6 - overdueRiskCount * 10;
+    confidenceScore = Math.max(18, Math.min(confidenceScore, 96));
+    const forecastConfidence = {
+      score: confidenceScore,
+      label: confidenceScore >= 74 ? "alta" : confidenceScore <= 40 ? "baixa" : "media",
+      committed_pipeline_count: committedPipelineCount,
+      proposal_count: proposalCount,
+      overdue_risk_count: overdueRiskCount,
+      summary: `Confianca ${confidenceScore >= 74 ? "alta" : confidenceScore <= 40 ? "baixa" : "media"} com ${proposalCount} lead(s) em proposta, ${committedPipelineCount} no pipeline comprometido e ${overdueRiskCount} risco(s) vencido(s).`,
+    };
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -786,6 +833,8 @@ const {
       window_allocation_plan: windowAllocationPlan,
       stage_forecast: stageForecast,
       conversion_forecast: conversionForecast,
+      owner_stage_mix: ownerStageMix,
+      forecast_confidence: forecastConfidence,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -2048,6 +2097,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Plano por janela")).toBeInTheDocument();
       expect(screen.getByText("Previsao por estagio")).toBeInTheDocument();
       expect(screen.getByText("Fechamento projetado")).toBeInTheDocument();
+      expect(screen.getByText("Mix por owner")).toBeInTheDocument();
+      expect(screen.getByText("Confianca do forecast")).toBeInTheDocument();
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 

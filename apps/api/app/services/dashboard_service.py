@@ -650,6 +650,15 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
     committed_pipeline_count = len(
         [item for item in pending_leads if str(item["stage"]) in {"follow_up", "proposal"}]
     )
+    proposal_count = len([item for item in pending_leads if str(item["stage"]) == "proposal"])
+    overdue_risk_count = len(
+        [
+            item
+            for item in pending_leads
+            if str(item["follow_up_bucket"]) == "overdue"
+            and str(item["priority_label"]) in {"high", "critical"}
+        ]
+    )
     forecast_band = "moderado"
     if expected_conversions >= 3:
         forecast_band = "forte"
@@ -663,6 +672,58 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "summary": (
             f"Janela dos proximos 7 dias com {expected_conversions} fechamento(s) esperado(s) "
             f"e {committed_pipeline_count} lead(s) no pipeline comprometido."
+        ),
+    }
+    owner_stage_mix_map: dict[str, dict[str, int | str]] = {}
+    for item in pending_leads:
+        owner_label = str(item["owner_name"] or item["suggested_owner_name"] or "Sem owner")
+        group = owner_stage_mix_map.setdefault(
+            owner_label,
+            {
+                "owner_label": owner_label,
+                "captured_count": 0,
+                "qualified_count": 0,
+                "follow_up_count": 0,
+                "proposal_count": 0,
+            },
+        )
+        stage = str(item["stage"])
+        if stage == "proposal":
+            group["proposal_count"] = int(group["proposal_count"]) + 1
+        elif stage == "follow_up":
+            group["follow_up_count"] = int(group["follow_up_count"]) + 1
+        elif stage == "qualified":
+            group["qualified_count"] = int(group["qualified_count"]) + 1
+        else:
+            group["captured_count"] = int(group["captured_count"]) + 1
+    owner_stage_mix = sorted(
+        owner_stage_mix_map.values(),
+        key=lambda item: (
+            -int(item["proposal_count"]),
+            -int(item["follow_up_count"]),
+            -int(item["qualified_count"]),
+            str(item["owner_label"]),
+        ),
+    )
+    confidence_score = 46
+    confidence_score += proposal_count * 12
+    confidence_score += committed_pipeline_count * 6
+    confidence_score -= overdue_risk_count * 10
+    confidence_score = max(18, min(confidence_score, 96))
+    confidence_label = "media"
+    if confidence_score >= 74:
+        confidence_label = "alta"
+    elif confidence_score <= 40:
+        confidence_label = "baixa"
+    forecast_confidence = {
+        "score": confidence_score,
+        "label": confidence_label,
+        "committed_pipeline_count": committed_pipeline_count,
+        "proposal_count": proposal_count,
+        "overdue_risk_count": overdue_risk_count,
+        "summary": (
+            f"Confianca {confidence_label} com {proposal_count} lead(s) em proposta, "
+            f"{committed_pipeline_count} no pipeline comprometido e {overdue_risk_count} risco(s) vencido(s)."
         ),
     }
     daily_execution_queue = [
@@ -775,6 +836,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "window_allocation_plan": window_allocation_plan,
         "stage_forecast": stage_forecast,
         "conversion_forecast": conversion_forecast,
+        "owner_stage_mix": owner_stage_mix[:4],
+        "forecast_confidence": forecast_confidence,
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

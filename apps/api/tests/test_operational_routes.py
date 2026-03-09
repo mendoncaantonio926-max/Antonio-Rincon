@@ -366,6 +366,8 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert isinstance(dashboard_response.json()["window_allocation_plan"], list)
     assert isinstance(dashboard_response.json()["stage_forecast"], list)
     assert "conversion_forecast" in dashboard_response.json()
+    assert isinstance(dashboard_response.json()["owner_stage_mix"], list)
+    assert "forecast_confidence" in dashboard_response.json()
     assert "morning_focus_summary" in dashboard_response.json()
     assert isinstance(dashboard_response.json()["owner_daily_briefs"], list)
 
@@ -490,6 +492,8 @@ def test_lead_pipeline_update_and_filters() -> None:
     assert isinstance(dashboard_response.json()["window_allocation_plan"], list)
     assert isinstance(dashboard_response.json()["stage_forecast"], list)
     assert "conversion_forecast" in dashboard_response.json()
+    assert isinstance(dashboard_response.json()["owner_stage_mix"], list)
+    assert "forecast_confidence" in dashboard_response.json()
 
 
 def test_membership_invite_and_ai_summary() -> None:
