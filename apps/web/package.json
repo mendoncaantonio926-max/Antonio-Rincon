@@ -14,7 +14,7 @@
     "@pulso/types": "0.1.8",
     "@pulso/ui": "0.1.8",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.2.4",
     "react-router-dom": "^6.30.1"
   },
   "devDependencies": {
@@ -22,7 +22,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^28.1.0",
     "typescript": "^5.6.3",
