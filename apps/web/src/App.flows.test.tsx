@@ -745,6 +745,35 @@ const {
       overdue_risk_count: overdueRiskCount,
       summary: `Confianca ${confidenceScore >= 74 ? "alta" : confidenceScore <= 40 ? "baixa" : "media"} com ${proposalCount} lead(s) em proposta, ${committedPipelineCount} no pipeline comprometido e ${overdueRiskCount} risco(s) vencido(s).`,
     };
+    const weeklyTarget = Math.max(2, membershipsState.items.length);
+    const gapToTarget = Math.max(weeklyTarget - expectedConversions, 0);
+    const goalRisk = {
+      weekly_target: weeklyTarget,
+      expected_conversions: expectedConversions,
+      gap_to_target: gapToTarget,
+      risk_label: gapToTarget >= 2 ? "critical" : gapToTarget >= 1 ? "attention" : "on_track",
+      summary: `Meta semanal de ${weeklyTarget} fechamento(s), previsao atual de ${expectedConversions} e gap de ${gapToTarget}.`,
+    };
+    const forecastScenarios = [
+      {
+        scenario_label: "Base",
+        expected_conversions: expectedConversions,
+        confidence_label: forecastConfidence.label,
+        summary: conversionForecast.summary,
+      },
+      {
+        scenario_label: "Pressionado",
+        expected_conversions: Math.max(expectedConversions - Math.max(overdueRiskCount, 1), 0),
+        confidence_label: overdueRiskCount > 0 ? "baixa" : "media",
+        summary: `Se os riscos vencidos seguirem sem resposta, a semana cai para ${Math.max(expectedConversions - Math.max(overdueRiskCount, 1), 0)} fechamento(s).`,
+      },
+      {
+        scenario_label: "Acelerado",
+        expected_conversions: expectedConversions + Math.max(proposalCount, 1),
+        confidence_label: forecastConfidence.label === "baixa" ? "media" : "alta",
+        summary: `Se as propostas e follow-ups quentes virarem, a semana pode chegar a ${expectedConversions + Math.max(proposalCount, 1)} fechamento(s).`,
+      },
+    ];
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -835,6 +864,8 @@ const {
       conversion_forecast: conversionForecast,
       owner_stage_mix: ownerStageMix,
       forecast_confidence: forecastConfidence,
+      goal_risk: goalRisk,
+      forecast_scenarios: forecastScenarios,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -2099,6 +2130,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Fechamento projetado")).toBeInTheDocument();
       expect(screen.getByText("Mix por owner")).toBeInTheDocument();
       expect(screen.getByText("Confianca do forecast")).toBeInTheDocument();
+      expect(screen.getByText("Risco de meta")).toBeInTheDocument();
+      expect(screen.getByText("Cenarios de fechamento")).toBeInTheDocument();
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 

@@ -161,6 +161,21 @@ class DashboardForecastConfidenceResponse(BaseModel):
     summary: str
 
 
+class DashboardGoalRiskResponse(BaseModel):
+    weekly_target: int
+    expected_conversions: int
+    gap_to_target: int
+    risk_label: str
+    summary: str
+
+
+class DashboardForecastScenarioResponse(BaseModel):
+    scenario_label: str
+    expected_conversions: int
+    confidence_label: str
+    summary: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -208,6 +223,8 @@ class DashboardSummaryResponse(BaseModel):
     conversion_forecast: DashboardConversionForecastResponse
     owner_stage_mix: list[DashboardOwnerStageMixResponse]
     forecast_confidence: DashboardForecastConfidenceResponse
+    goal_risk: DashboardGoalRiskResponse
+    forecast_scenarios: list[DashboardForecastScenarioResponse]
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str

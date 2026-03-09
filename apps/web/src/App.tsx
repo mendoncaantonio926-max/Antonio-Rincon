@@ -942,6 +942,28 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Risco de meta</span>
+                <div className="dashboard-recommendations">
+                  <span>{summary?.goal_risk.summary ?? "Meta semanal em leitura."}</span>
+                  <span>Meta semanal {summary?.goal_risk.weekly_target ?? 0}</span>
+                  <span>Gap {summary?.goal_risk.gap_to_target ?? 0}</span>
+                  <span>Risco {summary?.goal_risk.risk_label ?? "on_track"}</span>
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Cenarios de fechamento</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.forecast_scenarios ?? []).map((item) => (
+                    <span key={`forecast-scenario-${item.scenario_label}`}>
+                      {item.scenario_label}: {item.expected_conversions} fechamento(s),{" "}
+                      {item.confidence_label}. {item.summary}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

@@ -726,6 +726,51 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
             f"{committed_pipeline_count} no pipeline comprometido e {overdue_risk_count} risco(s) vencido(s)."
         ),
     }
+    weekly_target = max(2, memberships_count)
+    gap_to_target = max(weekly_target - expected_conversions, 0)
+    risk_label = "on_track"
+    if gap_to_target >= 2:
+        risk_label = "critical"
+    elif gap_to_target >= 1:
+        risk_label = "attention"
+    goal_risk = {
+        "weekly_target": weekly_target,
+        "expected_conversions": expected_conversions,
+        "gap_to_target": gap_to_target,
+        "risk_label": risk_label,
+        "summary": (
+            f"Meta semanal de {weekly_target} fechamento(s), previsao atual de "
+            f"{expected_conversions} e gap de {gap_to_target}."
+        ),
+    }
+    pessimistic = max(expected_conversions - max(overdue_risk_count, 1), 0)
+    optimistic = expected_conversions + max(proposal_count, 1)
+    forecast_scenarios = [
+        {
+            "scenario_label": "Base",
+            "expected_conversions": expected_conversions,
+            "confidence_label": confidence_label,
+            "summary": conversion_forecast["summary"],
+        },
+        {
+            "scenario_label": "Pressionado",
+            "expected_conversions": pessimistic,
+            "confidence_label": "baixa" if overdue_risk_count > 0 else "media",
+            "summary": (
+                f"Se os riscos vencidos seguirem sem resposta, a semana cai para {pessimistic} "
+                "fechamento(s)."
+            ),
+        },
+        {
+            "scenario_label": "Acelerado",
+            "expected_conversions": optimistic,
+            "confidence_label": "media" if confidence_label == "baixa" else "alta",
+            "summary": (
+                f"Se as propostas e follow-ups quentes virarem, a semana pode chegar a "
+                f"{optimistic} fechamento(s)."
+            ),
+        },
+    ]
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -838,6 +883,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "conversion_forecast": conversion_forecast,
         "owner_stage_mix": owner_stage_mix[:4],
         "forecast_confidence": forecast_confidence,
+        "goal_risk": goal_risk,
+        "forecast_scenarios": forecast_scenarios,
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

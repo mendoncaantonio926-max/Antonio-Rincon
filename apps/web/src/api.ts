@@ -433,6 +433,19 @@ export type DashboardSummary = {
     overdue_risk_count: number;
     summary: string;
   };
+  goal_risk: {
+    weekly_target: number;
+    expected_conversions: number;
+    gap_to_target: number;
+    risk_label: string;
+    summary: string;
+  };
+  forecast_scenarios: Array<{
+    scenario_label: string;
+    expected_conversions: number;
+    confidence_label: string;
+    summary: string;
+  }>;
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;
