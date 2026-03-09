@@ -591,6 +591,61 @@ const {
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
       .slice(0, 4);
+    const ownerDailyPlan = ownerCapacity.slice(0, 4).map((item) => {
+      const ownerItems = pendingLeads.filter(
+        (lead) =>
+          (lead.owner_name || lead.suggested_owner_name || "Sem owner") === item.owner_label,
+      );
+      const firstLead = ownerItems[0];
+      let focusToday = "Revisar fila comercial";
+      let priorityReason = "Fila equilibrada para o dia.";
+      if (firstLead) {
+        if (firstLead.follow_up_bucket === "overdue") {
+          focusToday = `Destravar ${firstLead.name} ainda hoje`;
+          priorityReason = "Existe atraso comercial na primeira posicao da fila.";
+        } else if (firstLead.follow_up_bucket === "today") {
+          focusToday = `Fechar retorno de ${firstLead.name}`;
+          priorityReason = "A janela de follow-up vence hoje.";
+        } else if (!firstLead.owner_user_id) {
+          focusToday = `Assumir owner de ${firstLead.name}`;
+          priorityReason = "Ha lead sem owner pedindo definicao imediata.";
+        } else {
+          focusToday = `Avancar ${firstLead.name} na proxima rodada`;
+          priorityReason = "A fila ja tem owner e precisa manter cadencia.";
+        }
+      }
+      return {
+        owner_label: item.owner_label,
+        focus_today: focusToday,
+        queue_size: item.active_queue_count,
+        next_window: item.recommended_window,
+        priority_reason: priorityReason,
+      };
+    });
+    const windowAllocationPlan = windowPressure.slice(0, 5).map((item) => {
+      const matchingLeads = pendingLeads.filter((lead) => {
+        const label =
+          {
+            overdue: "Atrasado",
+            today: "Hoje",
+            this_week: "Esta semana",
+            later: "Mais a frente",
+            unscheduled: "Sem agenda",
+          }[lead.follow_up_bucket] ?? "Sem agenda";
+        return label === item.window_label;
+      });
+      const primaryLead = matchingLeads[0];
+      const primaryOwnerLabel =
+        primaryLead?.owner_name || primaryLead?.suggested_owner_name || "Sem owner";
+      return {
+        window_label: item.window_label,
+        focus_count: item.leads_count,
+        primary_owner_label: primaryOwnerLabel,
+        plan_summary: primaryLead
+          ? `${primaryOwnerLabel} puxa ${primaryLead.name} e abre a janela ${item.window_label.toLowerCase()}.`
+          : `${item.window_label} concentra ${item.leads_count} lead(s) com ${item.high_risk_count} em risco.`,
+      };
+    });
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -675,6 +730,8 @@ const {
       rebalance_suggestions: rebalanceSuggestions,
       owner_capacity: ownerCapacity,
       assignment_suggestions: assignmentSuggestions,
+      owner_daily_plan: ownerDailyPlan,
+      window_allocation_plan: windowAllocationPlan,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -1933,6 +1990,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Redistribuicao sugerida")).toBeInTheDocument();
       expect(screen.getByText("Capacidade por owner")).toBeInTheDocument();
       expect(screen.getByText("Alocacao sugerida")).toBeInTheDocument();
+      expect(screen.getByText("Plano diario por owner")).toBeInTheDocument();
+      expect(screen.getByText("Plano por janela")).toBeInTheDocument();
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 

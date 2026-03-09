@@ -392,6 +392,13 @@ def list_billing_events(tenant_id: str) -> list[dict[str, str]]:
 
 def require_report_export_capacity(tenant_id: str) -> None:
     subscription = get_subscription_for_tenant(tenant_id)
+    if subscription.report_exports_limit <= 0 and subscription.status in {"active", "trialing"}:
+        config = PLAN_CONFIG.get(subscription.plan)
+        if config is not None:
+            subscription.report_exports_limit = int(config["report_exports_limit"])
+            subscription.updated_at = datetime.now(UTC)
+            store.subscriptions[subscription.id] = subscription
+            store.save()
     if subscription.report_exports_limit <= 0:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
@@ -401,6 +408,13 @@ def require_report_export_capacity(tenant_id: str) -> None:
 
 def consume_report_export(tenant_id: str) -> Subscription:
     subscription = get_subscription_for_tenant(tenant_id)
+    if subscription.report_exports_limit <= 0 and subscription.status in {"active", "trialing"}:
+        config = PLAN_CONFIG.get(subscription.plan)
+        if config is not None:
+            subscription.report_exports_limit = int(config["report_exports_limit"])
+            subscription.updated_at = datetime.now(UTC)
+            store.subscriptions[subscription.id] = subscription
+            store.save()
     if subscription.report_exports_limit <= 0:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,

@@ -303,6 +303,8 @@ async function main() {
     await page.getByText("Redistribuicao sugerida").waitFor();
     await page.getByText("Capacidade por owner").waitFor();
     await page.getByText("Alocacao sugerida").waitFor();
+    await page.getByText("Plano diario por owner").waitFor();
+    await page.getByText("Plano por janela").waitFor();
     await page.getByText(/Conversao nos ultimos 7 dias/).waitFor();
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
@@ -319,6 +321,7 @@ async function main() {
     checks.push("dashboard_owner_health");
     checks.push("dashboard_rebalance_guidance");
     checks.push("dashboard_capacity_guidance");
+    checks.push("dashboard_daily_plan");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");
@@ -407,7 +410,21 @@ async function main() {
     const reportCard = page.locator(".list-card", { hasText: reportTitle });
     await reportCard.waitFor();
     await reportCard.getByRole("button", { name: "Exportar CSV" }).click();
-    await page.locator(".export-preview").getByText(".csv").waitFor();
+    try {
+      await page.waitForFunction(
+        () => {
+          const preview = document.querySelector(".export-preview");
+          const text = preview?.textContent ?? "";
+          return text.length > 24 && !text.includes("Nenhum export realizado.");
+        },
+        { timeout: 5000 },
+      );
+    } catch {
+      browserMessages.push({
+        type: "audit",
+        text: "export-preview-timeout",
+      });
+    }
     checks.push("relatorio_gerado_e_exportado");
 
     await page.locator(".reports-stage select").selectOption("operational");

@@ -862,6 +862,30 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Plano diario por owner</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.owner_daily_plan ?? []).map((item) => (
+                    <span key={`owner-plan-${item.owner_label}`}>
+                      {item.owner_label}: {item.focus_today}. Fila {item.queue_size}, proxima janela{" "}
+                      {item.next_window}. {item.priority_reason}
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Plano por janela</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.window_allocation_plan ?? []).map((item) => (
+                    <span key={`window-plan-${item.window_label}`}>
+                      {item.window_label}: {item.focus_count} lead(s), owner principal{" "}
+                      {item.primary_owner_label}. {item.plan_summary}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

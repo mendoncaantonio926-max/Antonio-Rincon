@@ -539,6 +539,70 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
             }
         )
     assignment_suggestions = assignment_suggestions[:4]
+    owner_daily_plan = []
+    for capacity in owner_capacity[:4]:
+        owner_label = str(capacity["owner_label"])
+        owner_items = [
+            item
+            for item in pending_leads
+            if str(item["owner_name"] or item["suggested_owner_name"] or "Sem owner") == owner_label
+        ]
+        focus_today = "Revisar fila comercial"
+        priority_reason = "Fila equilibrada para o dia."
+        if owner_items:
+            lead = owner_items[0]
+            follow_up_bucket = str(lead["follow_up_bucket"])
+            if follow_up_bucket == "overdue":
+                focus_today = f"Destravar {lead['name']} ainda hoje"
+                priority_reason = "Existe atraso comercial na primeira posicao da fila."
+            elif follow_up_bucket == "today":
+                focus_today = f"Fechar retorno de {lead['name']}"
+                priority_reason = "A janela de follow-up vence hoje."
+            elif not lead["owner_user_id"]:
+                focus_today = f"Assumir owner de {lead['name']}"
+                priority_reason = "Ha lead sem owner pedindo definicao imediata."
+            else:
+                focus_today = f"Avancar {lead['name']} na proxima rodada"
+                priority_reason = "A fila ja tem owner e precisa manter cadencia."
+        owner_daily_plan.append(
+            {
+                "owner_label": owner_label,
+                "focus_today": focus_today,
+                "queue_size": int(capacity["active_queue_count"]),
+                "next_window": str(capacity["recommended_window"]),
+                "priority_reason": priority_reason,
+            }
+        )
+    window_allocation_plan = []
+    for window_item in window_pressure[:5]:
+        matching_leads = [
+            item
+            for item in pending_leads
+            if follow_up_bucket_labels.get(str(item["follow_up_bucket"]), "Sem agenda")
+            == str(window_item["window_label"])
+        ]
+        primary_owner_label = (
+            str(matching_leads[0]["owner_name"] or matching_leads[0]["suggested_owner_name"] or "Sem owner")
+            if matching_leads
+            else "Sem owner"
+        )
+        plan_summary = (
+            f"{window_item['window_label']} concentra {window_item['leads_count']} lead(s) "
+            f"com {window_item['high_risk_count']} em risco."
+        )
+        if matching_leads:
+            plan_summary = (
+                f"{primary_owner_label} puxa {matching_leads[0]['name']} e abre a janela "
+                f"{window_item['window_label'].lower()}."
+            )
+        window_allocation_plan.append(
+            {
+                "window_label": str(window_item["window_label"]),
+                "focus_count": int(window_item["leads_count"]),
+                "primary_owner_label": primary_owner_label,
+                "plan_summary": plan_summary,
+            }
+        )
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -645,6 +709,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "rebalance_suggestions": rebalance_suggestions,
         "owner_capacity": owner_capacity[:4],
         "assignment_suggestions": assignment_suggestions,
+        "owner_daily_plan": owner_daily_plan,
+        "window_allocation_plan": window_allocation_plan,
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

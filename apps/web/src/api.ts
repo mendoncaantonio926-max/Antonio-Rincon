@@ -392,6 +392,19 @@ export type DashboardSummary = {
     recommended_window: string;
     reason: string;
   }>;
+  owner_daily_plan: Array<{
+    owner_label: string;
+    focus_today: string;
+    queue_size: number;
+    next_window: string;
+    priority_reason: string;
+  }>;
+  window_allocation_plan: Array<{
+    window_label: string;
+    focus_count: number;
+    primary_owner_label: string;
+    plan_summary: string;
+  }>;
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;

@@ -114,6 +114,21 @@ class DashboardAssignmentSuggestionResponse(BaseModel):
     reason: str
 
 
+class DashboardOwnerPlanResponse(BaseModel):
+    owner_label: str
+    focus_today: str
+    queue_size: int
+    next_window: str
+    priority_reason: str
+
+
+class DashboardWindowPlanResponse(BaseModel):
+    window_label: str
+    focus_count: int
+    primary_owner_label: str
+    plan_summary: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -155,6 +170,8 @@ class DashboardSummaryResponse(BaseModel):
     rebalance_suggestions: list[DashboardRebalanceSuggestionResponse]
     owner_capacity: list[DashboardOwnerCapacityResponse]
     assignment_suggestions: list[DashboardAssignmentSuggestionResponse]
+    owner_daily_plan: list[DashboardOwnerPlanResponse]
+    window_allocation_plan: list[DashboardWindowPlanResponse]
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str
