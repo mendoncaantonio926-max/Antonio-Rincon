@@ -14,6 +14,18 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Docs
+
+### Ops
+
+## [0.1.8] - 2026-03-08
+
+### Added
+
 - billing agora expone estagio de cobranca, proxima acao comercial, periodo de graca, ultima tentativa de pagamento e contagem de falhas para refletir um fluxo de cobranca mais real
 - a tela de assinatura ganhou leitura comercial mais profunda com sinais de cobranca, janela de graca e controles locais para tentativa de cobranca e encerramento da conta
 - adversarios agora expone leitura temporal entre janelas, spotlight competitivo e delta de momentum por monitorado
@@ -221,6 +233,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 - scripts de backend e frontend padronizados para setup, smoke e validacao ponta a ponta
 - CI, changelog, release e triagem de PR alinhados ao fluxo local
+
 
 
 

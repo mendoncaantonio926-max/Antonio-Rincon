@@ -1,7 +1,7 @@
 {
   "name": "@pulso/web",
   "private": true,
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,8 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@pulso/types": "0.1.7",
-    "@pulso/ui": "0.1.7",
+    "@pulso/types": "0.1.8",
+    "@pulso/ui": "0.1.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.1"
