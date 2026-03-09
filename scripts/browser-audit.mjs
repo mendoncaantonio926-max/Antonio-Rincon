@@ -357,6 +357,11 @@ async function main() {
     await page.getByText("Sinal de rua").waitFor();
     checks.push("evento_de_adversario_criado");
 
+    await page.getByText("Spotlight temporal").waitFor();
+    await page.getByText(/Pressao em alta|Pressao estavel|Pressao em queda/).waitFor();
+    await page.locator(".watchlist-card").filter({ hasText: "Janela anterior" }).first().waitFor();
+    checks.push("spotlight_temporal_de_adversarios");
+
     await page.locator(".timeline-stage .toolbar select").selectOption("info");
     await page.getByText("Nenhum evento registrado para o filtro atual.").waitFor();
     await page.locator(".timeline-stage .toolbar select").selectOption("critical");
