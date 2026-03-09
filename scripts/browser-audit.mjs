@@ -298,7 +298,7 @@ async function main() {
     await page.getByText("Throughput comercial").waitFor();
     await page.getByText("Variacao por owner").waitFor();
     await page.getByText("Saude por owner").waitFor();
-    await page.getByText("Fila de recuperacao").waitFor();
+    await page.getByText("Fila de recuperacao", { exact: true }).waitFor();
     await page.getByText(/Conversao nos ultimos 7 dias/).waitFor();
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();

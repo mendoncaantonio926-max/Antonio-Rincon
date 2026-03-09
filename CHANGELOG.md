@@ -28,6 +28,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora expone meta de conversao por owner e comparativo de throughput entre a janela atual e a anterior no mesmo quadro comercial
 - dashboard agora expone variacao de throughput por owner para comparar quem acelerou ou caiu entre a janela atual e a anterior
 - dashboard agora expone saude comercial por owner e fila de recuperacao para atacar atraso, gap de meta e risco de conversao
+- IA contextual agora incorpora saude comercial por owner e fila de recuperacao na recomendacao executiva do dashboard
 
 ### Changed
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
+from app.services.dashboard_service import get_dashboard_summary
 from app.services.crud_service import (
     build_opponents_summary,
     list_contacts,
@@ -22,6 +23,7 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     reports = list_reports(tenant_id)
     subscription = get_subscription_for_tenant(tenant_id)
     opponents_summary = build_opponents_summary(tenant_id)
+    dashboard_summary = get_dashboard_summary(tenant_id)
     leads = list(store.leads.values())
     pending_lead_queue = [
         serialize_lead(lead, tenant_id) for lead in leads if not lead.converted_contact_id
@@ -79,6 +81,17 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     )
     trial_days_remaining = get_trial_days_remaining(subscription)
     module = module if module in {"dashboard", "contacts", "tasks", "opponents", "billing"} else "dashboard"
+    owner_health = dashboard_summary.get("owner_health", [])
+    recovery_queue = dashboard_summary.get("recovery_queue", [])
+    critical_owner = next(
+        (
+            item
+            for item in owner_health
+            if isinstance(item, dict) and item.get("pressure_label") == "critical"
+        ),
+        None,
+    )
+    first_recovery = recovery_queue[0] if recovery_queue and isinstance(recovery_queue[0], dict) else None
 
     next_action = "Consolidar rotina semanal"
     action_reason = "O workspace esta funcional e pede manutencao de cadencia, leitura executiva e revisao de prioridades."
@@ -97,6 +110,46 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         f"{open_tasks} tarefa(s) em aberto e {overdue_tasks} vencida(s).",
         f"{len(opponents)} adversario(s) e {critical_events} sinal(is) critico(s) monitorado(s).",
     ]
+    if critical_owner:
+        supporting_signals.insert(
+            0,
+            (
+                f"Owner sob pressao: {critical_owner['owner_label']} com score "
+                f"{critical_owner['health_score']}, gap {critical_owner['target_gap']} "
+                f"e {critical_owner['overdue_count']} atraso(s)."
+            ),
+        )
+        recommendations.insert(
+            0,
+            "Reequilibre a fila do owner mais pressionado antes de distribuir novos leads.",
+        )
+        blockers.insert(
+            0,
+            "Existe owner comercial com saude critica puxando atraso e gap de meta.",
+        )
+        if module == "dashboard" and urgency != "high":
+            next_action = "Recuperar owner sob pressao"
+            action_reason = (
+                f"{critical_owner['owner_label']} concentra atraso comercial e gap de meta, "
+                "o que pede rebalanceamento imediato da fila."
+            )
+            urgency = "high"
+            priority_score = max(priority_score, 84)
+            trigger_signal = (
+                f"{critical_owner['owner_label']} com score {critical_owner['health_score']} "
+                f"e {critical_owner['overdue_count']} atraso(s)"
+            )
+            focus_area = "gestao comercial"
+            suggested_owner = "coordenacao comercial"
+            due_window = "hoje"
+    if first_recovery:
+        supporting_signals.insert(
+            0,
+            (
+                f"Fila de recuperacao aberta por {first_recovery['lead_name']}: "
+                f"{first_recovery['reason']}."
+            ),
+        )
     if overdue_followups > 0 and module in {"dashboard", "contacts"}:
         focus_lead_name = str(priority_lead["name"]) if priority_lead else "a fila comercial"
         focus_owner = (
