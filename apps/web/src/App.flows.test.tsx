@@ -646,6 +646,58 @@ const {
           : `${item.window_label} concentra ${item.leads_count} lead(s) com ${item.high_risk_count} em risco.`,
       };
     });
+    const stageForecastMap = new Map<
+      string,
+      {
+        stage_label: string;
+        leads_count: number;
+        high_priority_count: number;
+        expected_conversions: number;
+      }
+    >();
+    for (const item of pendingLeads) {
+      const stageLabel =
+        {
+          captured: "Captado",
+          qualified: "Qualificado",
+          follow_up: "Em follow-up",
+          proposal: "Proposta",
+        }[item.stage] ?? "Captado";
+      const stageItem = stageForecastMap.get(stageLabel) ?? {
+        stage_label: stageLabel,
+        leads_count: 0,
+        high_priority_count: 0,
+        expected_conversions: 0,
+      };
+      stageItem.leads_count += 1;
+      if (["high", "critical"].includes(item.priority_label)) {
+        stageItem.high_priority_count += 1;
+      }
+      if (
+        item.stage === "proposal" ||
+        (item.stage === "follow_up" && ["today", "overdue"].includes(item.follow_up_bucket)) ||
+        (item.stage === "qualified" && item.priority_label === "critical")
+      ) {
+        stageItem.expected_conversions += 1;
+      }
+      stageForecastMap.set(stageLabel, stageItem);
+    }
+    const stageForecast = Array.from(stageForecastMap.values());
+    const expectedConversions = stageForecast.reduce(
+      (total, item) => total + item.expected_conversions,
+      0,
+    );
+    const committedPipelineCount = pendingLeads.filter((item) =>
+      ["follow_up", "proposal"].includes(item.stage),
+    ).length;
+    const conversionForecast = {
+      window_label: "Proximos 7 dias",
+      expected_conversions: expectedConversions,
+      committed_pipeline_count: committedPipelineCount,
+      forecast_band:
+        expectedConversions >= 3 ? "forte" : expectedConversions <= 1 ? "contido" : "moderado",
+      summary: `Janela dos proximos 7 dias com ${expectedConversions} fechamento(s) esperado(s) e ${committedPipelineCount} lead(s) no pipeline comprometido.`,
+    };
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -732,6 +784,8 @@ const {
       assignment_suggestions: assignmentSuggestions,
       owner_daily_plan: ownerDailyPlan,
       window_allocation_plan: windowAllocationPlan,
+      stage_forecast: stageForecast,
+      conversion_forecast: conversionForecast,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -1992,6 +2046,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Alocacao sugerida")).toBeInTheDocument();
       expect(screen.getByText("Plano diario por owner")).toBeInTheDocument();
       expect(screen.getByText("Plano por janela")).toBeInTheDocument();
+      expect(screen.getByText("Previsao por estagio")).toBeInTheDocument();
+      expect(screen.getByText("Fechamento projetado")).toBeInTheDocument();
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 

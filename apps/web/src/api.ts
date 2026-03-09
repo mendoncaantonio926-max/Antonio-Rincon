@@ -405,6 +405,19 @@ export type DashboardSummary = {
     primary_owner_label: string;
     plan_summary: string;
   }>;
+  stage_forecast: Array<{
+    stage_label: string;
+    leads_count: number;
+    high_priority_count: number;
+    expected_conversions: number;
+  }>;
+  conversion_forecast: {
+    window_label: string;
+    expected_conversions: number;
+    committed_pipeline_count: number;
+    forecast_band: string;
+    summary: string;
+  };
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;

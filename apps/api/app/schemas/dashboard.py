@@ -129,6 +129,21 @@ class DashboardWindowPlanResponse(BaseModel):
     plan_summary: str
 
 
+class DashboardStageForecastResponse(BaseModel):
+    stage_label: str
+    leads_count: int
+    high_priority_count: int
+    expected_conversions: int
+
+
+class DashboardConversionForecastResponse(BaseModel):
+    window_label: str
+    expected_conversions: int
+    committed_pipeline_count: int
+    forecast_band: str
+    summary: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -172,6 +187,8 @@ class DashboardSummaryResponse(BaseModel):
     assignment_suggestions: list[DashboardAssignmentSuggestionResponse]
     owner_daily_plan: list[DashboardOwnerPlanResponse]
     window_allocation_plan: list[DashboardWindowPlanResponse]
+    stage_forecast: list[DashboardStageForecastResponse]
+    conversion_forecast: DashboardConversionForecastResponse
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str

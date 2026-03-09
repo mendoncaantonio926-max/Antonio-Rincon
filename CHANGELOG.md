@@ -32,6 +32,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora expone pressao por janela e redistribuicao sugerida para rebalancear a fila comercial entre owners
 - dashboard agora expone capacidade por owner e alocacao sugerida para orientar para onde a fila deve ir primeiro
 - dashboard agora expone plano diario por owner e plano por janela para fechar a execucao comercial do dia
+- dashboard agora expone previsao por estagio e fechamento projetado para antecipar resultado comercial da semana
 - exportacao de relatorios no scaffold local agora recompõe a cota padrao do plano para contas ativas ou trial durante validacoes repetidas
 
 ### Changed
@@ -49,6 +50,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - browser audit agora valida tambem pressao por janela e redistribuicao sugerida no dashboard executivo
 - browser audit agora valida tambem capacidade por owner e alocacao sugerida no dashboard executivo
 - browser audit agora valida tambem o plano diario por owner e o plano por janela no dashboard executivo
+- browser audit agora valida tambem previsao por estagio e fechamento projetado no dashboard executivo
 ### Fixed
 
 ### Docs

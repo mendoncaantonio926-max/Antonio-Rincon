@@ -603,6 +603,68 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
                 "plan_summary": plan_summary,
             }
         )
+    stage_labels = {
+        "captured": "Captado",
+        "qualified": "Qualificado",
+        "follow_up": "Em follow-up",
+        "proposal": "Proposta",
+    }
+    stage_forecast_map: dict[str, dict[str, int | str]] = {}
+    for item in pending_leads:
+        stage_label = stage_labels.get(str(item["stage"]), "Captado")
+        group = stage_forecast_map.setdefault(
+            stage_label,
+            {
+                "stage_label": stage_label,
+                "leads_count": 0,
+                "high_priority_count": 0,
+                "expected_conversions": 0,
+            },
+        )
+        group["leads_count"] = int(group["leads_count"]) + 1
+        if str(item["priority_label"]) in {"high", "critical"}:
+            group["high_priority_count"] = int(group["high_priority_count"]) + 1
+        weight = 0
+        if str(item["stage"]) == "proposal":
+            weight = 1
+        elif str(item["stage"]) == "follow_up" and str(item["follow_up_bucket"]) in {"today", "overdue"}:
+            weight = 1
+        elif str(item["stage"]) == "qualified" and str(item["priority_label"]) == "critical":
+            weight = 1
+        group["expected_conversions"] = int(group["expected_conversions"]) + weight
+    stage_order = {
+        "Proposta": 0,
+        "Em follow-up": 1,
+        "Qualificado": 2,
+        "Captado": 3,
+    }
+    stage_forecast = sorted(
+        stage_forecast_map.values(),
+        key=lambda item: (
+            stage_order.get(str(item["stage_label"]), 99),
+            -int(item["high_priority_count"]),
+            -int(item["leads_count"]),
+        ),
+    )
+    expected_conversions = sum(int(item["expected_conversions"]) for item in stage_forecast)
+    committed_pipeline_count = len(
+        [item for item in pending_leads if str(item["stage"]) in {"follow_up", "proposal"}]
+    )
+    forecast_band = "moderado"
+    if expected_conversions >= 3:
+        forecast_band = "forte"
+    elif expected_conversions <= 1:
+        forecast_band = "contido"
+    conversion_forecast = {
+        "window_label": "Proximos 7 dias",
+        "expected_conversions": expected_conversions,
+        "committed_pipeline_count": committed_pipeline_count,
+        "forecast_band": forecast_band,
+        "summary": (
+            f"Janela dos proximos 7 dias com {expected_conversions} fechamento(s) esperado(s) "
+            f"e {committed_pipeline_count} lead(s) no pipeline comprometido."
+        ),
+    }
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -711,6 +773,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "assignment_suggestions": assignment_suggestions,
         "owner_daily_plan": owner_daily_plan,
         "window_allocation_plan": window_allocation_plan,
+        "stage_forecast": stage_forecast,
+        "conversion_forecast": conversion_forecast,
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

@@ -886,6 +886,40 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Previsao por estagio</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.stage_forecast ?? []).map((item) => (
+                    <span key={`stage-forecast-${item.stage_label}`}>
+                      {item.stage_label}: {item.leads_count} lead(s), {item.high_priority_count} em
+                      prioridade alta, {item.expected_conversions} fechamento(s) esperado(s)
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Fechamento projetado</span>
+                <div className="dashboard-recommendations">
+                  <span>
+                    {summary?.conversion_forecast.summary ??
+                      "A previsao aparece quando o funil ganha estagios de fechamento."}
+                  </span>
+                  <span>
+                    {summary?.conversion_forecast.window_label ?? "Janela"}:{" "}
+                    {summary?.conversion_forecast.expected_conversions ?? 0} fechamento(s)
+                    esperado(s)
+                  </span>
+                  <span>
+                    Pipeline comprometido:{" "}
+                    {summary?.conversion_forecast.committed_pipeline_count ?? 0}
+                  </span>
+                  <span>
+                    Banda de forecast: {summary?.conversion_forecast.forecast_band ?? "contido"}
+                  </span>
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>
