@@ -426,6 +426,56 @@ const {
         direction: delta > 0 ? "up" : delta < 0 ? "down" : "stable",
       };
     });
+    const ownerHealth = ownerTargets.map((item) => {
+      const throughputItem = ownerThroughput.find(
+        (throughput) => throughput.owner_label === item.owner_label,
+      );
+      const productivityItem = ownerProductivity.find(
+        (productivity) => productivity.label === item.owner_label,
+      );
+      let healthScore = 100;
+      healthScore -= item.gap * 14;
+      healthScore -= (productivityItem?.overdue_count ?? 0) * 18;
+      healthScore += Math.max(throughputItem?.delta ?? 0, 0) * 8;
+      healthScore -= Math.max(-(throughputItem?.delta ?? 0), 0) * 10;
+      healthScore = Math.max(18, Math.min(healthScore, 100));
+      return {
+        owner_label: item.owner_label,
+        health_score: healthScore,
+        pressure_label: healthScore <= 44 ? "critical" : healthScore <= 68 ? "attention" : "steady",
+        overdue_count: productivityItem?.overdue_count ?? 0,
+        target_gap: item.gap,
+        throughput_delta: throughputItem?.delta ?? 0,
+      };
+    });
+    const recoveryQueue = pendingLeads
+      .map((item) => {
+        let reason: string | null = null;
+        if (item.follow_up_bucket === "overdue") {
+          reason = "Follow-up fora do SLA";
+        } else if (["high", "critical"].includes(item.priority_label)) {
+          reason = "Lead com risco elevado";
+        } else if (!item.owner_user_id) {
+          reason = "Lead sem owner definido";
+        }
+        if (!reason) {
+          return null;
+        }
+        return {
+          lead_id: item.id,
+          lead_name: item.name,
+          owner_label: item.owner_name || item.suggested_owner_name || "Sem owner",
+          reason,
+          recommended_action:
+            item.follow_up_bucket === "overdue"
+              ? "Executar contato ainda hoje"
+              : item.owner_user_id
+                ? "Definir owner e janela"
+                : "Atribuir owner sugerido",
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .slice(0, 5);
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -504,6 +554,8 @@ const {
         summary: `Conversao nos ultimos 7 dias: ${currentWindowConvertedCount}. Janela anterior: ${previousWindowConvertedCount}. Delta ${throughputDelta}.`,
       },
       owner_throughput: ownerThroughput,
+      owner_health: ownerHealth,
+      recovery_queue: recoveryQueue,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -1756,6 +1808,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Meta por owner")).toBeInTheDocument();
       expect(screen.getByText("Throughput comercial")).toBeInTheDocument();
       expect(screen.getByText("Variacao por owner")).toBeInTheDocument();
+      expect(screen.getByText("Saude por owner")).toBeInTheDocument();
+      expect(screen.getByText("Fila de recuperacao")).toBeInTheDocument();
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 

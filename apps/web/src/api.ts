@@ -348,6 +348,21 @@ export type DashboardSummary = {
     delta: number;
     direction: string;
   }>;
+  owner_health: Array<{
+    owner_label: string;
+    health_score: number;
+    pressure_label: string;
+    overdue_count: number;
+    target_gap: number;
+    throughput_delta: number;
+  }>;
+  recovery_queue: Array<{
+    lead_id: string;
+    lead_name: string;
+    owner_label: string;
+    reason: string;
+    recommended_action: string;
+  }>;
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;

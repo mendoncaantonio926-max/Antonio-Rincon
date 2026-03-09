@@ -789,6 +789,30 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Saude por owner</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.owner_health ?? []).map((item) => (
+                    <span key={`owner-health-${item.owner_label}`}>
+                      {item.owner_label}: score {item.health_score}, {item.pressure_label}, gap{" "}
+                      {item.target_gap}, atraso {item.overdue_count}, delta {item.throughput_delta}
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Fila de recuperacao</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.recovery_queue ?? []).map((item) => (
+                    <span key={`recovery-${item.lead_id}`}>
+                      {item.lead_name}: {item.reason}. {item.recommended_action} com{" "}
+                      {item.owner_label}.
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

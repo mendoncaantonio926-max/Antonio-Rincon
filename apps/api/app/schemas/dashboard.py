@@ -64,6 +64,23 @@ class DashboardOwnerThroughputResponse(BaseModel):
     direction: str
 
 
+class DashboardOwnerHealthResponse(BaseModel):
+    owner_label: str
+    health_score: int
+    pressure_label: str
+    overdue_count: int
+    target_gap: int
+    throughput_delta: int
+
+
+class DashboardRecoveryItemResponse(BaseModel):
+    lead_id: str
+    lead_name: str
+    owner_label: str
+    reason: str
+    recommended_action: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -99,6 +116,8 @@ class DashboardSummaryResponse(BaseModel):
     owner_targets: list[DashboardOwnerTargetResponse]
     throughput_comparison: DashboardThroughputComparisonResponse
     owner_throughput: list[DashboardOwnerThroughputResponse]
+    owner_health: list[DashboardOwnerHealthResponse]
+    recovery_queue: list[DashboardRecoveryItemResponse]
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str

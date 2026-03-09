@@ -333,6 +333,79 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
             str(item["owner_label"]),
         )
     )
+    owner_health = []
+    for target in owner_targets:
+        throughput_item = next(
+            (
+                item
+                for item in owner_throughput
+                if str(item["owner_label"]) == str(target["owner_label"])
+            ),
+            None,
+        )
+        productivity_item = next(
+            (
+                item
+                for item in owner_productivity
+                if str(item["label"]) == str(target["owner_label"])
+            ),
+            None,
+        )
+        health_score = 100
+        health_score -= int(target["gap"]) * 14
+        health_score -= int(productivity_item["overdue_count"]) * 18 if productivity_item else 0
+        health_score += max(int(throughput_item["delta"]), 0) * 8 if throughput_item else 0
+        health_score -= max(-int(throughput_item["delta"]), 0) * 10 if throughput_item else 0
+        health_score = max(18, min(health_score, 100))
+        pressure_label = "steady"
+        if health_score <= 44:
+            pressure_label = "critical"
+        elif health_score <= 68:
+            pressure_label = "attention"
+        owner_health.append(
+            {
+                "owner_label": str(target["owner_label"]),
+                "health_score": health_score,
+                "pressure_label": pressure_label,
+                "overdue_count": int(productivity_item["overdue_count"]) if productivity_item else 0,
+                "target_gap": int(target["gap"]),
+                "throughput_delta": int(throughput_item["delta"]) if throughput_item else 0,
+            }
+        )
+    owner_health.sort(
+        key=lambda item: (
+            int(item["health_score"]),
+            -int(item["overdue_count"]),
+            -int(item["target_gap"]),
+            str(item["owner_label"]),
+        )
+    )
+    recovery_queue = []
+    for item in pending_leads:
+        reason = None
+        if str(item["follow_up_bucket"]) == "overdue":
+            reason = "Follow-up fora do SLA"
+        elif str(item["priority_label"]) in {"high", "critical"}:
+            reason = "Lead com risco elevado"
+        elif not item["owner_user_id"]:
+            reason = "Lead sem owner definido"
+        if reason is None:
+            continue
+        recommended_action = "Definir owner e janela"
+        if str(item["follow_up_bucket"]) == "overdue":
+            recommended_action = "Executar contato ainda hoje"
+        elif not item["owner_user_id"]:
+            recommended_action = "Atribuir owner sugerido"
+        recovery_queue.append(
+            {
+                "lead_id": str(item["id"]),
+                "lead_name": str(item["name"]),
+                "owner_label": str(item["owner_name"] or item["suggested_owner_name"] or "Sem owner"),
+                "reason": reason,
+                "recommended_action": recommended_action,
+            }
+        )
+    recovery_queue = recovery_queue[:5]
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -433,6 +506,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "owner_targets": owner_targets[:4],
         "throughput_comparison": throughput_comparison,
         "owner_throughput": owner_throughput[:4],
+        "owner_health": owner_health[:4],
+        "recovery_queue": recovery_queue,
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

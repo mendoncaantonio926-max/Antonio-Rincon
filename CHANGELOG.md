@@ -27,6 +27,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora expone primeira agenda do dia e resumo diario por owner para transformar a fila comercial em ritual de execucao
 - dashboard agora expone meta de conversao por owner e comparativo de throughput entre a janela atual e a anterior no mesmo quadro comercial
 - dashboard agora expone variacao de throughput por owner para comparar quem acelerou ou caiu entre a janela atual e a anterior
+- dashboard agora expone saude comercial por owner e fila de recuperacao para atacar atraso, gap de meta e risco de conversao
 
 ### Changed
 
@@ -39,6 +40,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - browser audit agora valida tambem a acao rapida comercial do dashboard antes de seguir para os fluxos do app
 - browser audit agora valida tambem meta por owner e throughput comercial no dashboard executivo
 - browser audit agora valida tambem a variacao de throughput por owner no dashboard executivo
+- browser audit agora valida tambem saude por owner e fila de recuperacao no dashboard executivo
 ### Fixed
 
 ### Docs
