@@ -39,6 +39,10 @@ function getLeadWindowLabel(lead: Lead) {
   return leadWindowLabels[lead.follow_up_bucket] ?? "Sem agenda";
 }
 
+function formatSignedNumber(value: number) {
+  return `${value >= 0 ? "+" : ""}${value}`;
+}
+
 function distributeRecoveredGap(
   totalRecoveredGap: number,
   buckets: Array<{ label: string; appliedCount: number }>,
@@ -467,6 +471,11 @@ function DashboardPage() {
       followUpsScheduled: number;
       stabilizedCount: number;
     }>;
+    ownerOutcomeImpact: Array<{
+      label: string;
+      status: "accelerated" | "stagnant";
+      summary: string;
+    }>;
     windowImpact: Array<{
       label: string;
       appliedCount: number;
@@ -704,6 +713,39 @@ function DashboardPage() {
               left.label.localeCompare(right.label),
           )
           .slice(0, 4);
+        const ownerOutcomeImpact = Array.from(
+          new Set([
+            ...ownerHealthImpact.map((item) => item.label),
+            ...ownerCadenceImpact.map((item) => item.label),
+          ]),
+        )
+          .map((label) => {
+            const health = ownerHealthImpact.find((item) => item.label === label);
+            const cadence = ownerCadenceImpact.find((item) => item.label === label);
+            const accelerated =
+              (health?.healthDelta ?? 0) > 0 ||
+              (health?.gapRecovered ?? 0) > 0 ||
+              (health?.overdueReduced ?? 0) > 0 ||
+              (cadence?.stabilizedCount ?? 0) > 0 ||
+              (cadence?.followUpsScheduled ?? 0) > 0 ||
+              (cadence?.assignmentsAdded ?? 0) > 0;
+            const status: "accelerated" | "stagnant" = accelerated ? "accelerated" : "stagnant";
+            return {
+              label,
+              status,
+              summary: accelerated
+                ? `Acelerou com score ${formatSignedNumber(health?.healthDelta ?? 0)}, ${
+                    cadence?.followUpsScheduled ?? 0
+                  } follow-up(s) e ${cadence?.stabilizedCount ?? 0} lead(s) estabilizado(s).`
+                : "Permaneceu sem ganho relevante de cadencia depois da regua.",
+            };
+          })
+          .sort(
+            (left, right) =>
+              Number(right.status === "accelerated") - Number(left.status === "accelerated") ||
+              left.label.localeCompare(right.label),
+          )
+          .slice(0, 4);
         const beforeWindowMap = new Map(
           beforeSummary.commercial_window_groups.map((item) => [item.label, item.leads_count]),
         );
@@ -754,6 +796,7 @@ function DashboardPage() {
           ownerImpact,
           ownerHealthImpact,
           ownerCadenceImpact,
+          ownerOutcomeImpact,
           windowImpact,
         });
       } else if (
@@ -834,6 +877,32 @@ function DashboardPage() {
                       : 0,
                 },
               ];
+        const ownerOutcomeImpact =
+          updatedLead === null
+            ? []
+            : (() => {
+                const accelerated =
+                  (ownerHealthImpact[0]?.healthDelta ?? 0) > 0 ||
+                  (ownerHealthImpact[0]?.gapRecovered ?? 0) > 0 ||
+                  (ownerHealthImpact[0]?.overdueReduced ?? 0) > 0 ||
+                  (ownerCadenceImpact[0]?.stabilizedCount ?? 0) > 0 ||
+                  (ownerCadenceImpact[0]?.followUpsScheduled ?? 0) > 0 ||
+                  (ownerCadenceImpact[0]?.assignmentsAdded ?? 0) > 0;
+                const status: "accelerated" | "stagnant" = accelerated ? "accelerated" : "stagnant";
+                return [
+                  {
+                    label: getLeadOwnerLabel(updatedLead),
+                    status,
+                    summary: accelerated
+                      ? `Acelerou com score ${formatSignedNumber(
+                          ownerHealthImpact[0]?.healthDelta ?? 0,
+                        )}, ${ownerCadenceImpact[0]?.followUpsScheduled ?? 0} follow-up(s) e ${
+                          ownerCadenceImpact[0]?.stabilizedCount ?? 0
+                        } lead(s) estabilizado(s).`
+                      : "Permaneceu sem ganho relevante de cadencia depois da regua.",
+                  },
+                ];
+              })();
         const beforeWindowMap = new Map(
           summary.commercial_window_groups.map((item) => [item.label, item.leads_count]),
         );
@@ -875,6 +944,7 @@ function DashboardPage() {
           ownerImpact,
           ownerHealthImpact,
           ownerCadenceImpact,
+          ownerOutcomeImpact,
           windowImpact,
         });
       } else {
@@ -1098,6 +1168,20 @@ function DashboardPage() {
                           <span>
                             Owners {item.assignmentsAdded}, follow-ups {item.followUpsScheduled},
                             estabilizados {item.stabilizedCount}
+                          </span>
+                        </p>
+                      ))}
+                    </div>
+                  </article>
+                  <article className="dashboard-ai-impact-card">
+                    <span>Owners acelerados e estagnados</span>
+                    <div className="dashboard-ai-impact-list">
+                      {dashboardAiRunResult.ownerOutcomeImpact.map((item) => (
+                        <p key={item.label}>
+                          <strong>{item.label}</strong>
+                          <span>
+                            {item.status === "accelerated" ? "Acelerado" : "Estagnado"}:{" "}
+                            {item.summary}
                           </span>
                         </p>
                       ))}

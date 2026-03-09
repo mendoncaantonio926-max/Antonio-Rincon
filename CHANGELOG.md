@@ -46,6 +46,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - o dashboard agora mostra quanto do gap de meta foi recuperado por owner e por janela depois da execucao da regua da IA
 - o dashboard agora mostra tambem a variacao de saude por owner depois da execucao da regua da IA
 - o dashboard agora mostra tambem a cadencia operacional por owner depois da execucao da regua da IA
+- o dashboard agora destaca owners acelerados e owners estagnados depois da execucao da regua da IA
 - exportacao de relatorios no scaffold local agora recompõe a cota padrao do plano para contas ativas ou trial durante validacoes repetidas
 
 ### Changed
@@ -77,6 +78,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - browser audit agora valida tambem a recuperacao por owner e por janela no retorno da regua da IA
 - browser audit agora valida tambem a leitura de saude por owner apos a regua da IA
 - browser audit agora valida tambem a cadencia por owner apos a regua da IA
+- browser audit agora valida tambem a leitura de owners acelerados e estagnados apos a regua da IA
 ### Fixed
 
 ### Docs

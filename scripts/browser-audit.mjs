@@ -335,6 +335,7 @@ async function main() {
     await page.getByText("Meta recuperada por owner").waitFor();
     await page.getByText("Saude por owner apos a regua").waitFor();
     await page.getByText("Cadencia por owner apos a regua").waitFor();
+    await page.getByText("Owners acelerados e estagnados").waitFor();
     await page.getByText("Recuperacao por janela").waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
     await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();
@@ -365,6 +366,7 @@ async function main() {
     checks.push("dashboard_ai_owner_window_impact");
     checks.push("dashboard_ai_owner_health_impact");
     checks.push("dashboard_ai_owner_cadence_impact");
+    checks.push("dashboard_ai_owner_outcome_impact");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");

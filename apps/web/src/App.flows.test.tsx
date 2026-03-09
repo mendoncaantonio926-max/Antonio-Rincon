@@ -2360,6 +2360,7 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Meta recuperada por owner")).toBeInTheDocument();
       expect(screen.getByText("Saude por owner apos a regua")).toBeInTheDocument();
       expect(screen.getByText("Cadencia por owner apos a regua")).toBeInTheDocument();
+      expect(screen.getByText("Owners acelerados e estagnados")).toBeInTheDocument();
       expect(screen.getByText("Recuperacao por janela")).toBeInTheDocument();
       expect(screen.getAllByText("Antonio Rincon").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Hoje").length).toBeGreaterThan(0);
