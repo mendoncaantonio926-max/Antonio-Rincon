@@ -13,6 +13,7 @@ class DashboardSummaryResponse(BaseModel):
     hot_leads_count: int
     overdue_followups_count: int
     due_today_followups_count: int
+    critical_queue_count: int
     open_tasks_count: int
     overdue_tasks_count: int
     opponents_count: int
@@ -20,4 +21,8 @@ class DashboardSummaryResponse(BaseModel):
     memberships_count: int
     plan: str
     trial_status: str
+    priority_lead_name: str | None = None
+    priority_lead_owner_name: str | None = None
+    priority_lead_follow_up_label: str | None = None
+    priority_lead_risk_score: int
     next_action: str

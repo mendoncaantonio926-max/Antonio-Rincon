@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
+from app.services.public_service import serialize_lead
 from app.services.crud_service import list_contacts, list_opponents, list_tasks
 from app.services.plan_service import get_subscription_for_tenant
 from app.services.report_service import list_reports
@@ -20,6 +21,28 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
     today = date.today().isoformat()
     converted_leads_count = len([lead for lead in leads if lead.converted_contact_id])
     pending_leads_count = len(leads) - converted_leads_count
+    pending_leads = [
+        serialize_lead(lead, tenant_id) for lead in leads if not lead.converted_contact_id
+    ]
+    bucket_order = {
+        "overdue": 0,
+        "today": 1,
+        "this_week": 2,
+        "later": 3,
+        "unscheduled": 4,
+    }
+    pending_leads.sort(
+        key=lambda item: (
+            bucket_order.get(str(item["follow_up_bucket"]), 99),
+            -int(item["risk_score"]),
+            str(item["follow_up_at"] or "9999-12-31"),
+            str(item["created_at"]),
+        )
+    )
+    priority_lead = pending_leads[0] if pending_leads else None
+    critical_queue_count = len(
+        [item for item in pending_leads if item["priority_label"] in {"high", "critical"}]
+    )
     overdue_followups_count = len(
         [
             lead
@@ -64,6 +87,14 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
     else:
         next_action = "Workspace ativo. Mantenha contatos, tarefas e relatorios atualizados."
 
+    follow_up_bucket_labels = {
+        "overdue": "Atrasado",
+        "today": "Hoje",
+        "this_week": "Esta semana",
+        "later": "Mais a frente",
+        "unscheduled": "Sem agenda",
+    }
+
     return {
         "tenant_name": tenant.name,
         "contacts_count": len(contacts),
@@ -74,6 +105,7 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "hot_leads_count": hot_leads_count,
         "overdue_followups_count": overdue_followups_count,
         "due_today_followups_count": due_today_followups_count,
+        "critical_queue_count": critical_queue_count,
         "open_tasks_count": len([task for task in tasks if task.status != "done"]),
         "overdue_tasks_count": overdue_tasks_count,
         "opponents_count": len(opponents),
@@ -81,5 +113,17 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "memberships_count": memberships_count,
         "plan": subscription.plan,
         "trial_status": subscription.status,
+        "priority_lead_name": str(priority_lead["name"]) if priority_lead else None,
+        "priority_lead_owner_name": (
+            str(priority_lead["owner_name"] or priority_lead["suggested_owner_name"])
+            if priority_lead
+            else None
+        ),
+        "priority_lead_follow_up_label": (
+            follow_up_bucket_labels.get(str(priority_lead["follow_up_bucket"]), "Sem agenda")
+            if priority_lead
+            else None
+        ),
+        "priority_lead_risk_score": int(priority_lead["risk_score"]) if priority_lead else 0,
         "next_action": next_action,
     }

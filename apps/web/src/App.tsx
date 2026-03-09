@@ -437,6 +437,10 @@ function DashboardPage() {
             <span>Relatorios</span>
             <strong>{summary?.reports_count ?? 0}</strong>
           </article>
+          <article className="signal-chip">
+            <span>Fila critica</span>
+            <strong>{summary?.critical_queue_count ?? 0}</strong>
+          </article>
         </div>
       </div>
       <div className="dashboard-metrics">
@@ -569,6 +573,22 @@ function DashboardPage() {
             <p className="eyebrow">Panorama executivo</p>
             <h2>Onde a energia deve entrar</h2>
           </div>
+          <article className="dashboard-commercial-focus">
+            <div className="dashboard-commercial-focus__header">
+              <div>
+                <p className="eyebrow">Fila comercial priorizada</p>
+                <h3>{summary?.priority_lead_name ?? "Sem lead critico no momento"}</h3>
+              </div>
+              <Badge tone={summary?.critical_queue_count ? "warning" : "info"}>
+                {`Risco ${summary?.priority_lead_risk_score ?? 0}`}
+              </Badge>
+            </div>
+            <p className="meta-copy">
+              {summary?.priority_lead_owner_name
+                ? `Puxar com ${summary.priority_lead_owner_name} na janela ${summary.priority_lead_follow_up_label ?? "definida"}.`
+                : "Sem prioridade comercial aberta neste momento."}
+            </p>
+          </article>
           <div className="snapshot-list">
             <article>
               <span>Base politica</span>
@@ -585,6 +605,13 @@ function DashboardPage() {
               <strong>
                 {summary?.hot_leads_count ?? 0} lead(s) quente(s), com{" "}
                 {summary?.due_today_followups_count ?? 0} follow-up(s) vencendo hoje.
+              </strong>
+            </article>
+            <article>
+              <span>Execucao comercial</span>
+              <strong>
+                {summary?.critical_queue_count ?? 0} lead(s) com risco alto ou critico pedem dono e
+                resposta imediata.
               </strong>
             </article>
             <article>

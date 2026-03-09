@@ -271,6 +271,7 @@ export type DashboardSummary = {
   hot_leads_count: number;
   overdue_followups_count: number;
   due_today_followups_count: number;
+  critical_queue_count: number;
   open_tasks_count: number;
   overdue_tasks_count: number;
   opponents_count: number;
@@ -278,6 +279,10 @@ export type DashboardSummary = {
   memberships_count: number;
   plan: string;
   trial_status: string;
+  priority_lead_name?: string | null;
+  priority_lead_owner_name?: string | null;
+  priority_lead_follow_up_label?: string | null;
+  priority_lead_risk_score: number;
   next_action: string;
 };
 

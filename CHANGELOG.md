@@ -20,6 +20,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - leads agora suportam estagio, responsavel e data de follow-up, com filtros de funil e atualizacao inline no painel autenticado
 - dashboard agora expone leads quentes, follow-ups atrasados e follow-ups vencendo hoje para leitura comercial imediata
 - leads agora calculam risco comercial, janela de follow-up e dono sugerido automaticamente para priorizar a fila
+- dashboard agora expone a fila comercial priorizada com lead mais urgente, owner sugerido, janela de resposta e tamanho da fila critica
 
 ### Changed
 
@@ -28,6 +29,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - browser audit agora valida tambem atualizacao de funil e filtro por estagio na area de leads
 - IA contextual agora prioriza SLA comercial rompido quando follow-ups ficam atrasados, e os cards de lead destacam urgencia comercial por estagio e prazo
 - a area de leads agora agrupa a fila por janela operacional, destaca escore de risco e permite atribuir a sugestao de owner sem sair do painel
+- IA contextual e dashboard agora usam o lead prioritario da fila para orientar dono sugerido e janela de resposta comercial
 ### Fixed
 
 ### Docs

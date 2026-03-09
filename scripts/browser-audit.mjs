@@ -287,6 +287,8 @@ async function main() {
     await page.getByText("Operacao em andamento").waitFor();
     await page.getByText("Escore de prioridade").waitFor();
     await page.getByText("Gatilho principal").waitFor();
+    await page.getByText("Fila comercial priorizada").waitFor();
+    await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
     const dashboardShot = path.join(logDir, "dashboard.png");
     if (await safeScreenshot(page, dashboardShot, browserMessages)) {
       screenshots.dashboard = dashboardShot;

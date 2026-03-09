@@ -932,6 +932,12 @@ const {
         (item) =>
           !item.converted_contact_id && ["qualified", "follow_up", "proposal"].includes(item.stage),
       ).length,
+      critical_queue_count: leadsState.items.filter((item) => {
+        const enriched = enrichLead(item);
+        return (
+          !enriched.converted_contact_id && ["high", "critical"].includes(enriched.priority_label)
+        );
+      }).length,
       overdue_followups_count: leadsState.items.filter(
         (item) =>
           !item.converted_contact_id &&
@@ -948,6 +954,10 @@ const {
       memberships_count: membershipsState.items.length,
       plan: billingState.subscription.plan,
       trial_status: billingState.subscription.status,
+      priority_lead_name: "Carlos Lima",
+      priority_lead_owner_name: "Antonio Rincon",
+      priority_lead_follow_up_label: "Atrasado",
+      priority_lead_risk_score: 100,
       next_action: "Fechar as pendencias operacionais.",
     })),
     getAiSummary: vi.fn(async (_token: string, module = "dashboard") => {
@@ -1553,6 +1563,9 @@ describe("App authenticated flows", () => {
       expect(screen.getAllByText("3 tarefas abertas").length).toBeGreaterThan(0);
       expect(screen.getByText("Leads pendentes")).toBeInTheDocument();
       expect(screen.getByText("Follow-ups atrasados")).toBeInTheDocument();
+      expect(screen.getByText("Fila comercial priorizada")).toBeInTheDocument();
+      expect(screen.getByText("Carlos Lima")).toBeInTheDocument();
+      expect(screen.getByText(/Puxar com Antonio Rincon/)).toBeInTheDocument();
     });
 
     await user.selectOptions(screen.getByDisplayValue("Workspace"), "billing");

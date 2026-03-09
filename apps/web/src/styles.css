@@ -994,6 +994,29 @@ h3,
   gap: 1rem;
 }
 
+.dashboard-commercial-focus {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1.05rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(196, 141, 72, 0.14), transparent 35%),
+    linear-gradient(180deg, rgba(255, 250, 242, 0.94), rgba(245, 237, 224, 0.88));
+  border: 1px solid rgba(120, 87, 45, 0.14);
+}
+
+.dashboard-commercial-focus__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-commercial-focus__header h3 {
+  margin: 0.15rem 0 0;
+}
+
 .dashboard-ai-summary {
   font-size: 1.1rem;
   line-height: 1.6;

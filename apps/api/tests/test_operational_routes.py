@@ -341,6 +341,9 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert "leads_count" in dashboard_response.json()
     assert "pending_leads_count" in dashboard_response.json()
     assert "overdue_followups_count" in dashboard_response.json()
+    assert "critical_queue_count" in dashboard_response.json()
+    assert "priority_lead_name" in dashboard_response.json()
+    assert "priority_lead_owner_name" in dashboard_response.json()
 
 
 def test_public_lead_capture() -> None:
@@ -503,6 +506,7 @@ def test_membership_invite_and_ai_summary() -> None:
     assert ai_response.json()["due_window"]
     assert isinstance(ai_response.json()["blockers"], list)
     assert isinstance(ai_response.json()["supporting_signals"], list)
+    assert len(ai_response.json()["supporting_signals"]) >= 1
 
     ai_contacts_response = client.get("/ai/summary?module=contacts", headers=headers)
     assert ai_contacts_response.status_code == 200

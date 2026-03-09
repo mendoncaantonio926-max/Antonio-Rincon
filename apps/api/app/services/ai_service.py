@@ -10,6 +10,7 @@ from app.services.crud_service import (
     list_tasks,
 )
 from app.services.plan_service import get_subscription_for_tenant, get_trial_days_remaining
+from app.services.public_service import serialize_lead
 from app.services.report_service import list_reports
 from app.services.store import store
 
@@ -22,6 +23,20 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     subscription = get_subscription_for_tenant(tenant_id)
     opponents_summary = build_opponents_summary(tenant_id)
     leads = list(store.leads.values())
+    pending_lead_queue = [
+        serialize_lead(lead, tenant_id) for lead in leads if not lead.converted_contact_id
+    ]
+    pending_lead_queue.sort(
+        key=lambda item: (
+            {"overdue": 0, "today": 1, "this_week": 2, "later": 3, "unscheduled": 4}.get(
+                str(item["follow_up_bucket"]), 99
+            ),
+            -int(item["risk_score"]),
+            str(item["follow_up_at"] or "9999-12-31"),
+            str(item["created_at"]),
+        )
+    )
+    priority_lead = pending_lead_queue[0] if pending_lead_queue else None
     pending_leads = len([lead for lead in leads if not lead.converted_contact_id])
     converted_leads = len(leads) - pending_leads
     overdue_followups = len(
@@ -83,36 +98,60 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         f"{len(opponents)} adversario(s) e {critical_events} sinal(is) critico(s) monitorado(s).",
     ]
     if overdue_followups > 0 and module in {"dashboard", "contacts"}:
+        focus_lead_name = str(priority_lead["name"]) if priority_lead else "a fila comercial"
+        focus_owner = (
+            str(priority_lead["owner_name"] or priority_lead["suggested_owner_name"])
+            if priority_lead
+            else "comercial"
+        )
+        focus_bucket = str(priority_lead["follow_up_bucket"]) if priority_lead else "overdue"
         next_action = "Regularizar follow-ups atrasados"
         action_reason = (
-            f"Ha {overdue_followups} lead(s) com follow-up fora do SLA comercial, pressionando conversao."
+            f"Ha {overdue_followups} lead(s) com follow-up fora do SLA comercial. {focus_lead_name} deve puxar a resposta imediata."
         )
         urgency = "high"
         priority_score = max(priority_score, 87)
-        trigger_signal = f"{overdue_followups} follow-up(s) atrasado(s)"
+        trigger_signal = f"{overdue_followups} follow-up(s) atrasado(s), com foco em {focus_lead_name}"
         focus_area = "sla comercial"
-        suggested_owner = "comercial"
-        due_window = "hoje"
+        suggested_owner = focus_owner
+        due_window = "hoje" if focus_bucket in {"overdue", "today"} else "nas proximas 24 horas"
         recommendations.insert(
             0,
             "Existem follow-ups atrasados no funil. Reorganize a abordagem antes de abrir novas frentes comerciais.",
         )
         blockers.insert(0, "O funil comercial tem follow-ups fora do SLA combinado.")
+        supporting_signals.insert(
+            0,
+            f"Lead prioritario: {focus_lead_name}, owner sugerido: {focus_owner}.",
+        )
     if pending_leads > 0 and module in {"dashboard", "contacts"} and urgency != "high":
+        focus_lead_name = str(priority_lead["name"]) if priority_lead else "a fila comercial"
+        focus_owner = (
+            str(priority_lead["owner_name"] or priority_lead["suggested_owner_name"])
+            if priority_lead
+            else "comercial e articulacao"
+        )
+        focus_bucket = (
+            str(priority_lead["follow_up_bucket"]).replace("_", " ") if priority_lead else "sem agenda"
+        )
         next_action = "Converter leads captados em contato"
         action_reason = (
-            f"Ha {pending_leads} lead(s) aguardando triagem comercial, o que reduz velocidade de resposta."
+            f"Ha {pending_leads} lead(s) aguardando triagem comercial. {focus_lead_name} deve sair primeiro para destravar a fila."
         )
         urgency = "normal"
         priority_score = max(priority_score, 66)
-        trigger_signal = f"{pending_leads} lead(s) pendente(s)"
+        trigger_signal = f"{pending_leads} lead(s) pendente(s), com foco em {focus_lead_name}"
         focus_area = "conversao comercial"
-        suggested_owner = "comercial e articulacao"
-        due_window = "nas proximas 24 horas"
+        suggested_owner = focus_owner
+        due_window = "nas proximas 24 horas" if focus_bucket != "later" else "esta semana"
         recommendations.append(
             "Leads captados ainda nao viraram contatos. Converta a fila quente para preservar contexto e velocidade."
         )
         blockers.append("A fila comercial tem leads sem conversao para o CRM.")
+        supporting_signals.insert(
+            0,
+            f"Primeiro lead da fila: {focus_lead_name}, janela: {focus_bucket}, owner sugerido: {focus_owner}.",
+        )
     if overdue_tasks > 0:
         next_action = "Resolver tarefas vencidas"
         action_reason = f"Ha {overdue_tasks} tarefa(s) fora do prazo, o que compromete execucao e previsibilidade operacional."
