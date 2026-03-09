@@ -455,6 +455,12 @@ function DashboardPage() {
     reducedCriticalQueue: number;
     reducedOverdueFollowups: number;
     ownerImpact: Array<{ label: string; appliedCount: number; recoveredGap: number }>;
+    ownerHealthImpact: Array<{
+      label: string;
+      healthDelta: number;
+      gapRecovered: number;
+      overdueReduced: number;
+    }>;
     windowImpact: Array<{
       label: string;
       appliedCount: number;
@@ -613,6 +619,37 @@ function DashboardPage() {
             appliedCount,
           })),
         ).slice(0, 4);
+        const beforeOwnerHealthMap = new Map(
+          beforeSummary.owner_health.map((item) => [item.owner_label, item]),
+        );
+        const afterOwnerHealthMap = new Map(
+          (refreshedSummary?.owner_health ?? []).map((item) => [item.owner_label, item]),
+        );
+        const ownerHealthImpact = Array.from(ownerBuckets.keys())
+          .map((label) => {
+            const beforeOwner = beforeOwnerHealthMap.get(label);
+            const afterOwner = afterOwnerHealthMap.get(label);
+            return {
+              label,
+              healthDelta: (afterOwner?.health_score ?? 0) - (beforeOwner?.health_score ?? 0),
+              gapRecovered: Math.max(
+                (beforeOwner?.target_gap ?? 0) - (afterOwner?.target_gap ?? 0),
+                0,
+              ),
+              overdueReduced: Math.max(
+                (beforeOwner?.overdue_count ?? 0) - (afterOwner?.overdue_count ?? 0),
+                0,
+              ),
+            };
+          })
+          .sort(
+            (left, right) =>
+              right.gapRecovered - left.gapRecovered ||
+              right.overdueReduced - left.overdueReduced ||
+              right.healthDelta - left.healthDelta ||
+              left.label.localeCompare(right.label),
+          )
+          .slice(0, 4);
         const beforeWindowMap = new Map(
           beforeSummary.commercial_window_groups.map((item) => [item.label, item.leads_count]),
         );
@@ -661,6 +698,7 @@ function DashboardPage() {
               )
             : 0,
           ownerImpact,
+          ownerHealthImpact,
           windowImpact,
         });
       } else if (
@@ -688,6 +726,33 @@ function DashboardPage() {
               { label: getLeadOwnerLabel(updatedLead), appliedCount: 1 },
             ])
           : [];
+        const beforeOwnerHealthMap = new Map(
+          summary.owner_health.map((item) => [item.owner_label, item]),
+        );
+        const afterOwnerHealthMap = new Map(
+          (refreshedSummary?.owner_health ?? []).map((item) => [item.owner_label, item]),
+        );
+        const ownerHealthImpact =
+          updatedLead === null
+            ? []
+            : [
+                {
+                  label: getLeadOwnerLabel(updatedLead),
+                  healthDelta:
+                    (afterOwnerHealthMap.get(getLeadOwnerLabel(updatedLead))?.health_score ?? 0) -
+                    (beforeOwnerHealthMap.get(getLeadOwnerLabel(updatedLead))?.health_score ?? 0),
+                  gapRecovered: Math.max(
+                    (beforeOwnerHealthMap.get(getLeadOwnerLabel(updatedLead))?.target_gap ?? 0) -
+                      (afterOwnerHealthMap.get(getLeadOwnerLabel(updatedLead))?.target_gap ?? 0),
+                    0,
+                  ),
+                  overdueReduced: Math.max(
+                    (beforeOwnerHealthMap.get(getLeadOwnerLabel(updatedLead))?.overdue_count ?? 0) -
+                      (afterOwnerHealthMap.get(getLeadOwnerLabel(updatedLead))?.overdue_count ?? 0),
+                    0,
+                  ),
+                },
+              ];
         const beforeWindowMap = new Map(
           summary.commercial_window_groups.map((item) => [item.label, item.leads_count]),
         );
@@ -727,6 +792,7 @@ function DashboardPage() {
               )
             : 0,
           ownerImpact,
+          ownerHealthImpact,
           windowImpact,
         });
       } else {
@@ -921,6 +987,21 @@ function DashboardPage() {
                           <strong>{item.label}</strong>
                           <span>
                             Gap recuperado {item.recoveredGap} em {item.appliedCount} lead(s)
+                          </span>
+                        </p>
+                      ))}
+                    </div>
+                  </article>
+                  <article className="dashboard-ai-impact-card">
+                    <span>Saude por owner apos a regua</span>
+                    <div className="dashboard-ai-impact-list">
+                      {dashboardAiRunResult.ownerHealthImpact.map((item) => (
+                        <p key={item.label}>
+                          <strong>{item.label}</strong>
+                          <span>
+                            Score {item.healthDelta >= 0 ? "+" : ""}
+                            {item.healthDelta}, gap recuperado {item.gapRecovered}, atraso reduzido{" "}
+                            {item.overdueReduced}
                           </span>
                         </p>
                       ))}
