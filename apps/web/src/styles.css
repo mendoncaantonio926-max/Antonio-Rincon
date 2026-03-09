@@ -424,6 +424,11 @@ h3,
   font-size: 0.92rem;
 }
 
+.dashboard-playbook-item {
+  display: grid;
+  gap: 0.7rem;
+}
+
 .landing-block {
   display: grid;
   gap: 1rem;

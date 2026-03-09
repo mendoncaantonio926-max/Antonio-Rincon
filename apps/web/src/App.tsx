@@ -436,6 +436,39 @@ function DashboardPage() {
     }
   }
 
+  async function handleDashboardForecastAction(
+    item: DashboardSummary["forecast_playbook"][number],
+  ) {
+    if (!tokens?.access_token || !summary?.priority_lead_id) {
+      return;
+    }
+
+    const updates: Record<string, unknown> = {};
+    if (item.owner_user_id) {
+      updates.owner_user_id = item.owner_user_id;
+    }
+    if (item.follow_up_at) {
+      updates.follow_up_at = item.follow_up_at;
+    }
+    if (!Object.keys(updates).length) {
+      return;
+    }
+
+    setDashboardLeadPending(`forecast:${item.scenario_label}`);
+    setDashboardLeadMessage(null);
+    try {
+      await api.updateLead(tokens.access_token, summary.priority_lead_id, updates);
+      setDashboardLeadMessage(`Cenario ${item.scenario_label} aplicado na fila comercial.`);
+      await loadDashboard();
+    } catch (error) {
+      setDashboardLeadMessage(
+        error instanceof Error ? error.message : "Falha ao aplicar o cenario do dashboard.",
+      );
+    } finally {
+      setDashboardLeadPending(null);
+    }
+  }
+
   return (
     <section className="app-section">
       <header className="topbar">
@@ -991,10 +1024,25 @@ function DashboardPage() {
                 <span>Movimentos por cenario</span>
                 <div className="dashboard-recommendations">
                   {(summary?.forecast_playbook ?? []).map((item) => (
-                    <span key={`forecast-playbook-${item.scenario_label}`}>
-                      {item.scenario_label}: {item.move_label} com {item.owner_label} (
-                      {item.due_window}). {item.summary}
-                    </span>
+                    <div
+                      key={`forecast-playbook-${item.scenario_label}`}
+                      className="dashboard-playbook-item"
+                    >
+                      <span>
+                        {item.scenario_label}: {item.move_label} com {item.owner_label} (
+                        {item.due_window}). {item.summary}
+                      </span>
+                      <Button
+                        label={
+                          dashboardLeadPending === `forecast:${item.scenario_label}`
+                            ? "Aplicando cenario..."
+                            : item.action_label
+                        }
+                        variant="secondary"
+                        onClick={() => void handleDashboardForecastAction(item)}
+                        disabled={dashboardLeadPending !== null || !summary?.priority_lead_id}
+                      />
+                    </div>
                   ))}
                 </div>
               </article>

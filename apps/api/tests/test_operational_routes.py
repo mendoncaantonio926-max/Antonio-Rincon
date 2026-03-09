@@ -373,6 +373,7 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert isinstance(dashboard_response.json()["forecast_drivers"], list)
     assert isinstance(dashboard_response.json()["forecast_blockers"], list)
     assert isinstance(dashboard_response.json()["forecast_playbook"], list)
+    assert "action_label" in dashboard_response.json()["forecast_playbook"][0]
     assert "morning_focus_summary" in dashboard_response.json()
     assert isinstance(dashboard_response.json()["owner_daily_briefs"], list)
 
@@ -504,6 +505,7 @@ def test_lead_pipeline_update_and_filters() -> None:
     assert isinstance(dashboard_response.json()["forecast_drivers"], list)
     assert isinstance(dashboard_response.json()["forecast_blockers"], list)
     assert isinstance(dashboard_response.json()["forecast_playbook"], list)
+    assert dashboard_response.json()["forecast_playbook"][0]["follow_up_at"] is not None
 
 
 def test_membership_invite_and_ai_summary() -> None:

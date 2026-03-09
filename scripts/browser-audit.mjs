@@ -318,6 +318,8 @@ async function main() {
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
     await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();
+    await page.getByRole("button", { name: "Aplicar Pressionado" }).click();
+    await page.getByText("Cenario Pressionado aplicado na fila comercial.").waitFor();
     const dashboardShot = path.join(logDir, "dashboard.png");
     if (await safeScreenshot(page, dashboardShot, browserMessages)) {
       screenshots.dashboard = dashboardShot;
@@ -336,6 +338,7 @@ async function main() {
     checks.push("dashboard_goal_risk");
     checks.push("dashboard_forecast_drivers");
     checks.push("dashboard_forecast_playbook");
+    checks.push("dashboard_forecast_action");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");

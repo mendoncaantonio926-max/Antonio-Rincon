@@ -836,23 +836,35 @@ const {
       {
         scenario_label: "Pressionado",
         move_label: "Estancar follow-ups vencidos",
+        action_label: "Aplicar Pressionado",
+        action_mode: "assign_and_schedule",
         owner_label: "Antonio Rincon",
+        owner_user_id: "user-1",
         due_window: "hoje",
+        follow_up_at: "2026-03-09",
         summary:
           "Responder riscos vencidos antes de redistribuir novos leads para a fila comercial.",
       },
       {
         scenario_label: "Base",
         move_label: "Blindar pipeline comprometido",
+        action_label: "Aplicar Base",
+        action_mode: "assign_and_schedule",
         owner_label: "Antonio Rincon",
+        owner_user_id: "user-1",
         due_window: "nas proximas 24 horas",
+        follow_up_at: "2026-03-10",
         summary: "Proteger leads em follow-up e proposta com dono claro e proxima data definida.",
       },
       {
         scenario_label: "Acelerado",
         move_label: "Empurrar propostas quentes",
+        action_label: "Aplicar Acelerado",
+        action_mode: "assign_and_schedule",
         owner_label: "Antonio Rincon",
+        owner_user_id: "user-1",
         due_window: "esta semana",
+        follow_up_at: "2026-03-12",
         summary: "Usar as propostas abertas para capturar o cenario acelerado da janela.",
       },
     ];
@@ -2282,6 +2294,18 @@ describe("App authenticated flows", () => {
         follow_up_at: expect.any(String),
       });
       expect(screen.getByText("Follow-up priorizado para hoje no dashboard.")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Aplicar Pressionado" }));
+
+    await waitFor(() => {
+      expect(apiMock.updateLead).toHaveBeenCalledWith("token-valido", "lead-quick", {
+        owner_user_id: "user-1",
+        follow_up_at: "2026-03-09",
+      });
+      expect(
+        screen.getByText("Cenario Pressionado aplicado na fila comercial."),
+      ).toBeInTheDocument();
     });
   });
 

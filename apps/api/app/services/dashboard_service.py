@@ -832,12 +832,24 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         if priority_lead and (priority_lead["owner_name"] or priority_lead["suggested_owner_name"])
         else "coordenacao comercial"
     )
+    forecast_owner_user_id = (
+        str(priority_lead["owner_user_id"] or priority_lead["suggested_owner_user_id"])
+        if priority_lead
+        and (priority_lead["owner_user_id"] or priority_lead["suggested_owner_user_id"])
+        else None
+    )
+    tomorrow = (today_date + timedelta(days=1)).isoformat()
+    this_week = (today_date + timedelta(days=3)).isoformat()
     forecast_playbook = [
         {
             "scenario_label": "Pressionado",
             "move_label": "Estancar follow-ups vencidos",
+            "action_label": "Aplicar Pressionado",
+            "action_mode": "assign_and_schedule",
             "owner_label": forecast_owner_label,
+            "owner_user_id": forecast_owner_user_id,
             "due_window": "hoje",
+            "follow_up_at": today,
             "summary": (
                 f"Responder {overdue_risk_count} risco(s) vencido(s) e puxar "
                 f"{forecast_owner_label} para a frente da fila antes de redistribuir novos leads."
@@ -846,8 +858,12 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         {
             "scenario_label": "Base",
             "move_label": "Blindar pipeline comprometido",
+            "action_label": "Aplicar Base",
+            "action_mode": "assign_and_schedule",
             "owner_label": forecast_owner_label,
+            "owner_user_id": forecast_owner_user_id,
             "due_window": "nas proximas 24 horas",
+            "follow_up_at": tomorrow,
             "summary": (
                 f"Proteger {committed_pipeline_count} lead(s) em follow-up ou proposta com "
                 "cadencia, dono claro e proxima data definida."
@@ -856,8 +872,12 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         {
             "scenario_label": "Acelerado",
             "move_label": "Empurrar propostas quentes",
+            "action_label": "Aplicar Acelerado",
+            "action_mode": "assign_and_schedule",
             "owner_label": forecast_owner_label,
+            "owner_user_id": forecast_owner_user_id,
             "due_window": "esta semana",
+            "follow_up_at": this_week,
             "summary": (
                 f"Usar as {proposal_count} proposta(s) abertas para capturar o cenario de "
                 f"{optimistic} fechamento(s) da janela."

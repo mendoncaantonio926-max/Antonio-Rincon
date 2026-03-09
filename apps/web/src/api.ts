@@ -459,8 +459,12 @@ export type DashboardSummary = {
   forecast_playbook: Array<{
     scenario_label: string;
     move_label: string;
+    action_label: string;
+    action_mode: string;
     owner_label: string;
+    owner_user_id?: string | null;
     due_window: string;
+    follow_up_at?: string | null;
     summary: string;
   }>;
   morning_focus_summary: string;

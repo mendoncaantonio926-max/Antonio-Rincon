@@ -185,8 +185,12 @@ class DashboardForecastDriverResponse(BaseModel):
 class DashboardForecastMoveResponse(BaseModel):
     scenario_label: str
     move_label: str
+    action_label: str
+    action_mode: str
     owner_label: str
+    owner_user_id: str | None = None
     due_window: str
+    follow_up_at: str | None = None
     summary: str
 
 
