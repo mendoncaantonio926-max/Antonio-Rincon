@@ -138,6 +138,35 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         window_groups.values(),
         key=lambda item: (-int(item["overdue_count"]), -int(item["due_today_count"]), -int(item["leads_count"])),
     )
+    owner_alerts = []
+    for group in commercial_owner_groups:
+        severity = "normal"
+        if int(group["overdue_count"]) > 0:
+            severity = "critical"
+        elif int(group["due_today_count"]) > 0:
+            severity = "attention"
+        if int(group["leads_count"]) >= 3 and severity == "normal":
+            severity = "attention"
+        owner_alerts.append(
+            {
+                "owner_label": str(group["label"]),
+                "severity": severity,
+                "summary": (
+                    f"{group['label']}: {group['leads_count']} lead(s), "
+                    f"{group['overdue_count']} atrasado(s), {group['due_today_count']} para hoje."
+                ),
+            }
+        )
+    daily_execution_queue = [
+        {
+            "lead_id": str(item["id"]),
+            "lead_name": str(item["name"]),
+            "owner_label": str(item["owner_name"] or item["suggested_owner_name"] or "Sem owner"),
+            "follow_up_label": follow_up_bucket_labels.get(str(item["follow_up_bucket"]), "Sem agenda"),
+            "risk_score": int(item["risk_score"]),
+        }
+        for item in pending_leads[:5]
+    ]
 
     return {
         "tenant_name": tenant.name,
@@ -181,5 +210,7 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "priority_lead_risk_score": int(priority_lead["risk_score"]) if priority_lead else 0,
         "commercial_owner_groups": commercial_owner_groups[:4],
         "commercial_window_groups": commercial_window_groups[:5],
+        "owner_alerts": owner_alerts[:4],
+        "daily_execution_queue": daily_execution_queue,
         "next_action": next_action,
     }

@@ -299,6 +299,18 @@ export type DashboardSummary = {
     overdue_count: number;
     due_today_count: number;
   }>;
+  owner_alerts: Array<{
+    owner_label: string;
+    severity: string;
+    summary: string;
+  }>;
+  daily_execution_queue: Array<{
+    lead_id: string;
+    lead_name: string;
+    owner_label: string;
+    follow_up_label: string;
+    risk_score: number;
+  }>;
   next_action: string;
 };
 

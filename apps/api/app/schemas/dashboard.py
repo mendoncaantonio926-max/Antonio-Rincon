@@ -10,6 +10,20 @@ class DashboardQueueGroupResponse(BaseModel):
     due_today_count: int
 
 
+class DashboardOwnerAlertResponse(BaseModel):
+    owner_label: str
+    severity: str
+    summary: str
+
+
+class DashboardExecutionItemResponse(BaseModel):
+    lead_id: str
+    lead_name: str
+    owner_label: str
+    follow_up_label: str
+    risk_score: int
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -38,4 +52,6 @@ class DashboardSummaryResponse(BaseModel):
     priority_lead_risk_score: int
     commercial_owner_groups: list[DashboardQueueGroupResponse]
     commercial_window_groups: list[DashboardQueueGroupResponse]
+    owner_alerts: list[DashboardOwnerAlertResponse]
+    daily_execution_queue: list[DashboardExecutionItemResponse]
     next_action: str

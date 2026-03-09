@@ -677,6 +677,29 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Alertas por owner</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.owner_alerts ?? []).map((alert) => (
+                    <span key={`alert-${alert.owner_label}`}>
+                      {alert.owner_label}: {alert.summary}
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Fila de hoje</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.daily_execution_queue ?? []).map((item) => (
+                    <span key={`queue-${item.lead_id}`}>
+                      {item.lead_name}: {item.owner_label}, {item.follow_up_label}, risco{" "}
+                      {item.risk_score}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

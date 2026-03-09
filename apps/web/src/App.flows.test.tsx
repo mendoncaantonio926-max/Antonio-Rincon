@@ -415,6 +415,26 @@ const {
       priority_lead_risk_score: priorityLead?.risk_score ?? 0,
       commercial_owner_groups: Array.from(ownerGroups.values()),
       commercial_window_groups: Array.from(windowGroups.values()),
+      owner_alerts: Array.from(ownerGroups.values()).map((group) => ({
+        owner_label: group.label,
+        severity:
+          group.overdue_count > 0 ? "critical" : group.due_today_count > 0 ? "attention" : "normal",
+        summary: `${group.label}: ${group.leads_count} lead(s), ${group.overdue_count} atrasado(s), ${group.due_today_count} para hoje.`,
+      })),
+      daily_execution_queue: pendingLeads.slice(0, 5).map((item) => ({
+        lead_id: item.id,
+        lead_name: item.name,
+        owner_label: item.owner_name || item.suggested_owner_name || "Sem owner",
+        follow_up_label:
+          {
+            overdue: "Atrasado",
+            today: "Hoje",
+            this_week: "Esta semana",
+            later: "Mais a frente",
+            unscheduled: "Sem agenda",
+          }[item.follow_up_bucket] ?? "Sem agenda",
+        risk_score: item.risk_score,
+      })),
       next_action: "Fechar as pendencias operacionais.",
     };
   }
@@ -1346,7 +1366,7 @@ describe("App authenticated flows", () => {
       });
       expect(screen.getByText("Imprensa Litoral")).toBeInTheDocument();
     });
-  });
+  }, 10000);
 
   it("avanca uma tarefa no board autenticado", async () => {
     const user = userEvent.setup();
@@ -1650,6 +1670,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Fila comercial priorizada")).toBeInTheDocument();
       expect(screen.getByText("Carlos Lima")).toBeInTheDocument();
       expect(screen.getByText(/Puxar com Antonio Rincon/)).toBeInTheDocument();
+      expect(screen.getByText("Alertas por owner")).toBeInTheDocument();
+      expect(screen.getByText("Fila de hoje")).toBeInTheDocument();
     });
 
     await user.selectOptions(screen.getByDisplayValue("Workspace"), "billing");

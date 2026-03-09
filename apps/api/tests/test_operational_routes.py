@@ -347,6 +347,8 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert "priority_lead_owner_name" in dashboard_response.json()
     assert isinstance(dashboard_response.json()["commercial_owner_groups"], list)
     assert isinstance(dashboard_response.json()["commercial_window_groups"], list)
+    assert isinstance(dashboard_response.json()["owner_alerts"], list)
+    assert isinstance(dashboard_response.json()["daily_execution_queue"], list)
 
 
 def test_public_lead_capture() -> None:
