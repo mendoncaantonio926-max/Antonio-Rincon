@@ -106,6 +106,9 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     focus_area = "cadencia executiva"
     suggested_owner = "coordenacao"
     due_window = "nesta semana"
+    execution_label = None
+    execution_mode = None
+    execution_payload = None
 
     recommendations: list[str] = []
     blockers: list[str] = []
@@ -126,6 +129,13 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         recommendations.append(
             f"{primary_forecast_move['move_label']}: {primary_forecast_move['summary']}"
         )
+        if module == "dashboard" and priority_lead:
+            execution_label = "Executar recomendacao"
+            execution_mode = "update_priority_lead"
+            execution_payload = {
+                "owner_user_id": primary_forecast_move.get("owner_user_id"),
+                "follow_up_at": primary_forecast_move.get("follow_up_at"),
+            }
         if (
             module == "dashboard"
             and goal_risk.get("risk_label") in {"attention", "critical"}
@@ -607,4 +617,7 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         "blockers": blockers[:3],
         "supporting_signals": supporting_signals[:3],
         "recommendations": recommendations[:3],
+        "execution_label": execution_label,
+        "execution_mode": execution_mode,
+        "execution_payload": execution_payload,
     }

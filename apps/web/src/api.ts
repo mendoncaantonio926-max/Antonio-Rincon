@@ -259,6 +259,12 @@ export type AiSummary = {
   blockers: string[];
   supporting_signals: string[];
   recommendations: string[];
+  execution_label?: string | null;
+  execution_mode?: string | null;
+  execution_payload?: {
+    owner_user_id?: string | null;
+    follow_up_at?: string | null;
+  } | null;
 };
 
 export type DashboardSummary = {

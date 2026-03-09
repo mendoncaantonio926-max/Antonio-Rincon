@@ -38,6 +38,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora expone alavancas e bloqueios do forecast para explicar o que acelera ou trava o fechamento da semana
 - dashboard agora expone movimentos por cenario para transformar forecast em plano de execucao comercial
 - dashboard agora permite aplicar cenarios do forecast diretamente na fila comercial prioritaria, com owner e janela definidos
+- dashboard agora permite executar a recomendacao da IA diretamente na fila comercial prioritaria
 - exportacao de relatorios no scaffold local agora recompõe a cota padrao do plano para contas ativas ou trial durante validacoes repetidas
 
 ### Changed
@@ -62,6 +63,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - IA contextual agora incorpora o playbook do forecast na leitura executiva do dashboard
 - browser audit agora valida tambem movimentos por cenario no dashboard executivo
 - browser audit agora valida tambem a aplicacao direta de cenarios do forecast no dashboard executivo
+- browser audit agora valida tambem a execucao da recomendacao da IA no dashboard executivo
 ### Fixed
 
 ### Docs

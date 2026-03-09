@@ -469,6 +469,38 @@ function DashboardPage() {
     }
   }
 
+  async function handleDashboardAiAction() {
+    if (
+      !tokens?.access_token ||
+      !summary?.priority_lead_id ||
+      aiSummary?.execution_mode !== "update_priority_lead" ||
+      !aiSummary.execution_payload
+    ) {
+      return;
+    }
+
+    const updates = Object.fromEntries(
+      Object.entries(aiSummary.execution_payload).filter(([, value]) => value),
+    );
+    if (!Object.keys(updates).length) {
+      return;
+    }
+
+    setDashboardLeadPending("ai_execution");
+    setDashboardLeadMessage(null);
+    try {
+      await api.updateLead(tokens.access_token, summary.priority_lead_id, updates);
+      setDashboardLeadMessage("Recomendacao da IA aplicada na fila comercial.");
+      await loadDashboard();
+    } catch (error) {
+      setDashboardLeadMessage(
+        error instanceof Error ? error.message : "Falha ao executar a recomendacao da IA.",
+      );
+    } finally {
+      setDashboardLeadPending(null);
+    }
+  }
+
   return (
     <section className="app-section">
       <header className="topbar">
@@ -588,6 +620,20 @@ function DashboardPage() {
             <p>{aiSummary?.action_reason ?? "Lendo o contexto operacional do workspace."}</p>
             <span>Urgencia {aiSummary?.urgency ?? "normal"}</span>
           </div>
+          {aiSummary?.execution_label && aiModule === "dashboard" ? (
+            <div className="dashboard-ai-actions">
+              <Button
+                label={
+                  dashboardLeadPending === "ai_execution"
+                    ? "Executando recomendacao..."
+                    : aiSummary.execution_label
+                }
+                variant="secondary"
+                onClick={() => void handleDashboardAiAction()}
+                disabled={dashboardLeadPending !== null || !summary?.priority_lead_id}
+              />
+            </div>
+          ) : null}
           <div className="dashboard-ai-meta">
             <article className="dashboard-ai-meta-card">
               <span>Escore de prioridade</span>

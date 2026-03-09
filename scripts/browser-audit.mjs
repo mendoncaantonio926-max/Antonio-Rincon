@@ -316,6 +316,8 @@ async function main() {
     await page.getByText("Movimentos por cenario").waitFor();
     await page.getByText(/Conversao nos ultimos 7 dias/).waitFor();
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
+    await page.getByRole("button", { name: "Executar recomendacao" }).click();
+    await page.getByText("Recomendacao da IA aplicada na fila comercial.").waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
     await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();
     await page.getByRole("button", { name: "Aplicar Pressionado" }).click();
@@ -339,6 +341,7 @@ async function main() {
     checks.push("dashboard_forecast_drivers");
     checks.push("dashboard_forecast_playbook");
     checks.push("dashboard_forecast_action");
+    checks.push("dashboard_ai_action");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");

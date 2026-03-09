@@ -561,6 +561,9 @@ def test_membership_invite_and_ai_summary() -> None:
     assert isinstance(ai_response.json()["supporting_signals"], list)
     assert len(ai_response.json()["supporting_signals"]) >= 1
     assert any("Playbook do forecast" in item for item in ai_response.json()["supporting_signals"])
+    assert ai_response.json()["execution_label"] == "Executar recomendacao"
+    assert ai_response.json()["execution_mode"] == "update_priority_lead"
+    assert ai_response.json()["execution_payload"]["follow_up_at"] is not None
 
     ai_contacts_response = client.get("/ai/summary?module=contacts", headers=headers)
     assert ai_contacts_response.status_code == 200

@@ -1034,6 +1034,12 @@ const {
         blockers: ["Poucos analistas ativos"],
         supporting_signals: ["3 tarefas abertas", "2 contatos prioritarios"],
         recommendations: ["Revisar backlog", "Atualizar equipe"],
+        execution_label: "Executar recomendacao",
+        execution_mode: "update_priority_lead",
+        execution_payload: {
+          owner_user_id: "user-1",
+          follow_up_at: "2026-03-09",
+        },
       },
       billing: {
         headline: "Assinatura sob atencao",
@@ -1050,6 +1056,9 @@ const {
         blockers: ["Sem dono comercial claro"],
         supporting_signals: ["Plano pro", "Trial ativo"],
         recommendations: ["Verificar uso", "Ajustar plano"],
+        execution_label: null,
+        execution_mode: null,
+        execution_payload: null,
       },
     },
   };
@@ -2199,6 +2208,7 @@ describe("App authenticated flows", () => {
       expect(apiMock.dashboardSummary).toHaveBeenCalledWith("token-valido");
       expect(apiMock.getAiSummary).toHaveBeenCalledWith("token-valido", "dashboard");
       expect(screen.getByText("Atacar tarefas vencidas.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Executar recomendacao" })).toBeInTheDocument();
       expect(screen.getByText("78/100")).toBeInTheDocument();
       expect(screen.getAllByText("3 tarefas abertas").length).toBeGreaterThan(0);
       expect(screen.getByText("Leads pendentes")).toBeInTheDocument();
@@ -2277,13 +2287,19 @@ describe("App authenticated flows", () => {
     renderAuthenticatedApp("/app");
 
     await screen.findByRole("heading", { name: "Visao geral" });
-    await user.click(screen.getByRole("button", { name: "Atribuir owner sugerido" }));
+    await user.click(screen.getByRole("button", { name: "Executar recomendacao" }));
 
     await waitFor(() => {
       expect(apiMock.updateLead).toHaveBeenCalledWith("token-valido", "lead-quick", {
         owner_user_id: "user-1",
+        follow_up_at: "2026-03-09",
       });
-      expect(screen.getByText("Owner sugerido aplicado na fila comercial.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Recomendacao da IA aplicada na fila comercial."),
+      ).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
       expect(screen.getByText(/Puxar com Antonio Rincon/)).toBeInTheDocument();
     });
 

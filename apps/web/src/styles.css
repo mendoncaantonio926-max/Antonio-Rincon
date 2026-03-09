@@ -1090,6 +1090,10 @@ h3,
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.dashboard-ai-actions {
+  margin-top: 0.9rem;
+}
+
 .dashboard-ai-meta,
 .dashboard-ai-lists {
   display: grid;
