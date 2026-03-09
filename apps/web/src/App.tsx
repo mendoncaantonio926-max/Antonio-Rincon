@@ -461,6 +461,12 @@ function DashboardPage() {
       gapRecovered: number;
       overdueReduced: number;
     }>;
+    ownerCadenceImpact: Array<{
+      label: string;
+      assignmentsAdded: number;
+      followUpsScheduled: number;
+      stabilizedCount: number;
+    }>;
     windowImpact: Array<{
       label: string;
       appliedCount: number;
@@ -650,6 +656,54 @@ function DashboardPage() {
               left.label.localeCompare(right.label),
           )
           .slice(0, 4);
+        const ownerCadenceMap = new Map<
+          string,
+          {
+            label: string;
+            assignmentsAdded: number;
+            followUpsScheduled: number;
+            stabilizedCount: number;
+          }
+        >();
+        for (const step of aiSummary.execution_batch) {
+          const previousLead = beforeLeadMap.get(step.lead_id);
+          const updatedLead = afterLeadMap.get(step.lead_id);
+          if (!updatedLead) {
+            continue;
+          }
+          const label = getLeadOwnerLabel(updatedLead);
+          const bucket = ownerCadenceMap.get(label) ?? {
+            label,
+            assignmentsAdded: 0,
+            followUpsScheduled: 0,
+            stabilizedCount: 0,
+          };
+          if (
+            updatedLead.owner_user_id &&
+            previousLead?.owner_user_id !== updatedLead.owner_user_id
+          ) {
+            bucket.assignmentsAdded += 1;
+          }
+          if (updatedLead.follow_up_at && previousLead?.follow_up_at !== updatedLead.follow_up_at) {
+            bucket.followUpsScheduled += 1;
+          }
+          if (
+            ["overdue", "unscheduled"].includes(previousLead?.follow_up_bucket ?? "") &&
+            !["overdue", "unscheduled"].includes(updatedLead.follow_up_bucket)
+          ) {
+            bucket.stabilizedCount += 1;
+          }
+          ownerCadenceMap.set(label, bucket);
+        }
+        const ownerCadenceImpact = Array.from(ownerCadenceMap.values())
+          .sort(
+            (left, right) =>
+              right.stabilizedCount - left.stabilizedCount ||
+              right.followUpsScheduled - left.followUpsScheduled ||
+              right.assignmentsAdded - left.assignmentsAdded ||
+              left.label.localeCompare(right.label),
+          )
+          .slice(0, 4);
         const beforeWindowMap = new Map(
           beforeSummary.commercial_window_groups.map((item) => [item.label, item.leads_count]),
         );
@@ -699,6 +753,7 @@ function DashboardPage() {
             : 0,
           ownerImpact,
           ownerHealthImpact,
+          ownerCadenceImpact,
           windowImpact,
         });
       } else if (
@@ -712,6 +767,8 @@ function DashboardPage() {
         if (!Object.keys(updates).length) {
           return;
         }
+        const beforeLeads = await api.listLeads(tokens.access_token);
+        const beforeLeadMap = new Map(beforeLeads.map((item) => [item.id, item]));
         await api.updateLead(tokens.access_token, summary.priority_lead_id, updates);
         setDashboardLeadMessage("Recomendacao da IA aplicada na fila comercial.");
         const afterLeads = await api.listLeads(tokens.access_token);
@@ -751,6 +808,30 @@ function DashboardPage() {
                       (afterOwnerHealthMap.get(getLeadOwnerLabel(updatedLead))?.overdue_count ?? 0),
                     0,
                   ),
+                },
+              ];
+        const ownerCadenceImpact =
+          updatedLead === null
+            ? []
+            : [
+                {
+                  label: getLeadOwnerLabel(updatedLead),
+                  assignmentsAdded:
+                    updatedLead.owner_user_id &&
+                    beforeLeadMap.get(updatedLead.id)?.owner_user_id !== updatedLead.owner_user_id
+                      ? 1
+                      : 0,
+                  followUpsScheduled:
+                    updatedLead.follow_up_at &&
+                    beforeLeadMap.get(updatedLead.id)?.follow_up_at !== updatedLead.follow_up_at
+                      ? 1
+                      : 0,
+                  stabilizedCount:
+                    ["overdue", "unscheduled"].includes(
+                      beforeLeadMap.get(updatedLead.id)?.follow_up_bucket ?? "",
+                    ) && !["overdue", "unscheduled"].includes(updatedLead.follow_up_bucket)
+                      ? 1
+                      : 0,
                 },
               ];
         const beforeWindowMap = new Map(
@@ -793,6 +874,7 @@ function DashboardPage() {
             : 0,
           ownerImpact,
           ownerHealthImpact,
+          ownerCadenceImpact,
           windowImpact,
         });
       } else {
@@ -1002,6 +1084,20 @@ function DashboardPage() {
                             Score {item.healthDelta >= 0 ? "+" : ""}
                             {item.healthDelta}, gap recuperado {item.gapRecovered}, atraso reduzido{" "}
                             {item.overdueReduced}
+                          </span>
+                        </p>
+                      ))}
+                    </div>
+                  </article>
+                  <article className="dashboard-ai-impact-card">
+                    <span>Cadencia por owner apos a regua</span>
+                    <div className="dashboard-ai-impact-list">
+                      {dashboardAiRunResult.ownerCadenceImpact.map((item) => (
+                        <p key={item.label}>
+                          <strong>{item.label}</strong>
+                          <span>
+                            Owners {item.assignmentsAdded}, follow-ups {item.followUpsScheduled},
+                            estabilizados {item.stabilizedCount}
                           </span>
                         </p>
                       ))}
