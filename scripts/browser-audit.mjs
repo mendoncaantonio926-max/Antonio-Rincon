@@ -345,6 +345,7 @@ async function main() {
     checks.push("dashboard_forecast_playbook");
     checks.push("dashboard_forecast_action");
     checks.push("dashboard_ai_action");
+    checks.push("dashboard_ai_batch_feedback");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");
