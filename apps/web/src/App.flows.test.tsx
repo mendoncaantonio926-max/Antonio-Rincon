@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import type { BillingEvent, BillingPlan, Subscription } from "./api";
 
 const {
   apiMock,
@@ -67,7 +68,11 @@ const {
     }>,
   };
 
-  const billingState = {
+  const billingState: {
+    subscription: Subscription;
+    plans: BillingPlan[];
+    events: BillingEvent[];
+  } = {
     subscription: {
       id: "sub-1",
       tenant_id: "tenant-1",
@@ -77,6 +82,10 @@ const {
       trial_ends_at: "2026-03-20",
       current_period_ends_at: "2026-04-01",
       cancel_at_period_end: false,
+      grace_period_ends_at: null,
+      last_payment_attempt_at: null,
+      failed_payments_count: 0,
+      grace_days_remaining: 0,
       trial_days_remaining: 12,
       seats_included: 3,
       ai_requests_limit: 150,
@@ -84,6 +93,8 @@ const {
       suggested_plan: "executive" as const,
       can_export_reports: true,
       commercial_status: "ativo",
+      collection_stage: "healthy",
+      next_commercial_action: "manter conta saudavel e mapear upsell",
       next_billing_at: "2026-04-01",
     },
     plans: [
@@ -443,13 +454,38 @@ const {
     subscriptionAction: vi.fn(
       async (
         _token: string,
-        action: "cancel" | "reactivate" | "renew_trial" | "mark_past_due" | "resolve_past_due",
+        action:
+          | "cancel"
+          | "reactivate"
+          | "renew_trial"
+          | "mark_past_due"
+          | "retry_charge"
+          | "resolve_past_due"
+          | "expire_subscription",
       ) => {
         if (action === "mark_past_due") {
           billingState.subscription = {
             ...billingState.subscription,
             status: "past_due",
-            commercial_status: "pendente",
+            commercial_status: "em_graca",
+            collection_stage: "grace",
+            grace_period_ends_at: "2026-03-15",
+            grace_days_remaining: 7,
+            failed_payments_count: billingState.subscription.failed_payments_count + 1,
+            next_commercial_action: "cobrar regularizacao antes do fim da graca",
+          };
+        }
+        if (action === "retry_charge") {
+          billingState.subscription = {
+            ...billingState.subscription,
+            status: "past_due",
+            commercial_status: "em_graca",
+            collection_stage: "grace",
+            grace_period_ends_at: "2026-03-15",
+            grace_days_remaining: 7,
+            failed_payments_count: billingState.subscription.failed_payments_count + 1,
+            last_payment_attempt_at: "2026-03-08",
+            next_commercial_action: "cobrar regularizacao antes do fim da graca",
           };
         }
         if (action === "resolve_past_due") {
@@ -457,6 +493,24 @@ const {
             ...billingState.subscription,
             status: "active",
             commercial_status: "ativo",
+            collection_stage: "healthy",
+            grace_period_ends_at: null,
+            grace_days_remaining: 0,
+            last_payment_attempt_at: null,
+            failed_payments_count: 0,
+            next_commercial_action: "manter conta saudavel e mapear upsell",
+          };
+        }
+        if (action === "expire_subscription") {
+          billingState.subscription = {
+            ...billingState.subscription,
+            status: "canceled",
+            commercial_status: "cancelado",
+            collection_stage: "churn",
+            cancel_at_period_end: false,
+            grace_period_ends_at: null,
+            grace_days_remaining: 0,
+            next_commercial_action: "reativar conta e renegociar plano",
           };
         }
         return { message: `Acao ${action} executada.` };
@@ -946,11 +1000,14 @@ describe("App authenticated flows", () => {
 
     await screen.findByRole("heading", { name: /^Assinatura$/ });
     await user.click(screen.getByRole("button", { name: "Marcar pendencia" }));
+    await user.click(screen.getByRole("button", { name: "Tentar cobranca" }));
 
     await waitFor(() => {
-      expect(apiMock.subscriptionAction).toHaveBeenCalledWith("token-valido", "mark_past_due");
-      expect(screen.getByText("Acao mark_past_due executada.")).toBeInTheDocument();
+      expect(apiMock.subscriptionAction).toHaveBeenCalledWith("token-valido", "retry_charge");
+      expect(screen.getByText("Acao retry_charge executada.")).toBeInTheDocument();
       expect(screen.getByText("past_due")).toBeInTheDocument();
+      expect(screen.getByText("grace")).toBeInTheDocument();
+      expect(screen.getByText("2026-03-15")).toBeInTheDocument();
     });
   });
 

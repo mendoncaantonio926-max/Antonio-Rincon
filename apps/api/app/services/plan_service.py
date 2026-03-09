@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import HTTPException, status
 
@@ -50,6 +50,16 @@ def get_trial_days_remaining(subscription: Subscription) -> int:
     return max((trial_end - date.today()).days, 0)
 
 
+def get_grace_days_remaining(subscription: Subscription) -> int:
+    if not subscription.grace_period_ends_at:
+        return 0
+    try:
+        grace_end = date.fromisoformat(subscription.grace_period_ends_at)
+    except ValueError:
+        return 0
+    return max((grace_end - date.today()).days, 0)
+
+
 def get_suggested_plan(subscription: Subscription) -> str:
     if subscription.status == "trialing":
         return "pro"
@@ -61,6 +71,8 @@ def get_suggested_plan(subscription: Subscription) -> str:
 
 
 def get_commercial_status(subscription: Subscription) -> str:
+    if subscription.status == "past_due" and get_grace_days_remaining(subscription) > 0:
+        return "em_graca"
     if subscription.cancel_at_period_end and subscription.status in {"active", "trialing"}:
         return "cancelamento_agendado"
     if subscription.status == "trialing":
@@ -70,6 +82,34 @@ def get_commercial_status(subscription: Subscription) -> str:
     if subscription.status == "canceled":
         return "cancelado"
     return "ativo"
+
+
+def get_collection_stage(subscription: Subscription) -> str:
+    if subscription.status == "canceled":
+        return "churn"
+    if subscription.status == "trialing":
+        return "trial"
+    if subscription.status == "past_due" and get_grace_days_remaining(subscription) > 0:
+        return "grace"
+    if subscription.status == "past_due":
+        return "dunning"
+    if subscription.cancel_at_period_end:
+        return "retention"
+    return "healthy"
+
+
+def get_next_commercial_action(subscription: Subscription) -> str:
+    if subscription.status == "canceled":
+        return "reativar conta e renegociar plano"
+    if subscription.status == "past_due" and get_grace_days_remaining(subscription) > 0:
+        return "cobrar regularizacao antes do fim da graca"
+    if subscription.status == "past_due":
+        return "escalar cobranca ou encerrar acesso"
+    if subscription.cancel_at_period_end:
+        return "acionar retencao antes do fechamento do ciclo"
+    if subscription.status == "trialing":
+        return "converter trial em plano pago"
+    return "manter conta saudavel e mapear upsell"
 
 
 def serialize_subscription(subscription: Subscription) -> dict[str, str | int | bool]:
@@ -82,6 +122,10 @@ def serialize_subscription(subscription: Subscription) -> dict[str, str | int | 
         "trial_ends_at": subscription.trial_ends_at,
         "current_period_ends_at": subscription.current_period_ends_at,
         "cancel_at_period_end": subscription.cancel_at_period_end,
+        "grace_period_ends_at": subscription.grace_period_ends_at,
+        "last_payment_attempt_at": subscription.last_payment_attempt_at,
+        "failed_payments_count": subscription.failed_payments_count,
+        "grace_days_remaining": get_grace_days_remaining(subscription),
         "trial_days_remaining": get_trial_days_remaining(subscription),
         "seats_included": subscription.seats_included,
         "ai_requests_limit": subscription.ai_requests_limit,
@@ -89,6 +133,8 @@ def serialize_subscription(subscription: Subscription) -> dict[str, str | int | 
         "suggested_plan": get_suggested_plan(subscription),
         "can_export_reports": subscription.report_exports_limit > 0,
         "commercial_status": get_commercial_status(subscription),
+        "collection_stage": get_collection_stage(subscription),
+        "next_commercial_action": get_next_commercial_action(subscription),
         "next_billing_at": subscription.current_period_ends_at,
         "created_at": subscription.created_at.isoformat(),
         "updated_at": subscription.updated_at.isoformat(),
@@ -117,6 +163,9 @@ def update_subscription_plan(tenant_id: str, actor_user_id: str, plan: str) -> S
     subscription.trial_ends_at = None
     subscription.current_period_ends_at = (date.today() + timedelta(days=30)).isoformat()
     subscription.cancel_at_period_end = False
+    subscription.grace_period_ends_at = None
+    subscription.last_payment_attempt_at = None
+    subscription.failed_payments_count = 0
     subscription.seats_included = config["seats_included"]
     subscription.ai_requests_limit = config["ai_requests_limit"]
     subscription.report_exports_limit = config["report_exports_limit"]
@@ -152,22 +201,48 @@ def apply_subscription_action(tenant_id: str, actor_user_id: str, action: str) -
             subscription.status = "active"
         if subscription.current_period_ends_at is None:
             subscription.current_period_ends_at = (date.today() + timedelta(days=30)).isoformat()
+        subscription.grace_period_ends_at = None
+        subscription.last_payment_attempt_at = None
+        subscription.failed_payments_count = 0
         message = "Assinatura reativada e renovada para seguir ativa."
     elif action == "renew_trial":
         subscription.status = "trialing"
         subscription.trial_ends_at = (date.today() + timedelta(days=14)).isoformat()
         subscription.current_period_ends_at = subscription.trial_ends_at
         subscription.cancel_at_period_end = False
+        subscription.grace_period_ends_at = None
+        subscription.last_payment_attempt_at = None
+        subscription.failed_payments_count = 0
         message = "Trial renovado por 14 dias em modo local."
     elif action == "mark_past_due":
         subscription.status = "past_due"
         subscription.cancel_at_period_end = False
+        subscription.last_payment_attempt_at = datetime.now(UTC).date().isoformat()
+        subscription.failed_payments_count += 1
+        subscription.grace_period_ends_at = (date.today() + timedelta(days=7)).isoformat()
         message = "Assinatura marcada como pendente em modo local."
+    elif action == "retry_charge":
+        subscription.status = "past_due"
+        subscription.cancel_at_period_end = False
+        subscription.last_payment_attempt_at = datetime.now(UTC).date().isoformat()
+        subscription.failed_payments_count += 1
+        if subscription.grace_period_ends_at is None:
+            subscription.grace_period_ends_at = (date.today() + timedelta(days=7)).isoformat()
+        message = "Nova tentativa de cobranca registrada em modo local."
     elif action == "resolve_past_due":
         subscription.status = "active"
         if subscription.current_period_ends_at is None:
             subscription.current_period_ends_at = (date.today() + timedelta(days=30)).isoformat()
+        subscription.grace_period_ends_at = None
+        subscription.last_payment_attempt_at = None
+        subscription.failed_payments_count = 0
         message = "Pendencia resolvida e assinatura reativada."
+    elif action == "expire_subscription":
+        subscription.status = "canceled"
+        subscription.cancel_at_period_end = False
+        subscription.current_period_ends_at = date.today().isoformat()
+        subscription.grace_period_ends_at = None
+        message = "Assinatura encerrada ao fim da janela comercial local."
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Acao de assinatura invalida.")
 
@@ -185,6 +260,8 @@ def apply_subscription_action(tenant_id: str, actor_user_id: str, action: str) -
                 "status": subscription.status,
                 "cancel_at_period_end": subscription.cancel_at_period_end,
                 "current_period_ends_at": subscription.current_period_ends_at,
+                "grace_period_ends_at": subscription.grace_period_ends_at,
+                "failed_payments_count": subscription.failed_payments_count,
             },
         )
     )
@@ -204,7 +281,9 @@ def list_billing_events(tenant_id: str) -> list[dict[str, str]]:
         "billing.subscription_reactivate": "Assinatura reativada",
         "billing.subscription_renew_trial": "Trial renovado",
         "billing.subscription_mark_past_due": "Assinatura em pendencia",
+        "billing.subscription_retry_charge": "Tentativa de cobranca",
         "billing.subscription_resolve_past_due": "Pendencia resolvida",
+        "billing.subscription_expire_subscription": "Assinatura encerrada",
     }
     serialized: list[dict[str, str]] = []
     for item in entries:
@@ -215,7 +294,9 @@ def list_billing_events(tenant_id: str) -> list[dict[str, str]]:
                 "title": event_titles.get(item.action, "Atualizacao comercial"),
                 "detail": (
                     f"Plano {item.metadata.get('plan', '-')}, status {item.metadata.get('status', '-')}, "
-                    f"proxima referencia {item.metadata.get('current_period_ends_at') or item.metadata.get('next_billing_at') or '-'}."
+                    f"proxima referencia {item.metadata.get('current_period_ends_at') or item.metadata.get('next_billing_at') or '-'}, "
+                    f"graca ate {item.metadata.get('grace_period_ends_at') or '-'}, "
+                    f"tentativas falhas {item.metadata.get('failed_payments_count', 0)}."
                 ),
                 "created_at": item.created_at.isoformat(),
             }

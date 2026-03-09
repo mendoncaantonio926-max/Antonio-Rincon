@@ -14,6 +14,10 @@ class SubscriptionResponse(BaseModel):
     trial_ends_at: str | None = None
     current_period_ends_at: str | None = None
     cancel_at_period_end: bool
+    grace_period_ends_at: str | None = None
+    last_payment_attempt_at: str | None = None
+    failed_payments_count: int
+    grace_days_remaining: int
     trial_days_remaining: int
     seats_included: int
     ai_requests_limit: int
@@ -21,6 +25,8 @@ class SubscriptionResponse(BaseModel):
     suggested_plan: Plan
     can_export_reports: bool
     commercial_status: str
+    collection_stage: str
+    next_commercial_action: str
     next_billing_at: str | None = None
     created_at: str
     updated_at: str

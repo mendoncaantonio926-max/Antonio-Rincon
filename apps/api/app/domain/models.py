@@ -166,6 +166,9 @@ class Subscription:
     trial_ends_at: str | None = None
     current_period_ends_at: str | None = None
     cancel_at_period_end: bool = False
+    grace_period_ends_at: str | None = None
+    last_payment_attempt_at: str | None = None
+    failed_payments_count: int = 0
     seats_included: int = 1
     ai_requests_limit: int = 50
     report_exports_limit: int = 10

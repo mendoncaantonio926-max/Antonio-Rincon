@@ -45,3 +45,11 @@ def create_all() -> None:
             connection.execute(
                 text("ALTER TABLE subscriptions ADD COLUMN cancel_at_period_end BOOLEAN NOT NULL DEFAULT 0")
             )
+        if "grace_period_ends_at" not in subscription_columns:
+            connection.execute(text("ALTER TABLE subscriptions ADD COLUMN grace_period_ends_at VARCHAR(32)"))
+        if "last_payment_attempt_at" not in subscription_columns:
+            connection.execute(text("ALTER TABLE subscriptions ADD COLUMN last_payment_attempt_at VARCHAR(32)"))
+        if "failed_payments_count" not in subscription_columns:
+            connection.execute(
+                text("ALTER TABLE subscriptions ADD COLUMN failed_payments_count INTEGER NOT NULL DEFAULT 0")
+            )

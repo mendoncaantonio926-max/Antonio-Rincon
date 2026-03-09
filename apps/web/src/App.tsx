@@ -2023,7 +2023,14 @@ function BillingPage() {
   }
 
   async function handleSubscriptionAction(
-    action: "cancel" | "reactivate" | "renew_trial" | "mark_past_due" | "resolve_past_due",
+    action:
+      | "cancel"
+      | "reactivate"
+      | "renew_trial"
+      | "mark_past_due"
+      | "retry_charge"
+      | "resolve_past_due"
+      | "expire_subscription",
   ) {
     if (!tokens?.access_token) return;
     try {
@@ -2043,9 +2050,31 @@ function BillingPage() {
             <p className="eyebrow">Leitura comercial</p>
             <h2>Assinatura</h2>
           </div>
-          <Badge tone={subscription?.status === "past_due" ? "warning" : "success"}>
+          <Badge
+            tone={
+              subscription?.status === "past_due"
+                ? "warning"
+                : subscription?.status === "canceled"
+                  ? "neutral"
+                  : "success"
+            }
+          >
             {subscription?.commercial_status ?? "carregando"}
           </Badge>
+        </div>
+        <div className="billing-hero-strip">
+          <article className="brief-card">
+            <strong>Estagio de cobranca</strong>
+            <span>{subscription?.collection_stage ?? "-"}</span>
+          </article>
+          <article className="brief-card">
+            <strong>Proxima acao comercial</strong>
+            <span>{subscription?.next_commercial_action ?? "-"}</span>
+          </article>
+          <article className="brief-card">
+            <strong>Tentativas falhas</strong>
+            <span>{subscription?.failed_payments_count ?? 0}</span>
+          </article>
         </div>
         <div className="billing-stat-grid">
           <article className="stat-tile">
@@ -2073,6 +2102,14 @@ function BillingPage() {
             <span>{subscription?.next_billing_at ?? "-"}</span>
           </article>
           <article className="stat-tile">
+            <strong>Graca ate</strong>
+            <span>{subscription?.grace_period_ends_at ?? "-"}</span>
+          </article>
+          <article className="stat-tile">
+            <strong>Dias de graca</strong>
+            <span>{subscription?.grace_days_remaining ?? 0}</span>
+          </article>
+          <article className="stat-tile">
             <strong>Dias restantes</strong>
             <span>{subscription?.trial_days_remaining ?? 0}</span>
           </article>
@@ -2092,6 +2129,10 @@ function BillingPage() {
             <strong>Cancelamento agendado</strong>
             <span>{subscription?.cancel_at_period_end ? "Sim" : "Nao"}</span>
           </article>
+          <article className="stat-tile">
+            <strong>Ultima tentativa</strong>
+            <span>{subscription?.last_payment_attempt_at ?? "-"}</span>
+          </article>
         </div>
         {message ? <div className="info-box">{message}</div> : null}
         <div className="billing-brief-grid">
@@ -2106,13 +2147,17 @@ function BillingPage() {
           <article className="brief-card brief-card--wide">
             <strong>Leitura comercial</strong>
             <span>
-              {subscription?.cancel_at_period_end
-                ? `Cancelamento previsto para ${subscription.current_period_ends_at ?? "o fim do periodo atual"}.`
-                : subscription?.status === "past_due"
-                  ? "Conta em pendencia. Priorize regularizacao antes de ampliar o uso."
-                  : subscription?.trial_days_remaining
-                    ? `Trial em andamento com ${subscription.trial_days_remaining} dia(s) restante(s).`
-                    : "Conta pronta para conversao, renovacao ou upgrade de plano."}
+              {subscription?.status === "canceled"
+                ? "Conta encerrada localmente. O proximo passo e decidir por reativacao ou novo ciclo comercial."
+                : subscription?.grace_days_remaining
+                  ? `Conta em janela de graca com ${subscription.grace_days_remaining} dia(s) para regularizacao.`
+                  : subscription?.cancel_at_period_end
+                    ? `Cancelamento previsto para ${subscription.current_period_ends_at ?? "o fim do periodo atual"}.`
+                    : subscription?.status === "past_due"
+                      ? "Conta em pendencia. Priorize regularizacao antes de ampliar o uso."
+                      : subscription?.trial_days_remaining
+                        ? `Trial em andamento com ${subscription.trial_days_remaining} dia(s) restante(s).`
+                        : "Conta pronta para conversao, renovacao ou upgrade de plano."}
             </span>
           </article>
         </div>
@@ -2134,6 +2179,13 @@ function BillingPage() {
           <button
             className="inline-button"
             type="button"
+            onClick={() => handleSubscriptionAction("retry_charge")}
+          >
+            Tentar cobranca
+          </button>
+          <button
+            className="inline-button"
+            type="button"
             onClick={() => handleSubscriptionAction("resolve_past_due")}
           >
             Resolver pendencia
@@ -2151,6 +2203,13 @@ function BillingPage() {
             onClick={() => handleSubscriptionAction("cancel")}
           >
             Cancelar
+          </button>
+          <button
+            className="inline-button"
+            type="button"
+            onClick={() => handleSubscriptionAction("expire_subscription")}
+          >
+            Encerrar conta
           </button>
         </div>
       </div>

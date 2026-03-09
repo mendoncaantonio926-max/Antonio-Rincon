@@ -137,6 +137,10 @@ export type Subscription = {
   trial_ends_at?: string | null;
   current_period_ends_at?: string | null;
   cancel_at_period_end: boolean;
+  grace_period_ends_at?: string | null;
+  last_payment_attempt_at?: string | null;
+  failed_payments_count: number;
+  grace_days_remaining: number;
   trial_days_remaining: number;
   seats_included: number;
   ai_requests_limit: number;
@@ -144,6 +148,8 @@ export type Subscription = {
   suggested_plan: "essential" | "pro" | "executive" | "enterprise";
   can_export_reports: boolean;
   commercial_status: string;
+  collection_stage: string;
+  next_commercial_action: string;
   next_billing_at?: string | null;
 };
 
@@ -437,7 +443,14 @@ export const api = {
   },
   subscriptionAction(
     token: string,
-    action: "cancel" | "reactivate" | "renew_trial" | "mark_past_due" | "resolve_past_due",
+    action:
+      | "cancel"
+      | "reactivate"
+      | "renew_trial"
+      | "mark_past_due"
+      | "retry_charge"
+      | "resolve_past_due"
+      | "expire_subscription",
   ) {
     return request<{ message: string }>("/billing/subscription/action", {
       method: "POST",

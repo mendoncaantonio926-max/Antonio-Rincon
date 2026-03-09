@@ -14,7 +14,12 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 ### Added
 
+- billing agora expone estagio de cobranca, proxima acao comercial, periodo de graca, ultima tentativa de pagamento e contagem de falhas para refletir um fluxo de cobranca mais real
+- a tela de assinatura ganhou leitura comercial mais profunda com sinais de cobranca, janela de graca e controles locais para tentativa de cobranca e encerramento da conta
+
 ### Changed
+
+- transicoes de billing passaram a atravessar com mais fidelidade os estados locais de trial, cobranca, graca, retencao, reativacao e churn
 
 ### Fixed
 
