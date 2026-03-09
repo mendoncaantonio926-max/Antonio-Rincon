@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from datetime import date
 
-from app.services.crud_service import list_contacts, list_opponent_events, list_opponents, list_tasks
+from app.services.crud_service import (
+    build_opponents_summary,
+    list_contacts,
+    list_opponent_events,
+    list_opponents,
+    list_tasks,
+)
 from app.services.plan_service import get_subscription_for_tenant, get_trial_days_remaining
 from app.services.report_service import list_reports
 from app.services.store import store
@@ -14,6 +20,7 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     opponents = list_opponents(tenant_id)
     reports = list_reports(tenant_id)
     subscription = get_subscription_for_tenant(tenant_id)
+    opponents_summary = build_opponents_summary(tenant_id)
     open_tasks = len([task for task in tasks if task.status != "done"])
     priority_contacts = len([contact for contact in contacts if contact.status == "priority"])
     overdue_tasks = len(
@@ -37,6 +44,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     next_action = "Consolidar rotina semanal"
     action_reason = "O workspace esta funcional e pede manutencao de cadencia, leitura executiva e revisao de prioridades."
     urgency = "normal"
+    priority_score = 34
+    trigger_signal = "cadencia operacional sob controle"
     focus_area = "cadencia executiva"
     suggested_owner = "coordenacao"
     due_window = "nesta semana"
@@ -52,6 +61,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         next_action = "Resolver tarefas vencidas"
         action_reason = f"Ha {overdue_tasks} tarefa(s) fora do prazo, o que compromete execucao e previsibilidade operacional."
         urgency = "high"
+        priority_score = max(priority_score, 82)
+        trigger_signal = f"{overdue_tasks} tarefa(s) vencida(s)"
         focus_area = "execucao critica"
         suggested_owner = "operacoes"
         due_window = "hoje"
@@ -64,6 +75,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Classificar contatos prioritarios"
             action_reason = "A base ja existe, mas ainda nao orienta a coordenacao porque faltam prioridades explicitas."
             urgency = "normal"
+            priority_score = max(priority_score, 58)
+            trigger_signal = "base sem priorizacao"
             focus_area = "qualificacao de base"
             suggested_owner = "articulacao territorial"
             due_window = "nas proximas 48 horas"
@@ -74,6 +87,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Cadastrar contatos estrategicos"
             action_reason = "Sem base inicial de contatos, o CRM nao consegue puxar territorio, liderancas nem imprensa."
             urgency = "high"
+            priority_score = max(priority_score, 88)
+            trigger_signal = "crm ainda vazio"
             focus_area = "ativacao de CRM"
             suggested_owner = "articulacao territorial"
             due_window = "hoje"
@@ -84,6 +99,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Abrir monitoramento de adversarios"
             action_reason = "Ainda nao ha adversarios mapeados, entao o workspace opera sem leitura competitiva minima."
             urgency = "normal"
+            priority_score = max(priority_score, 52)
+            trigger_signal = "monitoramento ainda nao iniciado"
             focus_area = "leitura competitiva"
             suggested_owner = "inteligencia"
             due_window = "nesta semana"
@@ -94,6 +111,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Responder sinais criticos da timeline"
             action_reason = f"Foram detectados {critical_events} evento(s) critico(s), o que pede resposta coordenada e material executivo."
             urgency = "high"
+            priority_score = max(priority_score, 86)
+            trigger_signal = f"{critical_events} sinal(is) critico(s) na timeline"
             focus_area = "resposta coordenada"
             suggested_owner = "inteligencia e comunicacao"
             due_window = "nas proximas 24 horas"
@@ -105,6 +124,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         if module in {"dashboard"} and urgency == "normal":
             next_action = "Gerar relatorio executivo"
             action_reason = "O workspace ja acumula atividade, mas ainda nao a consolidou em material de coordenacao."
+            priority_score = max(priority_score, 49)
+            trigger_signal = "falta consolidacao executiva"
             focus_area = "consolidacao executiva"
             suggested_owner = "coordenacao"
             due_window = "ate o fim da semana"
@@ -115,6 +136,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Fechar onboarding operacional"
             action_reason = "A ativacao inicial ainda nao terminou, o que reduz o contexto disponivel para decisao e rotina."
             urgency = "high"
+            priority_score = max(priority_score, 91)
+            trigger_signal = "ativacao inicial incompleta"
             focus_area = "ativacao inicial"
             suggested_owner = "owner do workspace"
             due_window = "hoje"
@@ -124,6 +147,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         next_action = "Regularizar pendencia comercial"
         action_reason = "A assinatura esta em pendencia financeira e pode travar continuidade de uso e expansao."
         urgency = "high"
+        priority_score = 95
+        trigger_signal = "pendencia comercial ativa"
         focus_area = "continuidade comercial"
         suggested_owner = "financeiro e decisao comercial"
         due_window = "imediatamente"
@@ -133,6 +158,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         next_action = "Reavaliar risco de cancelamento"
         action_reason = "Existe cancelamento agendado, entao convem confirmar renovacao, entrega percebida e plano correto."
         urgency = "normal"
+        priority_score = max(priority_score, 68)
+        trigger_signal = "cancelamento agendado"
         focus_area = "retencao"
         suggested_owner = "comercial"
         due_window = "neste ciclo"
@@ -142,11 +169,39 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         next_action = "Converter trial em plano ativo"
         action_reason = f"O trial termina em {trial_days_remaining} dia(s), entao a conversa comercial precisa acontecer agora."
         urgency = "normal"
+        priority_score = max(priority_score, 63)
+        trigger_signal = f"trial termina em {trial_days_remaining} dia(s)"
         focus_area = "conversao comercial"
         suggested_owner = "comercial"
         due_window = "antes do fim do trial"
         recommendations.append("O trial esta perto do fim. Prepare conversao ou ajuste de plano antes do vencimento.")
         blockers.append("O trial esta perto do fim e exige decisao comercial.")
+    if (
+        module in {"dashboard", "opponents"}
+        and opponents_summary["momentum_direction"] == "up"
+        and opponents_summary["critical_events_count"] > 0
+    ):
+        next_action = "Produzir resposta competitiva com base no spotlight"
+        action_reason = (
+            f"{opponents_summary['spotlight']['name']} acelerou o ritmo competitivo "
+            f"com delta {opponents_summary['spotlight']['momentum_delta']} e sinais criticos recentes."
+        )
+        urgency = "high"
+        priority_score = max(priority_score, 89)
+        trigger_signal = (
+            f"spotlight em alta: {opponents_summary['spotlight']['name']}"
+            if opponents_summary["spotlight"]["opponent_id"]
+            else "spotlight competitivo em alta"
+        )
+        focus_area = "contra-ataque competitivo"
+        suggested_owner = "inteligencia e comunicacao"
+        due_window = "nas proximas 24 horas"
+        recommendations.insert(
+            0,
+            "O spotlight temporal indica escalada recente. Converta a leitura em contra-acao politica e narrativa.",
+        )
+        blockers.insert(0, "A pressao competitiva subiu na janela recente e pede resposta coordenada.")
+
     if not recommendations:
         recommendations = [
             "Operacao com sinais saudaveis. Mantenha tarefas em dia e atualize a timeline dos adversarios.",
@@ -168,6 +223,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Cadastrar contatos estrategicos"
             action_reason = "Sem base ativa, o modulo de contatos ainda nao sustenta acao territorial nem relacionamento."
             urgency = "high"
+            priority_score = max(priority_score, 88)
+            trigger_signal = "crm ainda vazio"
             focus_area = "ativacao de CRM"
             suggested_owner = "articulacao territorial"
             due_window = "hoje"
@@ -199,10 +256,14 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Normalizar fila operacional"
             action_reason = "As tarefas vencidas indicam gargalo objetivo de execucao dentro do modulo."
             urgency = "high"
+            priority_score = max(priority_score, 84)
+            trigger_signal = f"{overdue_tasks} tarefa(s) vencida(s) no board"
             focus_area = "gargalo de execucao"
             suggested_owner = "operacoes"
             due_window = "hoje"
         else:
+            priority_score = max(priority_score, 46)
+            trigger_signal = "fila operacional pede cadencia"
             focus_area = "cadencia de entrega"
             suggested_owner = "operacoes"
             due_window = "nesta semana"
@@ -224,23 +285,36 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     elif module == "opponents":
         summary = (
             f"Ha {len(opponents)} adversario(s), {opponent_events} evento(s) e {critical_events} sinal(is) critico(s). "
-            f"O foco deve ser comparacao, timeline e resposta coordenada."
+            f"A janela recente variou {opponents_summary['momentum_delta']} contra a anterior, com spotlight em "
+            f"{opponents_summary['spotlight']['name']}."
         )
         if not opponents:
             next_action = "Cadastrar primeiro adversario"
             action_reason = "Sem monitorados, a leitura competitiva do modulo continua vazia."
             urgency = "normal"
+            priority_score = max(priority_score, 52)
+            trigger_signal = "monitoramento ainda nao iniciado"
             focus_area = "ativacao de monitoramento"
             suggested_owner = "inteligencia"
             due_window = "nesta semana"
-        elif critical_events > 0:
-            next_action = "Produzir resposta para sinais criticos"
-            action_reason = "A timeline ja mostra criticidade suficiente para virar acao coordenada."
+        elif opponents_summary["momentum_direction"] == "up":
+            next_action = "Responder aceleracao do spotlight"
+            action_reason = (
+                f"{opponents_summary['spotlight']['name']} puxou a alta recente e precisa de comparacao e resposta."
+            )
             urgency = "high"
+            priority_score = max(priority_score, 90)
+            trigger_signal = (
+                f"delta competitivo {opponents_summary['momentum_delta']}"
+                if opponents_summary["spotlight"]["opponent_id"]
+                else "delta competitivo em alta"
+            )
             focus_area = "resposta competitiva"
             suggested_owner = "inteligencia e comunicacao"
             due_window = "nas proximas 24 horas"
         else:
+            priority_score = max(priority_score, 57)
+            trigger_signal = "watchlist pede comparacao"
             focus_area = "watchlist comparativa"
             suggested_owner = "inteligencia"
             due_window = "nas proximas 48 horas"
@@ -252,7 +326,10 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         supporting_signals = [
             f"{len(opponents)} adversario(s) monitorado(s).",
             f"{opponent_events} evento(s) registrados na timeline.",
-            f"{critical_events} sinal(is) critico(s) exigindo leitura de resposta.",
+            (
+                f"Spotlight: {opponents_summary['spotlight']['name']} "
+                f"com delta {opponents_summary['spotlight']['momentum_delta']}."
+            ),
         ]
         blockers = [
             item
@@ -269,6 +346,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Resolver pendencia financeira"
             action_reason = "O billing ja tem um bloqueio explicito de continuidade e precisa de resolucao imediata."
             urgency = "high"
+            priority_score = 95
+            trigger_signal = "pendencia comercial ativa"
             focus_area = "continuidade comercial"
             suggested_owner = "financeiro e decisao comercial"
             due_window = "imediatamente"
@@ -276,6 +355,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Reverter cancelamento agendado"
             action_reason = "Ha risco concreto de perda de conta ao fim do periodo atual."
             urgency = "normal"
+            priority_score = max(priority_score, 68)
+            trigger_signal = "cancelamento agendado"
             focus_area = "retencao"
             suggested_owner = "comercial"
             due_window = "neste ciclo"
@@ -283,6 +364,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Conduzir conversa de conversao"
             action_reason = "O billing ainda esta em trial e precisa transformar uso em receita recorrente."
             urgency = "normal"
+            priority_score = max(priority_score, 61)
+            trigger_signal = "trial em fase de conversao"
             focus_area = "conversao comercial"
             suggested_owner = "comercial"
             due_window = "antes do fim do trial"
@@ -290,6 +373,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             next_action = "Reforcar valor percebido do plano"
             action_reason = "Mesmo com conta ativa, billing forte depende de uso percebido e narrativa de continuidade."
             urgency = "normal"
+            priority_score = max(priority_score, 44)
+            trigger_signal = "conta ativa pronta para expansao"
             focus_area = "retencao e expansao"
             suggested_owner = "comercial"
             due_window = "neste ciclo"
@@ -330,6 +415,8 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         "next_action": next_action,
         "action_reason": action_reason,
         "urgency": urgency,
+        "priority_score": priority_score,
+        "trigger_signal": trigger_signal,
         "focus_area": focus_area,
         "suggested_owner": suggested_owner,
         "due_window": due_window,

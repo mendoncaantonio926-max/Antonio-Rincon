@@ -254,6 +254,8 @@ const {
         next_action: "Atacar tarefas vencidas.",
         action_reason: "Ha frentes abertas e sinais suficientes para acelerar a execucao.",
         urgency: "alta",
+        priority_score: 78,
+        trigger_signal: "3 tarefas abertas",
         focus_area: "operacao",
         suggested_owner: "Coordenacao",
         due_window: "Hoje",
@@ -268,6 +270,8 @@ const {
         next_action: "Revisar status comercial.",
         action_reason: "O ciclo atual exige decisao sobre continuidade e uso.",
         urgency: "media",
+        priority_score: 62,
+        trigger_signal: "plano pro em trial",
         focus_area: "receita",
         suggested_owner: "Financeiro",
         due_window: "Esta semana",
@@ -1242,6 +1246,8 @@ describe("App authenticated flows", () => {
       expect(apiMock.dashboardSummary).toHaveBeenCalledWith("token-valido");
       expect(apiMock.getAiSummary).toHaveBeenCalledWith("token-valido", "dashboard");
       expect(screen.getByText("Atacar tarefas vencidas.")).toBeInTheDocument();
+      expect(screen.getByText("78/100")).toBeInTheDocument();
+      expect(screen.getAllByText("3 tarefas abertas").length).toBeGreaterThan(0);
     });
 
     await user.selectOptions(screen.getByDisplayValue("Workspace"), "billing");
@@ -1250,6 +1256,7 @@ describe("App authenticated flows", () => {
       expect(apiMock.getAiSummary).toHaveBeenCalledWith("token-valido", "billing");
       expect(screen.getByText("Revisar status comercial.")).toBeInTheDocument();
       expect(screen.getByText("Assinatura sob atencao")).toBeInTheDocument();
+      expect(screen.getByText("62/100")).toBeInTheDocument();
     });
   });
 

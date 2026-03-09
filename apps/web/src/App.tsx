@@ -500,6 +500,14 @@ function DashboardPage() {
           </div>
           <div className="dashboard-ai-meta">
             <article className="dashboard-ai-meta-card">
+              <span>Escore de prioridade</span>
+              <strong>{aiSummary?.priority_score ?? 0}/100</strong>
+            </article>
+            <article className="dashboard-ai-meta-card">
+              <span>Gatilho principal</span>
+              <strong>{aiSummary?.trigger_signal ?? "Leitura em formacao"}</strong>
+            </article>
+            <article className="dashboard-ai-meta-card">
               <span>Foco sugerido</span>
               <strong>{aiSummary?.focus_area ?? "Lendo contexto"}</strong>
             </article>

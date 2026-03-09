@@ -233,6 +233,8 @@ export type AiSummary = {
   next_action: string;
   action_reason: string;
   urgency: string;
+  priority_score: number;
+  trigger_signal: string;
   focus_area: string;
   suggested_owner: string;
   due_window: string;

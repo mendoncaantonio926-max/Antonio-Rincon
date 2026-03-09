@@ -374,6 +374,8 @@ def test_membership_invite_and_ai_summary() -> None:
     assert "next_action" in ai_response.json()
     assert "action_reason" in ai_response.json()
     assert ai_response.json()["urgency"] in {"normal", "high"}
+    assert isinstance(ai_response.json()["priority_score"], int)
+    assert ai_response.json()["trigger_signal"]
     assert ai_response.json()["focus_area"]
     assert ai_response.json()["suggested_owner"]
     assert ai_response.json()["due_window"]
@@ -389,6 +391,7 @@ def test_membership_invite_and_ai_summary() -> None:
     assert ai_billing_response.status_code == 200
     assert ai_billing_response.json()["module"] == "billing"
     assert ai_billing_response.json()["suggested_owner"]
+    assert ai_billing_response.json()["trigger_signal"]
 
     tenant_update_response = client.patch(
         "/tenants/current",

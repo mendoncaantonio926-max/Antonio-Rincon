@@ -10,6 +10,8 @@ class AiSummaryResponse(BaseModel):
     next_action: str
     action_reason: str
     urgency: str
+    priority_score: int
+    trigger_signal: str
     focus_area: str
     suggested_owner: str
     due_window: str
