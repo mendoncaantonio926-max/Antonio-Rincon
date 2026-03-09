@@ -38,6 +38,24 @@ class DashboardOwnerBriefResponse(BaseModel):
     brief: str
 
 
+class DashboardOwnerTargetResponse(BaseModel):
+    owner_label: str
+    target_conversions: int
+    actual_conversions: int
+    gap: int
+    status: str
+
+
+class DashboardThroughputComparisonResponse(BaseModel):
+    current_window_label: str
+    current_window_count: int
+    previous_window_label: str
+    previous_window_count: int
+    delta: int
+    direction: str
+    summary: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -70,6 +88,8 @@ class DashboardSummaryResponse(BaseModel):
     daily_execution_queue: list[DashboardExecutionItemResponse]
     owner_productivity: list[DashboardProductivityResponse]
     window_productivity: list[DashboardProductivityResponse]
+    owner_targets: list[DashboardOwnerTargetResponse]
+    throughput_comparison: DashboardThroughputComparisonResponse
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str

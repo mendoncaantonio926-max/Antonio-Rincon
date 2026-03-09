@@ -351,6 +351,10 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert isinstance(dashboard_response.json()["daily_execution_queue"], list)
     assert isinstance(dashboard_response.json()["owner_productivity"], list)
     assert isinstance(dashboard_response.json()["window_productivity"], list)
+    assert isinstance(dashboard_response.json()["owner_targets"], list)
+    assert "throughput_comparison" in dashboard_response.json()
+    assert "current_window_label" in dashboard_response.json()["throughput_comparison"]
+    assert "delta" in dashboard_response.json()["throughput_comparison"]
     assert "morning_focus_summary" in dashboard_response.json()
     assert isinstance(dashboard_response.json()["owner_daily_briefs"], list)
 
@@ -462,6 +466,8 @@ def test_lead_pipeline_update_and_filters() -> None:
     dashboard_response = client.get("/dashboard/summary", headers=headers)
     assert dashboard_response.status_code == 200
     assert dashboard_response.json()["overdue_followups_count"] >= 1
+    assert isinstance(dashboard_response.json()["owner_targets"], list)
+    assert "throughput_comparison" in dashboard_response.json()
 
 
 def test_membership_invite_and_ai_summary() -> None:

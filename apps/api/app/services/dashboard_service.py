@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from app.services.public_service import serialize_lead
 from app.services.crud_service import list_contacts, list_opponents, list_tasks
@@ -9,7 +9,16 @@ from app.services.report_service import list_reports
 from app.services.store import store
 
 
-def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
+def _parse_iso_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value[:10])
+    except ValueError:
+        return None
+
+
+def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
     tenant = store.tenants[tenant_id]
     subscription = get_subscription_for_tenant(tenant_id)
     contacts = list_contacts(tenant_id)
@@ -18,7 +27,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
     reports = list_reports(tenant_id)
     leads = list(store.leads.values())
     memberships_count = len([membership for membership in store.memberships.values() if membership.tenant_id == tenant_id])
-    today = date.today().isoformat()
+    today_date = date.today()
+    today = today_date.isoformat()
     converted_leads_count = len([lead for lead in leads if lead.converted_contact_id])
     pending_leads_count = len(leads) - converted_leads_count
     pending_leads = [
@@ -223,6 +233,67 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
             str(item["label"]),
         ),
     )
+    owner_targets = []
+    for item in owner_productivity:
+        target_conversions = max(
+            1,
+            (int(item["pending_count"]) + int(item["converted_count"]) + 1) // 2,
+        )
+        actual_conversions = int(item["converted_count"])
+        gap = max(target_conversions - actual_conversions, 0)
+        status = "on_track"
+        if gap >= 2 or (int(item["overdue_count"]) > 0 and actual_conversions == 0):
+            status = "behind"
+        elif gap >= 1 or int(item["due_today_count"]) > 0:
+            status = "at_risk"
+        owner_targets.append(
+            {
+                "owner_label": str(item["label"]),
+                "target_conversions": target_conversions,
+                "actual_conversions": actual_conversions,
+                "gap": gap,
+                "status": status,
+            }
+        )
+    owner_targets.sort(
+        key=lambda item: (
+            {"behind": 0, "at_risk": 1, "on_track": 2}.get(str(item["status"]), 99),
+            -int(item["gap"]),
+            str(item["owner_label"]),
+        )
+    )
+
+    current_window_start = today_date - timedelta(days=6)
+    previous_window_start = today_date - timedelta(days=13)
+    previous_window_end = today_date - timedelta(days=7)
+    current_window_converted_count = 0
+    previous_window_converted_count = 0
+    for lead in leads:
+        converted_date = _parse_iso_date(lead.converted_at)
+        if converted_date is None:
+            continue
+        if converted_date >= current_window_start:
+            current_window_converted_count += 1
+        elif previous_window_start <= converted_date <= previous_window_end:
+            previous_window_converted_count += 1
+    throughput_delta = current_window_converted_count - previous_window_converted_count
+    throughput_direction = "stable"
+    if throughput_delta > 0:
+        throughput_direction = "up"
+    elif throughput_delta < 0:
+        throughput_direction = "down"
+    throughput_comparison = {
+        "current_window_label": "Ultimos 7 dias",
+        "current_window_count": current_window_converted_count,
+        "previous_window_label": "7 dias anteriores",
+        "previous_window_count": previous_window_converted_count,
+        "delta": throughput_delta,
+        "direction": throughput_direction,
+        "summary": (
+            f"Conversao nos ultimos 7 dias: {current_window_converted_count}. "
+            f"Janela anterior: {previous_window_converted_count}. Delta {throughput_delta}."
+        ),
+    }
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -320,6 +391,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "daily_execution_queue": daily_execution_queue,
         "owner_productivity": owner_productivity[:4],
         "window_productivity": window_productivity[:5],
+        "owner_targets": owner_targets[:4],
+        "throughput_comparison": throughput_comparison,
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

@@ -742,6 +742,40 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Meta por owner</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.owner_targets ?? []).map((item) => (
+                    <span key={`owner-target-${item.owner_label}`}>
+                      {item.owner_label}: meta {item.target_conversions}, realizado{" "}
+                      {item.actual_conversions}, gap {item.gap} ({item.status})
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Throughput comercial</span>
+                <div className="dashboard-recommendations">
+                  <span>
+                    {summary?.throughput_comparison.summary ??
+                      "A comparacao de throughput aparece quando as conversoes entram em ritmo."}
+                  </span>
+                  <span>
+                    {summary?.throughput_comparison.current_window_label ?? "Janela atual"}:{" "}
+                    {summary?.throughput_comparison.current_window_count ?? 0}
+                  </span>
+                  <span>
+                    {summary?.throughput_comparison.previous_window_label ?? "Janela anterior"}:{" "}
+                    {summary?.throughput_comparison.previous_window_count ?? 0}
+                  </span>
+                  <span>
+                    Delta {summary?.throughput_comparison.delta ?? 0} (
+                    {summary?.throughput_comparison.direction ?? "stable"})
+                  </span>
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

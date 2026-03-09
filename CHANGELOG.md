@@ -25,6 +25,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora expone alertas por owner e uma fila diaria de execucao comercial para orientar cadencia operacional
 - dashboard agora expone produtividade por owner e por janela para ler conversao, fila pendente e atraso no mesmo quadro comercial
 - dashboard agora expone primeira agenda do dia e resumo diario por owner para transformar a fila comercial em ritual de execucao
+- dashboard agora expone meta de conversao por owner e comparativo de throughput entre a janela atual e a anterior no mesmo quadro comercial
 
 ### Changed
 
@@ -35,6 +36,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - a area de leads agora agrupa a fila por janela operacional, destaca escore de risco e permite atribuir a sugestao de owner sem sair do painel
 - IA contextual e dashboard agora usam o lead prioritario da fila para orientar dono sugerido e janela de resposta comercial
 - browser audit agora valida tambem a acao rapida comercial do dashboard antes de seguir para os fluxos do app
+- browser audit agora valida tambem meta por owner e throughput comercial no dashboard executivo
 ### Fixed
 
 ### Docs

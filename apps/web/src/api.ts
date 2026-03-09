@@ -325,6 +325,22 @@ export type DashboardSummary = {
     overdue_count: number;
     due_today_count: number;
   }>;
+  owner_targets: Array<{
+    owner_label: string;
+    target_conversions: number;
+    actual_conversions: number;
+    gap: number;
+    status: string;
+  }>;
+  throughput_comparison: {
+    current_window_label: string;
+    current_window_count: number;
+    previous_window_label: string;
+    previous_window_count: number;
+    delta: number;
+    direction: string;
+    summary: string;
+  };
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;

@@ -371,6 +371,49 @@ const {
       windowGroups.set(windowLabel, windowGroup);
     }
 
+    const ownerProductivity = Array.from(ownerGroups.values()).map((group) => ({
+      label: group.label,
+      pending_count: group.leads_count,
+      converted_count: group.label === "Antonio Rincon" ? 1 : 0,
+      overdue_count: group.overdue_count,
+      due_today_count: group.due_today_count,
+    }));
+    const windowProductivity = Array.from(windowGroups.values()).map((group) => ({
+      label: group.label,
+      pending_count: group.leads_count,
+      converted_count: group.label === "Convertido" ? 1 : 0,
+      overdue_count: group.overdue_count,
+      due_today_count: group.due_today_count,
+    }));
+    const ownerTargets = ownerProductivity.map((item) => {
+      const targetConversions = Math.max(
+        1,
+        Math.floor((item.pending_count + item.converted_count + 1) / 2),
+      );
+      const gap = Math.max(targetConversions - item.converted_count, 0);
+      let status = "on_track";
+      if (gap >= 2 || (item.overdue_count > 0 && item.converted_count === 0)) {
+        status = "behind";
+      } else if (gap >= 1 || item.due_today_count > 0) {
+        status = "at_risk";
+      }
+      return {
+        owner_label: item.label,
+        target_conversions: targetConversions,
+        actual_conversions: item.converted_count,
+        gap,
+        status,
+      };
+    });
+    const currentWindowConvertedCount = leadsState.items.filter(
+      (item) => item.converted_at && item.converted_at.slice(0, 10) >= "2026-03-03",
+    ).length;
+    const previousWindowConvertedCount = leadsState.items.filter((item) => {
+      const convertedAt = item.converted_at?.slice(0, 10);
+      return Boolean(convertedAt && convertedAt >= "2026-02-24" && convertedAt <= "2026-03-02");
+    }).length;
+    const throughputDelta = currentWindowConvertedCount - previousWindowConvertedCount;
+
     return {
       tenant_name: tenantState.tenant.name,
       contacts_count: contactsState.items.length,
@@ -435,20 +478,18 @@ const {
           }[item.follow_up_bucket] ?? "Sem agenda",
         risk_score: item.risk_score,
       })),
-      owner_productivity: Array.from(ownerGroups.values()).map((group) => ({
-        label: group.label,
-        pending_count: group.leads_count,
-        converted_count: group.label === "Antonio Rincon" ? 1 : 0,
-        overdue_count: group.overdue_count,
-        due_today_count: group.due_today_count,
-      })),
-      window_productivity: Array.from(windowGroups.values()).map((group) => ({
-        label: group.label,
-        pending_count: group.leads_count,
-        converted_count: group.label === "Convertido" ? 1 : 0,
-        overdue_count: group.overdue_count,
-        due_today_count: group.due_today_count,
-      })),
+      owner_productivity: ownerProductivity,
+      window_productivity: windowProductivity,
+      owner_targets: ownerTargets,
+      throughput_comparison: {
+        current_window_label: "Ultimos 7 dias",
+        current_window_count: currentWindowConvertedCount,
+        previous_window_label: "7 dias anteriores",
+        previous_window_count: previousWindowConvertedCount,
+        delta: throughputDelta,
+        direction: throughputDelta > 0 ? "up" : throughputDelta < 0 ? "down" : "stable",
+        summary: `Conversao nos ultimos 7 dias: ${currentWindowConvertedCount}. Janela anterior: ${previousWindowConvertedCount}. Delta ${throughputDelta}.`,
+      },
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -1698,6 +1739,9 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Resumo diario por owner")).toBeInTheDocument();
       expect(screen.getByText("Produtividade por owner")).toBeInTheDocument();
       expect(screen.getByText("Produtividade por janela")).toBeInTheDocument();
+      expect(screen.getByText("Meta por owner")).toBeInTheDocument();
+      expect(screen.getByText("Throughput comercial")).toBeInTheDocument();
+      expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 
     await user.selectOptions(screen.getByDisplayValue("Workspace"), "billing");
