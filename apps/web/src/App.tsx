@@ -964,6 +964,28 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Alavancas de fechamento</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.forecast_drivers ?? []).map((item) => (
+                    <span key={`forecast-driver-${item.label}`}>
+                      {item.label}: {item.summary}
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Bloqueios do forecast</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.forecast_blockers ?? []).map((item) => (
+                    <span key={`forecast-blocker-${item.label}`}>
+                      {item.label}: {item.summary}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

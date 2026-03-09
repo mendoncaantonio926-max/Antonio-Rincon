@@ -35,6 +35,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora expone previsao por estagio e fechamento projetado para antecipar resultado comercial da semana
 - dashboard agora expone mix do pipeline por owner e confianca do forecast para explicar o que sustenta a previsao comercial
 - dashboard agora expone risco de meta semanal e cenarios de fechamento para antecipar o desvio de resultado comercial
+- dashboard agora expone alavancas e bloqueios do forecast para explicar o que acelera ou trava o fechamento da semana
 - exportacao de relatorios no scaffold local agora recompõe a cota padrao do plano para contas ativas ou trial durante validacoes repetidas
 
 ### Changed
@@ -55,6 +56,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - browser audit agora valida tambem previsao por estagio e fechamento projetado no dashboard executivo
 - browser audit agora valida tambem mix por owner e confianca do forecast no dashboard executivo
 - browser audit agora valida tambem risco de meta e cenarios de fechamento no dashboard executivo
+- browser audit agora valida tambem alavancas e bloqueios do forecast no dashboard executivo
 ### Fixed
 
 ### Docs

@@ -774,6 +774,64 @@ const {
         summary: `Se as propostas e follow-ups quentes virarem, a semana pode chegar a ${expectedConversions + Math.max(proposalCount, 1)} fechamento(s).`,
       },
     ];
+    const forecastDrivers = [
+      ...(proposalCount > 0
+        ? [
+            {
+              label: "Propostas abertas",
+              impact: "positivo",
+              summary: `${proposalCount} lead(s) em proposta sustentam a aceleracao da semana.`,
+            },
+          ]
+        : []),
+      ...(committedPipelineCount > 0
+        ? [
+            {
+              label: "Pipeline comprometido",
+              impact: "positivo",
+              summary: `${committedPipelineCount} lead(s) estao em follow-up ou proposta, o que aumenta previsibilidade de fechamento.`,
+            },
+          ]
+        : []),
+      ...(forecastConfidence.label === "alta"
+        ? [
+            {
+              label: "Confianca alta",
+              impact: "positivo",
+              summary: "A distribuicao atual do funil sustenta previsao comercial mais confiavel.",
+            },
+          ]
+        : []),
+    ];
+    const forecastBlockers = [
+      ...(overdueRiskCount > 0
+        ? [
+            {
+              label: "Riscos vencidos",
+              impact: "negativo",
+              summary: `${overdueRiskCount} lead(s) de risco alto seguem com follow-up vencido.`,
+            },
+          ]
+        : []),
+      ...(gapToTarget > 0
+        ? [
+            {
+              label: "Gap para meta",
+              impact: "negativo",
+              summary: `Faltam ${gapToTarget} fechamento(s) para bater a meta semanal atual.`,
+            },
+          ]
+        : []),
+      ...(pendingLeads.length > committedPipelineCount
+        ? [
+            {
+              label: "Fila sem compromisso",
+              impact: "negativo",
+              summary: `${pendingLeads.length - committedPipelineCount} lead(s) ainda estao fora do pipeline comprometido.`,
+            },
+          ]
+        : []),
+    ];
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -866,6 +924,8 @@ const {
       forecast_confidence: forecastConfidence,
       goal_risk: goalRisk,
       forecast_scenarios: forecastScenarios,
+      forecast_drivers: forecastDrivers,
+      forecast_blockers: forecastBlockers,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -2132,6 +2192,14 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Confianca do forecast")).toBeInTheDocument();
       expect(screen.getByText("Risco de meta")).toBeInTheDocument();
       expect(screen.getByText("Cenarios de fechamento")).toBeInTheDocument();
+      expect(screen.getByText("Alavancas de fechamento")).toBeInTheDocument();
+      expect(screen.getByText("Bloqueios do forecast")).toBeInTheDocument();
+      expect(
+        screen.getByText(/Propostas abertas|Pipeline comprometido|Confianca alta/),
+      ).toBeInTheDocument();
+      expect(
+        screen.getAllByText(/Riscos vencidos|Gap para meta|Fila sem compromisso/).length,
+      ).toBeGreaterThan(0);
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 

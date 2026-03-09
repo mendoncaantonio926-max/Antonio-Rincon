@@ -311,6 +311,8 @@ async function main() {
     await page.getByText("Confianca do forecast").waitFor();
     await page.getByText("Risco de meta").waitFor();
     await page.getByText("Cenarios de fechamento").waitFor();
+    await page.getByText("Alavancas de fechamento").waitFor();
+    await page.getByText("Bloqueios do forecast").waitFor();
     await page.getByText(/Conversao nos ultimos 7 dias/).waitFor();
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
@@ -331,6 +333,7 @@ async function main() {
     checks.push("dashboard_conversion_forecast");
     checks.push("dashboard_forecast_confidence");
     checks.push("dashboard_goal_risk");
+    checks.push("dashboard_forecast_drivers");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");

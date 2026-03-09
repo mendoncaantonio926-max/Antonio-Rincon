@@ -446,6 +446,16 @@ export type DashboardSummary = {
     confidence_label: string;
     summary: string;
   }>;
+  forecast_drivers: Array<{
+    label: string;
+    impact: string;
+    summary: string;
+  }>;
+  forecast_blockers: Array<{
+    label: string;
+    impact: string;
+    summary: string;
+  }>;
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;

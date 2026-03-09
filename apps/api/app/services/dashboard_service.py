@@ -771,6 +771,62 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
             ),
         },
     ]
+    forecast_drivers = []
+    if proposal_count > 0:
+        forecast_drivers.append(
+            {
+                "label": "Propostas abertas",
+                "impact": "positivo",
+                "summary": f"{proposal_count} lead(s) em proposta sustentam a aceleracao da semana.",
+            }
+        )
+    if committed_pipeline_count > 0:
+        forecast_drivers.append(
+            {
+                "label": "Pipeline comprometido",
+                "impact": "positivo",
+                "summary": (
+                    f"{committed_pipeline_count} lead(s) estao em follow-up ou proposta, "
+                    "o que aumenta previsibilidade de fechamento."
+                ),
+            }
+        )
+    if confidence_label == "alta":
+        forecast_drivers.append(
+            {
+                "label": "Confianca alta",
+                "impact": "positivo",
+                "summary": "A distribuicao atual do funil sustenta previsao comercial mais confiavel.",
+            }
+        )
+    forecast_blockers = []
+    if overdue_risk_count > 0:
+        forecast_blockers.append(
+            {
+                "label": "Riscos vencidos",
+                "impact": "negativo",
+                "summary": f"{overdue_risk_count} lead(s) de risco alto seguem com follow-up vencido.",
+            }
+        )
+    if gap_to_target > 0:
+        forecast_blockers.append(
+            {
+                "label": "Gap para meta",
+                "impact": "negativo",
+                "summary": f"Faltam {gap_to_target} fechamento(s) para bater a meta semanal atual.",
+            }
+        )
+    if pending_leads_count > committed_pipeline_count:
+        forecast_blockers.append(
+            {
+                "label": "Fila sem compromisso",
+                "impact": "negativo",
+                "summary": (
+                    f"{pending_leads_count - committed_pipeline_count} lead(s) ainda estao fora "
+                    "do pipeline comprometido."
+                ),
+            }
+        )
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -885,6 +941,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "forecast_confidence": forecast_confidence,
         "goal_risk": goal_risk,
         "forecast_scenarios": forecast_scenarios,
+        "forecast_drivers": forecast_drivers[:3],
+        "forecast_blockers": forecast_blockers[:3],
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,
