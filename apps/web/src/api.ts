@@ -265,6 +265,13 @@ export type AiSummary = {
     owner_user_id?: string | null;
     follow_up_at?: string | null;
   } | null;
+  execution_batch?: Array<{
+    lead_id: string;
+    lead_name: string;
+    step_label: string;
+    owner_user_id?: string | null;
+    follow_up_at?: string | null;
+  }>;
 };
 
 export type DashboardSummary = {

@@ -317,7 +317,9 @@ async function main() {
     await page.getByText(/Conversao nos ultimos 7 dias/).waitFor();
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
     await page.getByRole("button", { name: "Executar recomendacao" }).click();
-    await page.getByText("Recomendacao da IA aplicada na fila comercial.").waitFor();
+    await page
+      .getByText(/Regua da IA aplicada em|Recomendacao da IA aplicada na fila comercial./)
+      .waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
     await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();
     await page.getByRole("button", { name: "Aplicar Pressionado" }).click();

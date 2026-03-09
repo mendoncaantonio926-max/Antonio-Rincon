@@ -470,27 +470,48 @@ function DashboardPage() {
   }
 
   async function handleDashboardAiAction() {
-    if (
-      !tokens?.access_token ||
-      !summary?.priority_lead_id ||
-      aiSummary?.execution_mode !== "update_priority_lead" ||
-      !aiSummary.execution_payload
-    ) {
-      return;
-    }
-
-    const updates = Object.fromEntries(
-      Object.entries(aiSummary.execution_payload).filter(([, value]) => value),
-    );
-    if (!Object.keys(updates).length) {
+    if (!tokens?.access_token || !aiSummary) {
       return;
     }
 
     setDashboardLeadPending("ai_execution");
     setDashboardLeadMessage(null);
     try {
-      await api.updateLead(tokens.access_token, summary.priority_lead_id, updates);
-      setDashboardLeadMessage("Recomendacao da IA aplicada na fila comercial.");
+      if (aiSummary.execution_mode === "update_lead_batch" && aiSummary.execution_batch?.length) {
+        let appliedCount = 0;
+        for (const step of aiSummary.execution_batch) {
+          const updates = Object.fromEntries(
+            Object.entries({
+              owner_user_id: step.owner_user_id,
+              follow_up_at: step.follow_up_at,
+            }).filter(([, value]) => value),
+          );
+          if (!Object.keys(updates).length) {
+            continue;
+          }
+          await api.updateLead(tokens.access_token, step.lead_id, updates);
+          appliedCount += 1;
+        }
+        if (!appliedCount) {
+          return;
+        }
+        setDashboardLeadMessage(`Regua da IA aplicada em ${appliedCount} lead(s).`);
+      } else if (
+        summary?.priority_lead_id &&
+        aiSummary.execution_mode === "update_priority_lead" &&
+        aiSummary.execution_payload
+      ) {
+        const updates = Object.fromEntries(
+          Object.entries(aiSummary.execution_payload).filter(([, value]) => value),
+        );
+        if (!Object.keys(updates).length) {
+          return;
+        }
+        await api.updateLead(tokens.access_token, summary.priority_lead_id, updates);
+        setDashboardLeadMessage("Recomendacao da IA aplicada na fila comercial.");
+      } else {
+        return;
+      }
       await loadDashboard();
     } catch (error) {
       setDashboardLeadMessage(
@@ -630,7 +651,7 @@ function DashboardPage() {
                 }
                 variant="secondary"
                 onClick={() => void handleDashboardAiAction()}
-                disabled={dashboardLeadPending !== null || !summary?.priority_lead_id}
+                disabled={dashboardLeadPending !== null}
               />
             </div>
           ) : null}

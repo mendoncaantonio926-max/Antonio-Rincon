@@ -1035,11 +1035,27 @@ const {
         supporting_signals: ["3 tarefas abertas", "2 contatos prioritarios"],
         recommendations: ["Revisar backlog", "Atualizar equipe"],
         execution_label: "Executar recomendacao",
-        execution_mode: "update_priority_lead",
+        execution_mode: "update_lead_batch",
         execution_payload: {
           owner_user_id: "user-1",
           follow_up_at: "2026-03-09",
         },
+        execution_batch: [
+          {
+            lead_id: "lead-quick",
+            lead_name: "Lucia Prado",
+            step_label: "Acao imediata",
+            owner_user_id: "user-1",
+            follow_up_at: "2026-03-09",
+          },
+          {
+            lead_id: "lead-batch-2",
+            lead_name: "Mateus Serra",
+            step_label: "Cadencia 2",
+            owner_user_id: "user-1",
+            follow_up_at: "2026-03-10",
+          },
+        ],
       },
       billing: {
         headline: "Assinatura sob atencao",
@@ -1059,6 +1075,7 @@ const {
         execution_label: null,
         execution_mode: null,
         execution_payload: null,
+        execution_batch: [],
       },
     },
   };
@@ -2282,6 +2299,23 @@ describe("App authenticated flows", () => {
         converted_at: null,
         created_at: "2026-03-08T10:00:00Z",
       },
+      {
+        id: "lead-batch-2",
+        name: "Mateus Serra",
+        email: "mateus@exemplo.com",
+        phone: "11933334444",
+        city: "Osasco",
+        role: "Assessor",
+        challenge: "Precisa de follow-up nesta semana.",
+        source: "evento",
+        stage: "follow_up",
+        owner_user_id: null,
+        owner_name: null,
+        follow_up_at: null,
+        converted_contact_id: null,
+        converted_at: null,
+        created_at: "2026-03-08T11:00:00Z",
+      },
     ];
 
     renderAuthenticatedApp("/app");
@@ -2294,9 +2328,11 @@ describe("App authenticated flows", () => {
         owner_user_id: "user-1",
         follow_up_at: "2026-03-09",
       });
-      expect(
-        screen.getByText("Recomendacao da IA aplicada na fila comercial."),
-      ).toBeInTheDocument();
+      expect(apiMock.updateLead).toHaveBeenCalledWith("token-valido", "lead-batch-2", {
+        owner_user_id: "user-1",
+        follow_up_at: "2026-03-10",
+      });
+      expect(screen.getByText("Regua da IA aplicada em 2 lead(s).")).toBeInTheDocument();
     });
 
     await waitFor(() => {

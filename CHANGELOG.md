@@ -39,6 +39,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora expone movimentos por cenario para transformar forecast em plano de execucao comercial
 - dashboard agora permite aplicar cenarios do forecast diretamente na fila comercial prioritaria, com owner e janela definidos
 - dashboard agora permite executar a recomendacao da IA diretamente na fila comercial prioritaria
+- a recomendacao da IA no dashboard agora pode aplicar uma mini-regua comercial em lote sobre a fila prioritaria
 - exportacao de relatorios no scaffold local agora recompõe a cota padrao do plano para contas ativas ou trial durante validacoes repetidas
 
 ### Changed

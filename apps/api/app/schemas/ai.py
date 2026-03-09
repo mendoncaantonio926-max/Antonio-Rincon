@@ -8,6 +8,14 @@ class AiExecutionPayloadResponse(BaseModel):
     follow_up_at: str | None = None
 
 
+class AiExecutionStepResponse(BaseModel):
+    lead_id: str
+    lead_name: str
+    step_label: str
+    owner_user_id: str | None = None
+    follow_up_at: str | None = None
+
+
 class AiSummaryResponse(BaseModel):
     headline: str
     module: str
@@ -26,3 +34,4 @@ class AiSummaryResponse(BaseModel):
     execution_label: str | None = None
     execution_mode: str | None = None
     execution_payload: AiExecutionPayloadResponse | None = None
+    execution_batch: list[AiExecutionStepResponse] = []

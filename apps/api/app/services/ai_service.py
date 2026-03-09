@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from app.services.dashboard_service import get_dashboard_summary
 from app.services.crud_service import (
@@ -109,6 +109,7 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     execution_label = None
     execution_mode = None
     execution_payload = None
+    execution_batch = []
 
     recommendations: list[str] = []
     blockers: list[str] = []
@@ -131,11 +132,31 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         )
         if module == "dashboard" and priority_lead:
             execution_label = "Executar recomendacao"
-            execution_mode = "update_priority_lead"
+            execution_mode = "update_lead_batch"
             execution_payload = {
                 "owner_user_id": primary_forecast_move.get("owner_user_id"),
                 "follow_up_at": primary_forecast_move.get("follow_up_at"),
             }
+            execution_batch = []
+            for index, lead in enumerate(pending_lead_queue[:3]):
+                step_follow_up_at = lead.get("follow_up_at")
+                if not step_follow_up_at:
+                    step_follow_up_at = (date.today() + timedelta(days=min(index, 2))).isoformat()
+                execution_batch.append(
+                    {
+                        "lead_id": str(lead["id"]),
+                        "lead_name": str(lead["name"]),
+                        "step_label": "Acao imediata" if index == 0 else f"Cadencia {index + 1}",
+                        "owner_user_id": str(
+                            lead.get("owner_user_id")
+                            or lead.get("suggested_owner_user_id")
+                            or primary_forecast_move.get("owner_user_id")
+                            or ""
+                        )
+                        or None,
+                        "follow_up_at": step_follow_up_at,
+                    }
+                )
         if (
             module == "dashboard"
             and goal_risk.get("risk_label") in {"attention", "critical"}
@@ -620,4 +641,5 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         "execution_label": execution_label,
         "execution_mode": execution_mode,
         "execution_payload": execution_payload,
+        "execution_batch": execution_batch,
     }
