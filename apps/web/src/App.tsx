@@ -986,6 +986,19 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Movimentos por cenario</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.forecast_playbook ?? []).map((item) => (
+                    <span key={`forecast-playbook-${item.scenario_label}`}>
+                      {item.scenario_label}: {item.move_label} com {item.owner_label} (
+                      {item.due_window}). {item.summary}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

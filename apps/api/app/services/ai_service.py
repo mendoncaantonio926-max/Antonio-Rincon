@@ -92,6 +92,11 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         None,
     )
     first_recovery = recovery_queue[0] if recovery_queue and isinstance(recovery_queue[0], dict) else None
+    forecast_playbook = dashboard_summary.get("forecast_playbook", [])
+    primary_forecast_move = (
+        forecast_playbook[0] if forecast_playbook and isinstance(forecast_playbook[0], dict) else None
+    )
+    goal_risk = dashboard_summary.get("goal_risk", {})
 
     next_action = "Consolidar rotina semanal"
     action_reason = "O workspace esta funcional e pede manutencao de cadencia, leitura executiva e revisao de prioridades."
@@ -110,6 +115,33 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         f"{open_tasks} tarefa(s) em aberto e {overdue_tasks} vencida(s).",
         f"{len(opponents)} adversario(s) e {critical_events} sinal(is) critico(s) monitorado(s).",
     ]
+    if primary_forecast_move:
+        supporting_signals.insert(
+            0,
+            (
+                f"Playbook do forecast: {primary_forecast_move['scenario_label']} pede "
+                f"{primary_forecast_move['move_label']} com {primary_forecast_move['owner_label']}."
+            ),
+        )
+        recommendations.append(
+            f"{primary_forecast_move['move_label']}: {primary_forecast_move['summary']}"
+        )
+        if (
+            module == "dashboard"
+            and goal_risk.get("risk_label") in {"attention", "critical"}
+            and urgency == "normal"
+        ):
+            next_action = str(primary_forecast_move["move_label"])
+            action_reason = str(primary_forecast_move["summary"])
+            urgency = "high" if goal_risk.get("risk_label") == "critical" else "normal"
+            priority_score = max(priority_score, 79 if goal_risk.get("risk_label") == "attention" else 85)
+            trigger_signal = (
+                f"forecast {primary_forecast_move['scenario_label'].lower()} com gap "
+                f"{goal_risk.get('gap_to_target', 0)}"
+            )
+            focus_area = "forecast comercial"
+            suggested_owner = str(primary_forecast_move["owner_label"])
+            due_window = str(primary_forecast_move["due_window"])
     if critical_owner:
         supporting_signals.insert(
             0,

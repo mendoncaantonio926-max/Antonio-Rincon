@@ -827,6 +827,43 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
                 ),
             }
         )
+    forecast_owner_label = (
+        str(priority_lead["owner_name"] or priority_lead["suggested_owner_name"])
+        if priority_lead and (priority_lead["owner_name"] or priority_lead["suggested_owner_name"])
+        else "coordenacao comercial"
+    )
+    forecast_playbook = [
+        {
+            "scenario_label": "Pressionado",
+            "move_label": "Estancar follow-ups vencidos",
+            "owner_label": forecast_owner_label,
+            "due_window": "hoje",
+            "summary": (
+                f"Responder {overdue_risk_count} risco(s) vencido(s) e puxar "
+                f"{forecast_owner_label} para a frente da fila antes de redistribuir novos leads."
+            ),
+        },
+        {
+            "scenario_label": "Base",
+            "move_label": "Blindar pipeline comprometido",
+            "owner_label": forecast_owner_label,
+            "due_window": "nas proximas 24 horas",
+            "summary": (
+                f"Proteger {committed_pipeline_count} lead(s) em follow-up ou proposta com "
+                "cadencia, dono claro e proxima data definida."
+            ),
+        },
+        {
+            "scenario_label": "Acelerado",
+            "move_label": "Empurrar propostas quentes",
+            "owner_label": forecast_owner_label,
+            "due_window": "esta semana",
+            "summary": (
+                f"Usar as {proposal_count} proposta(s) abertas para capturar o cenario de "
+                f"{optimistic} fechamento(s) da janela."
+            ),
+        },
+    ]
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -943,6 +980,7 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "forecast_scenarios": forecast_scenarios,
         "forecast_drivers": forecast_drivers[:3],
         "forecast_blockers": forecast_blockers[:3],
+        "forecast_playbook": forecast_playbook,
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

@@ -182,6 +182,14 @@ class DashboardForecastDriverResponse(BaseModel):
     summary: str
 
 
+class DashboardForecastMoveResponse(BaseModel):
+    scenario_label: str
+    move_label: str
+    owner_label: str
+    due_window: str
+    summary: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -233,6 +241,7 @@ class DashboardSummaryResponse(BaseModel):
     forecast_scenarios: list[DashboardForecastScenarioResponse]
     forecast_drivers: list[DashboardForecastDriverResponse]
     forecast_blockers: list[DashboardForecastDriverResponse]
+    forecast_playbook: list[DashboardForecastMoveResponse]
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str

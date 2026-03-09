@@ -832,6 +832,30 @@ const {
           ]
         : []),
     ];
+    const forecastPlaybook = [
+      {
+        scenario_label: "Pressionado",
+        move_label: "Estancar follow-ups vencidos",
+        owner_label: "Antonio Rincon",
+        due_window: "hoje",
+        summary:
+          "Responder riscos vencidos antes de redistribuir novos leads para a fila comercial.",
+      },
+      {
+        scenario_label: "Base",
+        move_label: "Blindar pipeline comprometido",
+        owner_label: "Antonio Rincon",
+        due_window: "nas proximas 24 horas",
+        summary: "Proteger leads em follow-up e proposta com dono claro e proxima data definida.",
+      },
+      {
+        scenario_label: "Acelerado",
+        move_label: "Empurrar propostas quentes",
+        owner_label: "Antonio Rincon",
+        due_window: "esta semana",
+        summary: "Usar as propostas abertas para capturar o cenario acelerado da janela.",
+      },
+    ];
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -926,6 +950,7 @@ const {
       forecast_scenarios: forecastScenarios,
       forecast_drivers: forecastDrivers,
       forecast_blockers: forecastBlockers,
+      forecast_playbook: forecastPlaybook,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -2194,12 +2219,14 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Cenarios de fechamento")).toBeInTheDocument();
       expect(screen.getByText("Alavancas de fechamento")).toBeInTheDocument();
       expect(screen.getByText("Bloqueios do forecast")).toBeInTheDocument();
+      expect(screen.getByText("Movimentos por cenario")).toBeInTheDocument();
       expect(
         screen.getByText(/Propostas abertas|Pipeline comprometido|Confianca alta/),
       ).toBeInTheDocument();
       expect(
         screen.getAllByText(/Riscos vencidos|Gap para meta|Fila sem compromisso/).length,
       ).toBeGreaterThan(0);
+      expect(screen.getByText(/Estancar follow-ups vencidos/)).toBeInTheDocument();
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 

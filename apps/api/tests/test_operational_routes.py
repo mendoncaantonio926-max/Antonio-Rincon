@@ -372,6 +372,7 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert isinstance(dashboard_response.json()["forecast_scenarios"], list)
     assert isinstance(dashboard_response.json()["forecast_drivers"], list)
     assert isinstance(dashboard_response.json()["forecast_blockers"], list)
+    assert isinstance(dashboard_response.json()["forecast_playbook"], list)
     assert "morning_focus_summary" in dashboard_response.json()
     assert isinstance(dashboard_response.json()["owner_daily_briefs"], list)
 
@@ -502,6 +503,7 @@ def test_lead_pipeline_update_and_filters() -> None:
     assert isinstance(dashboard_response.json()["forecast_scenarios"], list)
     assert isinstance(dashboard_response.json()["forecast_drivers"], list)
     assert isinstance(dashboard_response.json()["forecast_blockers"], list)
+    assert isinstance(dashboard_response.json()["forecast_playbook"], list)
 
 
 def test_membership_invite_and_ai_summary() -> None:
@@ -556,6 +558,7 @@ def test_membership_invite_and_ai_summary() -> None:
     assert isinstance(ai_response.json()["blockers"], list)
     assert isinstance(ai_response.json()["supporting_signals"], list)
     assert len(ai_response.json()["supporting_signals"]) >= 1
+    assert any("Playbook do forecast" in item for item in ai_response.json()["supporting_signals"])
 
     ai_contacts_response = client.get("/ai/summary?module=contacts", headers=headers)
     assert ai_contacts_response.status_code == 200
