@@ -2357,6 +2357,10 @@ describe("App authenticated flows", () => {
       expect(screen.getByText(/Fila critica reduzida:/)).toBeInTheDocument();
       expect(screen.getByText(/Backlog comercial reduzido:/)).toBeInTheDocument();
       expect(screen.getByText(/Ainda faltam:/)).toBeInTheDocument();
+      expect(screen.getByText("Resumo executivo pos-regua")).toBeInTheDocument();
+      expect(screen.getByText("Owners acelerados")).toBeInTheDocument();
+      expect(screen.getByText("Owners estagnados")).toBeInTheDocument();
+      expect(screen.getByText("Intervencao humana restante")).toBeInTheDocument();
       expect(screen.getByText("Meta recuperada por owner")).toBeInTheDocument();
       expect(screen.getByText("Saude por owner apos a regua")).toBeInTheDocument();
       expect(screen.getByText("Cadencia por owner apos a regua")).toBeInTheDocument();

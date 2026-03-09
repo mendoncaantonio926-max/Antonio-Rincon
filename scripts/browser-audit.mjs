@@ -326,12 +326,16 @@ async function main() {
       const text = document.querySelector(".dashboard-ai-run-result")?.textContent ?? "";
       return (
         text.includes("Lote aplicado") &&
+        text.includes("Resumo executivo pos-regua") &&
         text.includes("Owners aplicados:") &&
         text.includes("Backlog comercial reduzido:") &&
         text.includes("Gap recuperado:") &&
         text.includes("Fila critica reduzida:")
       );
     });
+    await page.getByText("Owners acelerados", { exact: true }).waitFor();
+    await page.getByText("Owners estagnados", { exact: true }).waitFor();
+    await page.getByText("Intervencao humana restante", { exact: true }).waitFor();
     await page.getByText("Meta recuperada por owner").waitFor();
     await page.getByText("Saude por owner apos a regua").waitFor();
     await page.getByText("Cadencia por owner apos a regua").waitFor();
@@ -363,6 +367,7 @@ async function main() {
     checks.push("dashboard_ai_action");
     checks.push("dashboard_ai_batch_feedback");
     checks.push("dashboard_ai_forecast_impact");
+    checks.push("dashboard_ai_executive_summary");
     checks.push("dashboard_ai_owner_window_impact");
     checks.push("dashboard_ai_owner_health_impact");
     checks.push("dashboard_ai_owner_cadence_impact");

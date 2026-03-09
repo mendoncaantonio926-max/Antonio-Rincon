@@ -959,6 +959,16 @@ function DashboardPage() {
     }
   }
 
+  const acceleratedOwnersCount =
+    dashboardAiRunResult?.ownerOutcomeImpact.filter((item) => item.status === "accelerated")
+      .length ?? 0;
+  const stagnantOwnersCount =
+    dashboardAiRunResult?.ownerOutcomeImpact.filter((item) => item.status === "stagnant").length ??
+    0;
+  const manualInterventionCount = dashboardAiRunResult
+    ? dashboardAiRunResult.remainingQueue + stagnantOwnersCount
+    : 0;
+
   return (
     <section className="app-section">
       <header className="topbar">
@@ -1131,6 +1141,25 @@ function DashboardPage() {
               <span>Ainda faltam: {dashboardAiRunResult.remainingQueue}</span>
               {dashboardAiRunResult.ownerImpact.length ? (
                 <div className="dashboard-ai-impact-grid">
+                  <article className="dashboard-ai-impact-card">
+                    <span>Resumo executivo pos-regua</span>
+                    <div className="dashboard-ai-impact-list">
+                      <p>
+                        <strong>Owners acelerados</strong>
+                        <span>{acceleratedOwnersCount} owner(s) responderam a regua.</span>
+                      </p>
+                      <p>
+                        <strong>Owners estagnados</strong>
+                        <span>{stagnantOwnersCount} owner(s) seguem sem ganho relevante.</span>
+                      </p>
+                      <p>
+                        <strong>Intervencao humana restante</strong>
+                        <span>
+                          {manualInterventionCount} frente(s) ainda pedem coordenacao direta.
+                        </span>
+                      </p>
+                    </div>
+                  </article>
                   <article className="dashboard-ai-impact-card">
                     <span>Meta recuperada por owner</span>
                     <div className="dashboard-ai-impact-list">
