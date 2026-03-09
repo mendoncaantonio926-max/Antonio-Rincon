@@ -224,6 +224,11 @@ export type Lead = {
   owner_user_id?: string | null;
   owner_name?: string | null;
   follow_up_at?: string | null;
+  risk_score: number;
+  priority_label: string;
+  follow_up_bucket: string;
+  suggested_owner_user_id?: string | null;
+  suggested_owner_name?: string | null;
   converted_contact_id?: string | null;
   converted_at?: string | null;
   created_at: string;

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import HTTPException, status
 
@@ -10,10 +10,82 @@ from app.services.crud_service import create_contact
 from app.services.store import store
 
 
-def serialize_lead(lead: LeadFormSubmission) -> dict:
+def _lead_priority_label(risk_score: int) -> str:
+    if risk_score >= 85:
+        return "critical"
+    if risk_score >= 65:
+        return "high"
+    if risk_score >= 40:
+        return "normal"
+    return "low"
+
+
+def _lead_follow_up_bucket(lead: LeadFormSubmission) -> str:
+    if lead.converted_contact_id:
+        return "converted"
+    if not lead.follow_up_at:
+        return "unscheduled"
+
+    today = date.today().isoformat()
+    if lead.follow_up_at < today:
+        return "overdue"
+    if lead.follow_up_at == today:
+        return "today"
+    if lead.follow_up_at <= (date.today() + timedelta(days=7)).isoformat():
+        return "this_week"
+    return "later"
+
+
+def _lead_risk_score(lead: LeadFormSubmission) -> int:
+    score = {
+        "captured": 26,
+        "qualified": 58,
+        "follow_up": 68,
+        "proposal": 78,
+        "converted": 14,
+        "archived": 8,
+    }.get(lead.stage, 20)
+    follow_up_bucket = _lead_follow_up_bucket(lead)
+    if follow_up_bucket == "overdue":
+        score += 24
+    elif follow_up_bucket == "today":
+        score += 14
+    elif follow_up_bucket == "this_week":
+        score += 8
+    if lead.phone:
+        score += 8
+    if lead.city:
+        score += 4
+    if lead.challenge:
+        score += 6
+    return min(score, 100)
+
+
+def _suggested_owner(tenant_id: str | None) -> tuple[str | None, str | None]:
+    if not tenant_id:
+        return (None, None)
+
+    priority_order = {"coordinator": 0, "admin": 1, "owner": 2, "analyst": 3, "viewer": 4}
+    memberships = sorted(
+        [item for item in store.memberships.values() if item.tenant_id == tenant_id],
+        key=lambda item: (priority_order.get(item.role, 99), item.created_at.isoformat()),
+    )
+    if not memberships:
+        return (None, None)
+    suggested_membership = memberships[0]
+    suggested_user = store.users.get(suggested_membership.user_id)
+    return (
+        suggested_membership.user_id,
+        suggested_user.full_name if suggested_user else None,
+    )
+
+
+def serialize_lead(lead: LeadFormSubmission, tenant_id: str | None = None) -> dict:
     owner_name = None
     if lead.owner_user_id and lead.owner_user_id in store.users:
         owner_name = store.users[lead.owner_user_id].full_name
+    suggested_owner_user_id, suggested_owner_name = _suggested_owner(tenant_id)
+    risk_score = _lead_risk_score(lead)
     return {
         "id": lead.id,
         "name": lead.name,
@@ -27,6 +99,11 @@ def serialize_lead(lead: LeadFormSubmission) -> dict:
         "owner_user_id": lead.owner_user_id,
         "owner_name": owner_name,
         "follow_up_at": lead.follow_up_at,
+        "risk_score": risk_score,
+        "priority_label": _lead_priority_label(risk_score),
+        "follow_up_bucket": _lead_follow_up_bucket(lead),
+        "suggested_owner_user_id": None if lead.owner_user_id else suggested_owner_user_id,
+        "suggested_owner_name": None if lead.owner_user_id else suggested_owner_name,
         "converted_contact_id": lead.converted_contact_id,
         "converted_at": lead.converted_at,
         "created_at": lead.created_at.isoformat(),
@@ -55,11 +132,19 @@ def list_leads(
         leads = [lead for lead in leads if lead.stage == stage]
     if owner_user_id:
         leads = [lead for lead in leads if lead.owner_user_id == owner_user_id]
+    bucket_order = {
+        "overdue": 0,
+        "today": 1,
+        "this_week": 2,
+        "later": 3,
+        "unscheduled": 4,
+        "converted": 5,
+    }
     leads.sort(
         key=lambda item: (
-            item.stage == "converted",
-            item.follow_up_at is None,
-            item.follow_up_at or "",
+            bucket_order.get(_lead_follow_up_bucket(item), 99),
+            -_lead_risk_score(item),
+            item.follow_up_at or "9999-12-31",
             item.created_at.isoformat(),
         )
     )

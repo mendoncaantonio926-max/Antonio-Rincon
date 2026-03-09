@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -180,6 +180,11 @@ const {
       owner_user_id?: string | null;
       owner_name?: string | null;
       follow_up_at?: string | null;
+      risk_score?: number;
+      priority_label?: string;
+      follow_up_bucket?: string;
+      suggested_owner_user_id?: string | null;
+      suggested_owner_name?: string | null;
       converted_contact_id?: string | null;
       converted_at?: string | null;
       created_at: string;
@@ -215,6 +220,81 @@ const {
       created_at: string;
     }>,
   };
+
+  function getLeadFollowUpBucket(lead: (typeof leadsState.items)[number]) {
+    if (lead.converted_contact_id) {
+      return "converted";
+    }
+    if (!lead.follow_up_at) {
+      return "unscheduled";
+    }
+    if (lead.follow_up_at < "2026-03-09") {
+      return "overdue";
+    }
+    if (lead.follow_up_at === "2026-03-09") {
+      return "today";
+    }
+    if (lead.follow_up_at <= "2026-03-16") {
+      return "this_week";
+    }
+    return "later";
+  }
+
+  function getLeadPriorityLabel(riskScore: number) {
+    if (riskScore >= 85) {
+      return "critical";
+    }
+    if (riskScore >= 65) {
+      return "high";
+    }
+    if (riskScore >= 40) {
+      return "normal";
+    }
+    return "low";
+  }
+
+  function enrichLead(lead: (typeof leadsState.items)[number]) {
+    const followUpBucket = getLeadFollowUpBucket(lead);
+    let riskScore =
+      {
+        captured: 26,
+        qualified: 58,
+        follow_up: 68,
+        proposal: 78,
+        converted: 14,
+        archived: 8,
+      }[lead.stage] ?? 20;
+    if (followUpBucket === "overdue") {
+      riskScore += 24;
+    } else if (followUpBucket === "today") {
+      riskScore += 14;
+    } else if (followUpBucket === "this_week") {
+      riskScore += 8;
+    }
+    if (lead.phone) {
+      riskScore += 8;
+    }
+    if (lead.city) {
+      riskScore += 4;
+    }
+    if (lead.challenge) {
+      riskScore += 6;
+    }
+    riskScore = Math.min(riskScore, 100);
+    const suggestedOwner = lead.owner_user_id ? null : (membershipsState.items[0] ?? null);
+
+    return {
+      ...lead,
+      follow_up_at: lead.follow_up_at ?? null,
+      converted_contact_id: lead.converted_contact_id ?? null,
+      converted_at: lead.converted_at ?? null,
+      risk_score: riskScore,
+      priority_label: getLeadPriorityLabel(riskScore),
+      follow_up_bucket: followUpBucket,
+      suggested_owner_user_id: lead.owner_user_id ? null : (suggestedOwner?.user_id ?? null),
+      suggested_owner_name: lead.owner_user_id ? null : (suggestedOwner?.full_name ?? null),
+    };
+  }
 
   const campaignsState = {
     items: [] as Array<{
@@ -703,20 +783,22 @@ const {
         _token: string,
         params?: { query?: string; stage?: string; owner_user_id?: string },
       ) => {
-        return leadsState.items.filter(
-          (item) =>
-            (params?.query
-              ? [item.name, item.email, item.phone, item.city, item.challenge]
-                  .filter(Boolean)
-                  .some((value) =>
-                    String(value)
-                      .toLowerCase()
-                      .includes(params.query?.toLowerCase() ?? ""),
-                  )
-              : true) &&
-            (params?.stage ? item.stage === params.stage : true) &&
-            (params?.owner_user_id ? item.owner_user_id === params.owner_user_id : true),
-        );
+        return leadsState.items
+          .filter(
+            (item) =>
+              (params?.query
+                ? [item.name, item.email, item.phone, item.city, item.challenge]
+                    .filter(Boolean)
+                    .some((value) =>
+                      String(value)
+                        .toLowerCase()
+                        .includes(params.query?.toLowerCase() ?? ""),
+                    )
+                : true) &&
+              (params?.stage ? item.stage === params.stage : true) &&
+              (params?.owner_user_id ? item.owner_user_id === params.owner_user_id : true),
+          )
+          .map(enrichLead);
       },
     ),
     updateLead: vi.fn(async (_token: string, leadId: string, body: Record<string, unknown>) => {
@@ -738,10 +820,14 @@ const {
         owner_user_id: ownerUserId.length > 0 ? ownerUserId : null,
         owner_name: ownerName,
         follow_up_at:
-          body.follow_up_at === undefined ? lead.follow_up_at : String(body.follow_up_at || ""),
+          body.follow_up_at === undefined
+            ? (lead.follow_up_at ?? null)
+            : body.follow_up_at
+              ? String(body.follow_up_at)
+              : null,
       };
       leadsState.items = leadsState.items.map((item) => (item.id === leadId ? updatedLead : item));
-      return updatedLead;
+      return enrichLead(updatedLead);
     }),
     convertLead: vi.fn(async (_token: string, leadId: string) => {
       const lead = leadsState.items.find((item) => item.id === leadId);
@@ -778,7 +864,7 @@ const {
       leadsState.items = leadsState.items.map((item) =>
         item.id === leadId ? convertedLead : item,
       );
-      return convertedLead;
+      return enrichLead(convertedLead);
     }),
     currentTenant: vi.fn(async () => tenantState),
     updateCurrentTenant: vi.fn(async (_token: string, body: Record<string, unknown>) => {
@@ -1395,6 +1481,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Coordenadora local")).toBeInTheDocument();
       expect(screen.getByText("Sem WhatsApp")).toBeInTheDocument();
       expect(screen.getByText("SLA estourado")).toBeInTheDocument();
+      expect(screen.getByText("Sem agenda")).toBeInTheDocument();
+      expect(screen.getByText("Sugestao de dono: Antonio Rincon")).toBeInTheDocument();
     });
   });
 
@@ -1404,7 +1492,7 @@ describe("App authenticated flows", () => {
 
     await screen.findByRole("heading", { name: "Leads captados" });
     await user.selectOptions(screen.getAllByDisplayValue("Captado")[0], "follow_up");
-    await user.selectOptions(screen.getAllByDisplayValue("Sem dono")[0], "user-1");
+    await user.click(screen.getByRole("button", { name: "Atribuir sugestao" }));
 
     await waitFor(() => {
       expect(apiMock.updateLead).toHaveBeenCalledWith("token-valido", "lead-1", {
@@ -1435,7 +1523,11 @@ describe("App authenticated flows", () => {
     renderAuthenticatedApp("/app/leads");
 
     await screen.findByRole("heading", { name: "Leads captados" });
-    await user.click(screen.getAllByRole("button", { name: "Converter para contato" })[0]);
+    const marinaCard = screen.getByText("Marina Gomes").closest(".lead-card");
+    expect(marinaCard).not.toBeNull();
+    await user.click(
+      within(marinaCard as HTMLElement).getByRole("button", { name: "Converter para contato" }),
+    );
 
     await waitFor(() => {
       expect(apiMock.convertLead).toHaveBeenCalledWith("token-valido", "lead-1");

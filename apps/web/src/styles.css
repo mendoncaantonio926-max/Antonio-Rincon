@@ -1367,6 +1367,33 @@ h3,
 }
 
 .lead-records {
+  display: grid;
+  gap: 1rem;
+}
+
+.lead-bucket {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem 1.05rem;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(245, 238, 226, 0.82));
+  border: 1px solid rgba(120, 87, 45, 0.12);
+  box-shadow: 0 18px 44px rgba(70, 52, 25, 0.08);
+}
+
+.lead-bucket__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.lead-bucket__header h3 {
+  margin: 0.1rem 0 0;
+}
+
+.lead-bucket__grid {
   gap: 1rem;
 }
 
@@ -1378,6 +1405,35 @@ h3,
 
 .lead-card {
   gap: 0.8rem;
+}
+
+.lead-card__status-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.lead-card__priority {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  background: rgba(126, 89, 36, 0.08);
+  border: 1px solid rgba(126, 89, 36, 0.12);
+}
+
+.lead-card__priority-copy {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.lead-card__priority-copy strong,
+.lead-card__suggestion strong {
+  color: var(--ink);
 }
 
 .lead-card__funnel {
@@ -1407,6 +1463,18 @@ h3,
   border-radius: 16px;
   background: rgba(18, 31, 51, 0.04);
   border: 1px solid rgba(18, 31, 51, 0.06);
+}
+
+.lead-card__suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 0.95rem;
+  border-radius: 18px;
+  background: rgba(18, 31, 51, 0.04);
+  border: 1px dashed rgba(18, 31, 51, 0.16);
 }
 
 .audit-intro {

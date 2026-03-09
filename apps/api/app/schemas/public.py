@@ -26,6 +26,11 @@ class LeadResponse(BaseModel):
     owner_user_id: str | None = None
     owner_name: str | None = None
     follow_up_at: str | None = None
+    risk_score: int
+    priority_label: str
+    follow_up_bucket: str
+    suggested_owner_user_id: str | None = None
+    suggested_owner_name: str | None = None
     converted_contact_id: str | None = None
     converted_at: str | None = None
     created_at: str

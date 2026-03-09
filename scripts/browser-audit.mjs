@@ -396,6 +396,8 @@ async function main() {
     await page.getByText(leadEmail).waitFor();
     checks.push("lead_aparece_no_app");
     const leadCard = page.locator(".lead-card", { hasText: leadEmail });
+    await leadCard.getByText(/Sugestao de dono:/).waitFor();
+    checks.push("fila_comercial_priorizada_no_browser");
     await leadCard.locator("select").first().selectOption("follow_up");
     await page.getByText("Lead atualizado no funil comercial.").waitFor();
     const ownerSelect = leadCard.locator("select").nth(1);

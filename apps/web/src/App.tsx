@@ -2389,6 +2389,55 @@ function LeadsPage() {
     (lead) =>
       !lead.converted_contact_id && ["qualified", "follow_up", "proposal"].includes(lead.stage),
   ).length;
+  const criticalQueue = leads.filter(
+    (lead) => !lead.converted_contact_id && ["high", "critical"].includes(lead.priority_label),
+  ).length;
+  const leadBuckets = [
+    {
+      key: "overdue",
+      eyebrow: "Risco imediato",
+      title: "Atrasados",
+      description: "Follow-ups vencidos e pressao comercial que pede resposta agora.",
+    },
+    {
+      key: "today",
+      eyebrow: "Hoje",
+      title: "Vencem hoje",
+      description: "Janela de resposta ativa. Ideal para fechar proximo passo ainda neste ciclo.",
+    },
+    {
+      key: "this_week",
+      eyebrow: "Cadencia",
+      title: "Esta semana",
+      description: "Leads ja em movimento, mas ainda dentro da faixa segura de abordagem.",
+    },
+    {
+      key: "later",
+      eyebrow: "Pipeline",
+      title: "Mais a frente",
+      description: "Oportunidades em acompanhamento, com janela de follow-up futura.",
+    },
+    {
+      key: "unscheduled",
+      eyebrow: "Triagem",
+      title: "Sem agenda",
+      description:
+        "Entradas sem dono ou sem proxima data definida. Aqui mora o atrito operacional.",
+    },
+    {
+      key: "converted",
+      eyebrow: "Fechados",
+      title: "Convertidos",
+      description: "Leads que ja viraram relacao ativa no CRM e sairam da fila comercial.",
+    },
+  ] as const;
+  const groupedLeads = leadBuckets
+    .map((bucket) => ({
+      ...bucket,
+      items: leads.filter((lead) => lead.follow_up_bucket === bucket.key),
+    }))
+    .filter((bucket) => bucket.items.length > 0);
+
   function getLeadCommercialSignal(lead: Lead) {
     const followUpAt = lead.follow_up_at ?? "";
     const isOverdue = Boolean(followUpAt) && followUpAt < todayIso;
@@ -2406,6 +2455,36 @@ function LeadsPage() {
       return { tone: "info" as const, label: "Lead quente" };
     }
     return { tone: "neutral" as const, label: "Pendente de triagem" };
+  }
+
+  function getLeadPriorityMeta(lead: Lead) {
+    switch (lead.priority_label) {
+      case "critical":
+        return { tone: "danger" as const, label: "Prioridade critica" };
+      case "high":
+        return { tone: "warning" as const, label: "Alta prioridade" };
+      case "normal":
+        return { tone: "info" as const, label: "Ritmo normal" };
+      default:
+        return { tone: "neutral" as const, label: "Baixa pressao" };
+    }
+  }
+
+  function getLeadBucketSummary(lead: Lead) {
+    switch (lead.follow_up_bucket) {
+      case "overdue":
+        return "Follow-up fora da janela ideal. Reagir agora reduz perda de calor.";
+      case "today":
+        return "Janela ativa hoje. O proximo passo precisa sair nesta rodada.";
+      case "this_week":
+        return "Cadencia montada para esta semana, com margem de controle.";
+      case "later":
+        return "Seguimento programado para uma janela futura do ciclo comercial.";
+      case "converted":
+        return "Lead ja incorporado ao CRM como contato ativo.";
+      default:
+        return "Sem data marcada. Definir dono e proximo passo evita esfriamento.";
+    }
   }
 
   useEffect(() => {
@@ -2506,6 +2585,10 @@ function LeadsPage() {
             <strong>Leads quentes</strong>
             <span>{hotLeads}</span>
           </article>
+          <article className="summary-tile">
+            <strong>Fila critica</strong>
+            <span>{criticalQueue}</span>
+          </article>
         </div>
         <div className="leads-intro">
           <p className="meta-copy">
@@ -2516,6 +2599,11 @@ function LeadsPage() {
             {overdueFollowUps
               ? `${overdueFollowUps} follow-up(s) estao fora do SLA e ${dueTodayFollowUps} vencem hoje.`
               : "Sem follow-up atrasado agora. Mantenha a cadencia antes da janela esfriar."}
+          </p>
+          <p className="meta-copy">
+            {criticalQueue
+              ? `${criticalQueue} lead(s) estao com prioridade alta ou critica e devem puxar a cadencia comercial.`
+              : "A fila critica esta controlada. Use as sugestoes de owner para manter distribuicao clara."}
           </p>
         </div>
         <div className="toolbar lead-toolbar">
@@ -2551,107 +2639,164 @@ function LeadsPage() {
             }}
           />
         </div>
-        <div className="list-grid lead-records">
+        <div className="lead-records">
           {leads.length === 0 ? <p className="meta-copy">Nenhum lead captado ainda.</p> : null}
-          {leads.map((lead) => {
-            const commercialSignal = getLeadCommercialSignal(lead);
-            return (
-              <article className="list-card lead-card" key={lead.id}>
-                <div className="section-header">
-                  <strong>{lead.name}</strong>
-                  <span>{new Date(lead.created_at).toLocaleDateString("pt-BR")}</span>
+          {groupedLeads.map((bucket) => (
+            <section className="lead-bucket" key={bucket.key}>
+              <div className="lead-bucket__header">
+                <div>
+                  <p className="eyebrow">{bucket.eyebrow}</p>
+                  <h3>{bucket.title}</h3>
                 </div>
-                <span>{lead.email}</span>
-                <div className="lead-card__meta">
-                  <span>{lead.phone || "Sem WhatsApp"}</span>
-                  <span>{lead.city || "Cidade nao informada"}</span>
-                  <span>{lead.role || "Papel nao informado"}</span>
-                </div>
-                <div className="lead-card__status">
-                  <Badge tone={commercialSignal.tone}>{commercialSignal.label}</Badge>
-                  <span className="meta-copy">Origem: {lead.source || "website"}</span>
-                </div>
-                <div className="lead-card__funnel">
-                  <label>
-                    <span className="meta-copy">Estagio</span>
-                    <select
-                      value={lead.stage}
-                      onChange={(event) =>
-                        void handleLeadUpdate(lead.id, {
-                          stage: event.target.value,
-                        })
-                      }
-                      disabled={pendingLeadId === lead.id}
-                    >
-                      <option value="captured">Captado</option>
-                      <option value="qualified">Qualificado</option>
-                      <option value="follow_up">Em follow-up</option>
-                      <option value="proposal">Proposta</option>
-                      <option value="converted">Convertido</option>
-                      <option value="archived">Arquivado</option>
-                    </select>
-                  </label>
-                  <label>
-                    <span className="meta-copy">Responsavel</span>
-                    <select
-                      value={lead.owner_user_id || ""}
-                      onChange={(event) =>
-                        void handleLeadUpdate(lead.id, {
-                          owner_user_id: event.target.value,
-                        })
-                      }
-                      disabled={pendingLeadId === lead.id}
-                    >
-                      <option value="">Sem dono</option>
-                      {memberships.map((member) => (
-                        <option key={member.id} value={member.user_id}>
-                          {member.full_name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    <span className="meta-copy">Proximo follow-up</span>
-                    <input
-                      type="date"
-                      value={lead.follow_up_at || ""}
-                      onChange={(event) =>
-                        void handleLeadUpdate(lead.id, {
-                          follow_up_at: event.target.value,
-                        })
-                      }
-                      disabled={pendingLeadId === lead.id}
-                    />
-                  </label>
-                </div>
-                <p>{lead.challenge || "Sem desafio informado no primeiro contato."}</p>
-                <div className="lead-card__actions">
-                  <span className="meta-copy">
-                    {lead.owner_name
-                      ? `Dono: ${lead.owner_name}`
-                      : lead.follow_up_at
-                        ? `Follow-up em ${new Date(lead.follow_up_at).toLocaleDateString("pt-BR")}`
-                        : "Sem proximo passo definido"}
-                  </span>
-                  {lead.converted_contact_id ? (
-                    <span className="meta-copy">
-                      Convertido em{" "}
-                      {new Date(lead.converted_at || lead.created_at).toLocaleDateString("pt-BR")}
-                    </span>
-                  ) : (
-                    <Button
-                      label={
-                        pendingLeadId === lead.id ? "Convertendo..." : "Converter para contato"
-                      }
-                      variant="secondary"
-                      onClick={() => void handleLeadConvert(lead.id)}
-                      disabled={pendingLeadId === lead.id}
-                    />
-                  )}
-                </div>
-              </article>
-            );
-          })}
+                <span>{bucket.items.length}</span>
+              </div>
+              <p className="meta-copy">{bucket.description}</p>
+              <div className="list-grid lead-bucket__grid">
+                {bucket.items.map((lead) => {
+                  const commercialSignal = getLeadCommercialSignal(lead);
+                  const priorityMeta = getLeadPriorityMeta(lead);
+                  return (
+                    <article className="list-card lead-card" key={lead.id}>
+                      <div className="section-header">
+                        <strong>{lead.name}</strong>
+                        <span>{new Date(lead.created_at).toLocaleDateString("pt-BR")}</span>
+                      </div>
+                      <span>{lead.email}</span>
+                      <div className="lead-card__meta">
+                        <span>{lead.phone || "Sem WhatsApp"}</span>
+                        <span>{lead.city || "Cidade nao informada"}</span>
+                        <span>{lead.role || "Papel nao informado"}</span>
+                      </div>
+                      <div className="lead-card__status">
+                        <div className="lead-card__status-badges">
+                          <Badge tone={commercialSignal.tone}>{commercialSignal.label}</Badge>
+                          <Badge tone={priorityMeta.tone}>{priorityMeta.label}</Badge>
+                        </div>
+                        <span className="meta-copy">Origem: {lead.source || "website"}</span>
+                      </div>
+                      <div className="lead-card__priority">
+                        <div className="lead-card__priority-copy">
+                          <strong>Escore de risco: {lead.risk_score}</strong>
+                          <span className="meta-copy">{getLeadBucketSummary(lead)}</span>
+                        </div>
+                        <span className="meta-copy">
+                          {lead.owner_name
+                            ? `Dono: ${lead.owner_name}`
+                            : lead.suggested_owner_name
+                              ? `Sugestao de dono: ${lead.suggested_owner_name}`
+                              : "Sem sugestao automatica disponivel"}
+                        </span>
+                      </div>
+                      <div className="lead-card__funnel">
+                        <label>
+                          <span className="meta-copy">Estagio</span>
+                          <select
+                            value={lead.stage}
+                            onChange={(event) =>
+                              void handleLeadUpdate(lead.id, {
+                                stage: event.target.value,
+                              })
+                            }
+                            disabled={pendingLeadId === lead.id}
+                          >
+                            <option value="captured">Captado</option>
+                            <option value="qualified">Qualificado</option>
+                            <option value="follow_up">Em follow-up</option>
+                            <option value="proposal">Proposta</option>
+                            <option value="converted">Convertido</option>
+                            <option value="archived">Arquivado</option>
+                          </select>
+                        </label>
+                        <label>
+                          <span className="meta-copy">Responsavel</span>
+                          <select
+                            value={lead.owner_user_id || ""}
+                            onChange={(event) =>
+                              void handleLeadUpdate(lead.id, {
+                                owner_user_id: event.target.value,
+                              })
+                            }
+                            disabled={pendingLeadId === lead.id}
+                          >
+                            <option value="">Sem dono</option>
+                            {memberships.map((member) => (
+                              <option key={member.id} value={member.user_id}>
+                                {member.full_name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          <span className="meta-copy">Proximo follow-up</span>
+                          <input
+                            type="date"
+                            value={lead.follow_up_at || ""}
+                            onChange={(event) =>
+                              void handleLeadUpdate(lead.id, {
+                                follow_up_at: event.target.value,
+                              })
+                            }
+                            disabled={pendingLeadId === lead.id}
+                          />
+                        </label>
+                      </div>
+                      {!lead.owner_user_id && lead.suggested_owner_user_id ? (
+                        <div className="lead-card__suggestion">
+                          <div>
+                            <strong>Atribuicao sugerida</strong>
+                            <p className="meta-copy">
+                              Encaminhe este lead para{" "}
+                              {lead.suggested_owner_name || "o owner sugerido"} e reduza tempo
+                              parado na triagem.
+                            </p>
+                          </div>
+                          <Button
+                            label={
+                              pendingLeadId === lead.id ? "Atribuindo..." : "Atribuir sugestao"
+                            }
+                            variant="secondary"
+                            onClick={() =>
+                              void handleLeadUpdate(lead.id, {
+                                owner_user_id: lead.suggested_owner_user_id || "",
+                              })
+                            }
+                            disabled={pendingLeadId === lead.id}
+                          />
+                        </div>
+                      ) : null}
+                      <p>{lead.challenge || "Sem desafio informado no primeiro contato."}</p>
+                      <div className="lead-card__actions">
+                        <span className="meta-copy">
+                          {lead.follow_up_at
+                            ? `Follow-up em ${new Date(lead.follow_up_at).toLocaleDateString("pt-BR")}`
+                            : "Sem proximo passo definido"}
+                        </span>
+                        {lead.converted_contact_id ? (
+                          <span className="meta-copy">
+                            Convertido em{" "}
+                            {new Date(lead.converted_at || lead.created_at).toLocaleDateString(
+                              "pt-BR",
+                            )}
+                          </span>
+                        ) : (
+                          <Button
+                            label={
+                              pendingLeadId === lead.id
+                                ? "Convertendo..."
+                                : "Converter para contato"
+                            }
+                            variant="secondary"
+                            onClick={() => void handleLeadConvert(lead.id)}
+                            disabled={pendingLeadId === lead.id}
+                          />
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       </div>
     </section>

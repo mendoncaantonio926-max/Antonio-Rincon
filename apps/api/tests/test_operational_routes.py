@@ -357,6 +357,9 @@ def test_public_lead_capture() -> None:
     )
     assert response.status_code == 201
     assert response.json()["email"] == "lead.comercial@example.com"
+    assert response.json()["follow_up_bucket"] == "unscheduled"
+    assert response.json()["priority_label"] == "normal"
+    assert response.json()["suggested_owner_user_id"] is None
 
 
 def test_lead_can_be_converted_to_contact_once() -> None:
@@ -412,6 +415,12 @@ def test_lead_pipeline_update_and_filters() -> None:
     token = _get_access_token()
     headers = {"Authorization": f"Bearer {token}"}
 
+    initial_list_response = client.get("/leads", headers=headers)
+    assert initial_list_response.status_code == 200
+    captured_lead = next(item for item in initial_list_response.json() if item["id"] == lead_id)
+    assert captured_lead["follow_up_bucket"] == "unscheduled"
+    assert captured_lead["suggested_owner_user_id"] is not None
+
     update_response = client.patch(
         f"/leads/{lead_id}",
         headers=headers,
@@ -425,6 +434,9 @@ def test_lead_pipeline_update_and_filters() -> None:
     assert update_response.json()["stage"] == "follow_up"
     assert update_response.json()["owner_name"] == "Owner Demo"
     assert update_response.json()["follow_up_at"] == "2026-03-01"
+    assert update_response.json()["follow_up_bucket"] == "overdue"
+    assert update_response.json()["risk_score"] >= 80
+    assert update_response.json()["suggested_owner_user_id"] is None
 
     filtered_by_stage = client.get("/leads?stage=follow_up", headers=headers)
     assert filtered_by_stage.status_code == 200

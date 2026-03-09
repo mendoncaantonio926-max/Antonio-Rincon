@@ -19,7 +19,7 @@ def get_leads(
 ) -> list[dict]:
     require_min_role(context, {"owner", "admin", "coordinator"})
     leads = list_leads(query=query, stage=stage, owner_user_id=owner_user_id)
-    return [serialize_lead(lead) for lead in leads]
+    return [serialize_lead(lead, context.membership.tenant_id) for lead in leads]
 
 
 @router.patch("/{lead_id}", response_model=LeadResponse)
@@ -31,7 +31,7 @@ def patch_lead(lead_id: str, payload: LeadUpdateRequest, context: CurrentContext
         lead_id=lead_id,
         updates=payload.model_dump(exclude_unset=True),
     )
-    return serialize_lead(lead)
+    return serialize_lead(lead, context.membership.tenant_id)
 
 
 @router.post("/{lead_id}/convert", response_model=LeadResponse)
@@ -42,4 +42,4 @@ def post_convert_lead(lead_id: str, context: CurrentContextDep) -> dict:
         user_id=context.user.id,
         lead_id=lead_id,
     )
-    return serialize_lead(lead)
+    return serialize_lead(lead, context.membership.tenant_id)
