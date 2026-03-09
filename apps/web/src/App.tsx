@@ -82,6 +82,55 @@ function distributeRecoveredGap(
     );
 }
 
+function buildOwnerDecisionImpact(
+  ownerOutcomeImpact: Array<{
+    label: string;
+    status: "accelerated" | "stagnant";
+    summary: string;
+  }>,
+  ownerHealthImpact: Array<{
+    label: string;
+    healthDelta: number;
+    gapRecovered: number;
+    overdueReduced: number;
+  }>,
+  ownerCadenceImpact: Array<{
+    label: string;
+    assignmentsAdded: number;
+    followUpsScheduled: number;
+    stabilizedCount: number;
+  }>,
+) {
+  return ownerOutcomeImpact
+    .map((item) => {
+      const health = ownerHealthImpact.find((entry) => entry.label === item.label);
+      const cadence = ownerCadenceImpact.find((entry) => entry.label === item.label);
+      const mode: "coordination_now" | "auto_cadence" =
+        item.status === "stagnant" ||
+        (health?.healthDelta ?? 0) <= 0 ||
+        ((health?.gapRecovered ?? 0) === 0 && (cadence?.stabilizedCount ?? 0) === 0)
+          ? "coordination_now"
+          : "auto_cadence";
+      return {
+        label: item.label,
+        mode,
+        reason:
+          mode === "coordination_now"
+            ? `Puxar agora: score ${formatSignedNumber(health?.healthDelta ?? 0)}, gap recuperado ${
+                health?.gapRecovered ?? 0
+              } e ${cadence?.stabilizedCount ?? 0} lead(s) estabilizado(s).`
+            : `Pode seguir em cadencia: ${cadence?.followUpsScheduled ?? 0} follow-up(s), ${
+                cadence?.stabilizedCount ?? 0
+              } lead(s) estabilizado(s) e score ${formatSignedNumber(health?.healthDelta ?? 0)}.`,
+      };
+    })
+    .sort(
+      (left, right) =>
+        Number(left.mode === "coordination_now") - Number(right.mode === "coordination_now") ||
+        left.label.localeCompare(right.label),
+    );
+}
+
 function LandingPage() {
   const [leadMessage, setLeadMessage] = useState<string | null>(null);
   const [leadPending, setLeadPending] = useState(false);
@@ -476,6 +525,11 @@ function DashboardPage() {
       status: "accelerated" | "stagnant";
       summary: string;
     }>;
+    ownerDecisionImpact: Array<{
+      label: string;
+      mode: "coordination_now" | "auto_cadence";
+      reason: string;
+    }>;
     windowImpact: Array<{
       label: string;
       appliedCount: number;
@@ -746,6 +800,11 @@ function DashboardPage() {
               left.label.localeCompare(right.label),
           )
           .slice(0, 4);
+        const ownerDecisionImpact = buildOwnerDecisionImpact(
+          ownerOutcomeImpact,
+          ownerHealthImpact,
+          ownerCadenceImpact,
+        ).slice(0, 4);
         const beforeWindowMap = new Map(
           beforeSummary.commercial_window_groups.map((item) => [item.label, item.leads_count]),
         );
@@ -797,6 +856,7 @@ function DashboardPage() {
           ownerHealthImpact,
           ownerCadenceImpact,
           ownerOutcomeImpact,
+          ownerDecisionImpact,
           windowImpact,
         });
       } else if (
@@ -903,6 +963,11 @@ function DashboardPage() {
                   },
                 ];
               })();
+        const ownerDecisionImpact = buildOwnerDecisionImpact(
+          ownerOutcomeImpact,
+          ownerHealthImpact,
+          ownerCadenceImpact,
+        );
         const beforeWindowMap = new Map(
           summary.commercial_window_groups.map((item) => [item.label, item.leads_count]),
         );
@@ -945,6 +1010,7 @@ function DashboardPage() {
           ownerHealthImpact,
           ownerCadenceImpact,
           ownerOutcomeImpact,
+          ownerDecisionImpact,
           windowImpact,
         });
       } else {
@@ -965,6 +1031,12 @@ function DashboardPage() {
   const stagnantOwnersCount =
     dashboardAiRunResult?.ownerOutcomeImpact.filter((item) => item.status === "stagnant").length ??
     0;
+  const coordinationNowCount =
+    dashboardAiRunResult?.ownerDecisionImpact.filter((item) => item.mode === "coordination_now")
+      .length ?? 0;
+  const autoCadenceCount =
+    dashboardAiRunResult?.ownerDecisionImpact.filter((item) => item.mode === "auto_cadence")
+      .length ?? 0;
   const manualInterventionCount = dashboardAiRunResult
     ? dashboardAiRunResult.remainingQueue + stagnantOwnersCount
     : 0;
@@ -1211,6 +1283,30 @@ function DashboardPage() {
                           <span>
                             {item.status === "accelerated" ? "Acelerado" : "Estagnado"}:{" "}
                             {item.summary}
+                          </span>
+                        </p>
+                      ))}
+                    </div>
+                  </article>
+                  <article className="dashboard-ai-impact-card">
+                    <span>Decisao executiva por owner</span>
+                    <div className="dashboard-ai-impact-list">
+                      <p>
+                        <strong>Puxar pela coordenacao agora</strong>
+                        <span>{coordinationNowCount} owner(s) exigem intervencao direta.</span>
+                      </p>
+                      <p>
+                        <strong>Seguir em cadencia automatica</strong>
+                        <span>{autoCadenceCount} owner(s) podem seguir sem escalonamento.</span>
+                      </p>
+                      {dashboardAiRunResult.ownerDecisionImpact.map((item) => (
+                        <p key={item.label}>
+                          <strong>{item.label}</strong>
+                          <span>
+                            {item.mode === "coordination_now"
+                              ? "Coordenacao agora"
+                              : "Cadencia automatica"}
+                            : {item.reason}
                           </span>
                         </p>
                       ))}

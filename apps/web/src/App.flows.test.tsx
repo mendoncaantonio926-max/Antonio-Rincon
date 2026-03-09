@@ -2361,6 +2361,9 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Owners acelerados")).toBeInTheDocument();
       expect(screen.getByText("Owners estagnados")).toBeInTheDocument();
       expect(screen.getByText("Intervencao humana restante")).toBeInTheDocument();
+      expect(screen.getByText("Decisao executiva por owner")).toBeInTheDocument();
+      expect(screen.getByText("Puxar pela coordenacao agora")).toBeInTheDocument();
+      expect(screen.getByText("Seguir em cadencia automatica")).toBeInTheDocument();
       expect(screen.getByText("Meta recuperada por owner")).toBeInTheDocument();
       expect(screen.getByText("Saude por owner apos a regua")).toBeInTheDocument();
       expect(screen.getByText("Cadencia por owner apos a regua")).toBeInTheDocument();

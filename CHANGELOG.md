@@ -48,6 +48,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - o dashboard agora mostra tambem a cadencia operacional por owner depois da execucao da regua da IA
 - o dashboard agora destaca owners acelerados e owners estagnados depois da execucao da regua da IA
 - o dashboard agora resume a regua aplicada com owners acelerados, owners estagnados e intervencao humana restante
+- o dashboard agora aponta por owner quem deve ser puxado pela coordenacao e quem pode seguir em cadencia automatica
 - exportacao de relatorios no scaffold local agora recompõe a cota padrao do plano para contas ativas ou trial durante validacoes repetidas
 
 ### Changed
@@ -81,6 +82,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - browser audit agora valida tambem a cadencia por owner apos a regua da IA
 - browser audit agora valida tambem a leitura de owners acelerados e estagnados apos a regua da IA
 - browser audit agora valida tambem o resumo executivo da regua aplicada no dashboard
+- browser audit agora valida tambem a decisao executiva por owner apos a regua aplicada
 ### Fixed
 
 ### Docs
