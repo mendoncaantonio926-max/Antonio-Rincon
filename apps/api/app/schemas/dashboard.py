@@ -81,6 +81,21 @@ class DashboardRecoveryItemResponse(BaseModel):
     recommended_action: str
 
 
+class DashboardWindowPressureResponse(BaseModel):
+    window_label: str
+    leads_count: int
+    high_risk_count: int
+    owners_involved: int
+    pressure_label: str
+
+
+class DashboardRebalanceSuggestionResponse(BaseModel):
+    from_owner_label: str
+    to_owner_label: str
+    lead_name: str
+    reason: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -118,6 +133,8 @@ class DashboardSummaryResponse(BaseModel):
     owner_throughput: list[DashboardOwnerThroughputResponse]
     owner_health: list[DashboardOwnerHealthResponse]
     recovery_queue: list[DashboardRecoveryItemResponse]
+    window_pressure: list[DashboardWindowPressureResponse]
+    rebalance_suggestions: list[DashboardRebalanceSuggestionResponse]
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str

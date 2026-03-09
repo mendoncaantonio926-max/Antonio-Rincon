@@ -476,6 +476,78 @@ const {
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
       .slice(0, 5);
+    const windowPressureMap = new Map<
+      string,
+      {
+        window_label: string;
+        leads_count: number;
+        high_risk_count: number;
+        owners: Set<string>;
+        pressure_label: string;
+      }
+    >();
+    for (const item of pendingLeads) {
+      const windowLabel =
+        {
+          overdue: "Atrasado",
+          today: "Hoje",
+          this_week: "Esta semana",
+          later: "Mais a frente",
+          unscheduled: "Sem agenda",
+        }[item.follow_up_bucket] ?? "Sem agenda";
+      const group = windowPressureMap.get(windowLabel) ?? {
+        window_label: windowLabel,
+        leads_count: 0,
+        high_risk_count: 0,
+        owners: new Set<string>(),
+        pressure_label: "steady",
+      };
+      group.leads_count += 1;
+      if (["high", "critical"].includes(item.priority_label)) {
+        group.high_risk_count += 1;
+      }
+      group.owners.add(item.owner_name || item.suggested_owner_name || "Sem owner");
+      windowPressureMap.set(windowLabel, group);
+    }
+    const windowPressure = Array.from(windowPressureMap.values()).map((item) => ({
+      window_label: item.window_label,
+      leads_count: item.leads_count,
+      high_risk_count: item.high_risk_count,
+      owners_involved: item.owners.size,
+      pressure_label:
+        item.window_label === "Atrasado" || item.high_risk_count >= 2
+          ? "critical"
+          : item.leads_count >= 2 || item.high_risk_count >= 1
+            ? "attention"
+            : "steady",
+    }));
+    const stableOwners = ownerHealth.filter((item) => item.pressure_label === "steady");
+    const stressedOwners = new Set(
+      ownerHealth
+        .filter((item) => item.pressure_label !== "steady")
+        .map((item) => item.owner_label),
+    );
+    const rebalanceSuggestions = recoveryQueue
+      .map((item) => {
+        const targetOwner = stableOwners[0];
+        if (!targetOwner) {
+          return null;
+        }
+        if (item.owner_label !== "Sem owner" && !stressedOwners.has(item.owner_label)) {
+          return null;
+        }
+        return {
+          from_owner_label: item.owner_label,
+          to_owner_label: targetOwner.owner_label,
+          lead_name: item.lead_name,
+          reason:
+            item.owner_label === "Sem owner"
+              ? `${item.lead_name} precisa ganhar dono para entrar na cadencia.`
+              : `${item.lead_name} precisa sair de ${item.owner_label} para aliviar a fila critica.`,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .slice(0, 4);
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -556,6 +628,8 @@ const {
       owner_throughput: ownerThroughput,
       owner_health: ownerHealth,
       recovery_queue: recoveryQueue,
+      window_pressure: windowPressure,
+      rebalance_suggestions: rebalanceSuggestions,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -1810,6 +1884,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Variacao por owner")).toBeInTheDocument();
       expect(screen.getByText("Saude por owner")).toBeInTheDocument();
       expect(screen.getByText("Fila de recuperacao")).toBeInTheDocument();
+      expect(screen.getByText("Pressao por janela")).toBeInTheDocument();
+      expect(screen.getByText("Redistribuicao sugerida")).toBeInTheDocument();
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 

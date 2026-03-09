@@ -29,6 +29,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora expone variacao de throughput por owner para comparar quem acelerou ou caiu entre a janela atual e a anterior
 - dashboard agora expone saude comercial por owner e fila de recuperacao para atacar atraso, gap de meta e risco de conversao
 - IA contextual agora incorpora saude comercial por owner e fila de recuperacao na recomendacao executiva do dashboard
+- dashboard agora expone pressao por janela e redistribuicao sugerida para rebalancear a fila comercial entre owners
 
 ### Changed
 
@@ -42,6 +43,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - browser audit agora valida tambem meta por owner e throughput comercial no dashboard executivo
 - browser audit agora valida tambem a variacao de throughput por owner no dashboard executivo
 - browser audit agora valida tambem saude por owner e fila de recuperacao no dashboard executivo
+- browser audit agora valida tambem pressao por janela e redistribuicao sugerida no dashboard executivo
 ### Fixed
 
 ### Docs

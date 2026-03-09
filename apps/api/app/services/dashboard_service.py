@@ -406,6 +406,75 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
             }
         )
     recovery_queue = recovery_queue[:5]
+    window_pressure_map: dict[str, dict[str, object]] = {}
+    for item in pending_leads:
+        window_label = follow_up_bucket_labels.get(str(item["follow_up_bucket"]), "Sem agenda")
+        group = window_pressure_map.setdefault(
+            window_label,
+            {
+                "window_label": window_label,
+                "leads_count": 0,
+                "high_risk_count": 0,
+                "owners": set(),
+                "pressure_label": "steady",
+            },
+        )
+        group["leads_count"] = int(group["leads_count"]) + 1
+        if str(item["priority_label"]) in {"high", "critical"}:
+            group["high_risk_count"] = int(group["high_risk_count"]) + 1
+        owners = group["owners"]
+        if isinstance(owners, set):
+            owners.add(str(item["owner_name"] or item["suggested_owner_name"] or "Sem owner"))
+    window_pressure = []
+    for group in window_pressure_map.values():
+        pressure_label = "steady"
+        if str(group["window_label"]) == "Atrasado" or int(group["high_risk_count"]) >= 2:
+            pressure_label = "critical"
+        elif int(group["leads_count"]) >= 2 or int(group["high_risk_count"]) >= 1:
+            pressure_label = "attention"
+        window_pressure.append(
+            {
+                "window_label": str(group["window_label"]),
+                "leads_count": int(group["leads_count"]),
+                "high_risk_count": int(group["high_risk_count"]),
+                "owners_involved": len(group["owners"]) if isinstance(group["owners"], set) else 0,
+                "pressure_label": pressure_label,
+            }
+        )
+    window_pressure.sort(
+        key=lambda item: (
+            {"critical": 0, "attention": 1, "steady": 2}.get(str(item["pressure_label"]), 99),
+            -int(item["high_risk_count"]),
+            -int(item["leads_count"]),
+            str(item["window_label"]),
+        )
+    )
+    stable_owners = [item for item in owner_health if str(item["pressure_label"]) == "steady"]
+    stressed_owners = {
+        str(item["owner_label"]): item for item in owner_health if str(item["pressure_label"]) != "steady"
+    }
+    rebalance_suggestions = []
+    for item in recovery_queue:
+        target_owner = stable_owners[0] if stable_owners else None
+        owner_label = str(item["owner_label"])
+        if target_owner is None:
+            continue
+        if owner_label != "Sem owner" and owner_label not in stressed_owners:
+            continue
+        reason = (
+            f"{item['lead_name']} precisa sair de {owner_label} para aliviar a fila critica."
+            if owner_label != "Sem owner"
+            else f"{item['lead_name']} precisa ganhar dono para entrar na cadencia."
+        )
+        rebalance_suggestions.append(
+            {
+                "from_owner_label": owner_label,
+                "to_owner_label": str(target_owner["owner_label"]),
+                "lead_name": str(item["lead_name"]),
+                "reason": reason,
+            }
+        )
+    rebalance_suggestions = rebalance_suggestions[:4]
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -508,6 +577,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "owner_throughput": owner_throughput[:4],
         "owner_health": owner_health[:4],
         "recovery_queue": recovery_queue,
+        "window_pressure": window_pressure[:5],
+        "rebalance_suggestions": rebalance_suggestions,
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

@@ -363,6 +363,19 @@ export type DashboardSummary = {
     reason: string;
     recommended_action: string;
   }>;
+  window_pressure: Array<{
+    window_label: string;
+    leads_count: number;
+    high_risk_count: number;
+    owners_involved: number;
+    pressure_label: string;
+  }>;
+  rebalance_suggestions: Array<{
+    from_owner_label: string;
+    to_owner_label: string;
+    lead_name: string;
+    reason: string;
+  }>;
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;

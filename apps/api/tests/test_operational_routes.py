@@ -358,6 +358,8 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert isinstance(dashboard_response.json()["owner_throughput"], list)
     assert isinstance(dashboard_response.json()["owner_health"], list)
     assert isinstance(dashboard_response.json()["recovery_queue"], list)
+    assert isinstance(dashboard_response.json()["window_pressure"], list)
+    assert isinstance(dashboard_response.json()["rebalance_suggestions"], list)
     assert "morning_focus_summary" in dashboard_response.json()
     assert isinstance(dashboard_response.json()["owner_daily_briefs"], list)
 
@@ -474,6 +476,8 @@ def test_lead_pipeline_update_and_filters() -> None:
     assert isinstance(dashboard_response.json()["owner_throughput"], list)
     assert isinstance(dashboard_response.json()["owner_health"], list)
     assert isinstance(dashboard_response.json()["recovery_queue"], list)
+    assert isinstance(dashboard_response.json()["window_pressure"], list)
+    assert isinstance(dashboard_response.json()["rebalance_suggestions"], list)
 
 
 def test_membership_invite_and_ai_summary() -> None:

@@ -813,6 +813,30 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Pressao por janela</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.window_pressure ?? []).map((item) => (
+                    <span key={`window-pressure-${item.window_label}`}>
+                      {item.window_label}: {item.leads_count} lead(s), {item.high_risk_count} em
+                      risco, {item.owners_involved} owner(s), {item.pressure_label}
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Redistribuicao sugerida</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.rebalance_suggestions ?? []).map((item) => (
+                    <span key={`rebalance-${item.lead_name}-${item.to_owner_label}`}>
+                      {item.lead_name}: mover de {item.from_owner_label} para {item.to_owner_label}.{" "}
+                      {item.reason}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>
