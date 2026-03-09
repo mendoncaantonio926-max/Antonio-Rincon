@@ -161,6 +161,9 @@ export type Subscription = {
   failed_payments_count: number;
   grace_days_remaining: number;
   trial_days_remaining: number;
+  seat_usage_count: number;
+  seat_usage_ratio: number;
+  seat_pressure: string;
   seats_included: number;
   ai_requests_limit: number;
   report_exports_limit: number;
@@ -168,6 +171,9 @@ export type Subscription = {
   can_export_reports: boolean;
   commercial_status: string;
   collection_stage: string;
+  renewal_risk: string;
+  commercial_motion: string;
+  recommended_billing_cycle: string;
   next_commercial_action: string;
   next_billing_at?: string | null;
 };
@@ -471,7 +477,9 @@ export const api = {
       | "mark_past_due"
       | "retry_charge"
       | "resolve_past_due"
-      | "expire_subscription",
+      | "expire_subscription"
+      | "switch_to_annual"
+      | "switch_to_monthly",
   ) {
     return request<{ message: string }>("/billing/subscription/action", {
       method: "POST",

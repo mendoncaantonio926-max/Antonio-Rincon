@@ -14,8 +14,11 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 ### Added
 
+- assinatura agora expone ocupacao real de assentos, pressao de capacidade, risco de renovacao, movimento comercial e ciclo recomendado
+
 ### Changed
 
+- billing agora permite alternar ciclo mensal/anual em modo local e usa esses sinais para orientar retencao e expansao
 ### Fixed
 
 ### Docs
@@ -177,6 +180,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 
 ### Ops
 
+- browser audit real agora valida tambem a alternancia de ciclo anual na tela de billing
 - browser audit real agora valida tambem o spotlight temporal da tela de adversarios
 - browser audit real agora valida tambem a leitura priorizada da IA no dashboard
 - prontidao de release consolidada em wrapper reutilizavel para uso local

@@ -87,6 +87,9 @@ const {
       failed_payments_count: 0,
       grace_days_remaining: 0,
       trial_days_remaining: 12,
+      seat_usage_count: 1,
+      seat_usage_ratio: 0.33,
+      seat_pressure: "saudavel",
       seats_included: 3,
       ai_requests_limit: 150,
       report_exports_limit: 34,
@@ -94,6 +97,9 @@ const {
       can_export_reports: true,
       commercial_status: "ativo",
       collection_stage: "healthy",
+      renewal_risk: "low",
+      commercial_motion: "manter",
+      recommended_billing_cycle: "monthly",
       next_commercial_action: "manter conta saudavel e mapear upsell",
       next_billing_at: "2026-04-01",
     },
@@ -499,7 +505,9 @@ const {
           | "mark_past_due"
           | "retry_charge"
           | "resolve_past_due"
-          | "expire_subscription",
+          | "expire_subscription"
+          | "switch_to_annual"
+          | "switch_to_monthly",
       ) => {
         if (action === "mark_past_due") {
           billingState.subscription = {
@@ -507,6 +515,8 @@ const {
             status: "past_due",
             commercial_status: "em_graca",
             collection_stage: "grace",
+            renewal_risk: "high",
+            commercial_motion: "regularizar",
             grace_period_ends_at: "2026-03-15",
             grace_days_remaining: 7,
             failed_payments_count: billingState.subscription.failed_payments_count + 1,
@@ -519,6 +529,8 @@ const {
             status: "past_due",
             commercial_status: "em_graca",
             collection_stage: "grace",
+            renewal_risk: "high",
+            commercial_motion: "regularizar",
             grace_period_ends_at: "2026-03-15",
             grace_days_remaining: 7,
             failed_payments_count: billingState.subscription.failed_payments_count + 1,
@@ -532,6 +544,8 @@ const {
             status: "active",
             commercial_status: "ativo",
             collection_stage: "healthy",
+            renewal_risk: "low",
+            commercial_motion: "manter",
             grace_period_ends_at: null,
             grace_days_remaining: 0,
             last_payment_attempt_at: null,
@@ -545,10 +559,26 @@ const {
             status: "canceled",
             commercial_status: "cancelado",
             collection_stage: "churn",
+            renewal_risk: "critical",
+            commercial_motion: "reter",
             cancel_at_period_end: false,
             grace_period_ends_at: null,
             grace_days_remaining: 0,
             next_commercial_action: "reativar conta e renegociar plano",
+          };
+        }
+        if (action === "switch_to_annual") {
+          billingState.subscription = {
+            ...billingState.subscription,
+            billing_cycle: "annual",
+            recommended_billing_cycle: "annual",
+          };
+        }
+        if (action === "switch_to_monthly") {
+          billingState.subscription = {
+            ...billingState.subscription,
+            billing_cycle: "monthly",
+            recommended_billing_cycle: "monthly",
           };
         }
         return { message: `Acao ${action} executada.` };
@@ -937,11 +967,11 @@ describe("App authenticated flows", () => {
     renderAuthenticatedApp("/app/contacts");
 
     await screen.findByRole("heading", { name: "Contatos" });
-    await user.type(screen.getByLabelText("Nome"), "Lideranca Centro");
+    fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "Lideranca Centro" } });
     await user.selectOptions(screen.getByLabelText("Tipo"), "leadership");
     await user.selectOptions(screen.getByLabelText("Status"), "priority");
-    await user.type(screen.getByLabelText("Cidade"), "Sao Paulo");
-    await user.type(screen.getByLabelText("Tags"), "centro, bairro");
+    fireEvent.change(screen.getByLabelText("Cidade"), { target: { value: "Sao Paulo" } });
+    fireEvent.change(screen.getByLabelText("Tags"), { target: { value: "centro, bairro" } });
     await user.click(screen.getByRole("button", { name: "Salvar contato" }));
 
     await waitFor(() => {
@@ -1046,6 +1076,13 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("past_due")).toBeInTheDocument();
       expect(screen.getByText("grace")).toBeInTheDocument();
       expect(screen.getByText("2026-03-15")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Migrar para anual" }));
+
+    await waitFor(() => {
+      expect(apiMock.subscriptionAction).toHaveBeenCalledWith("token-valido", "switch_to_annual");
+      expect(screen.getAllByText("annual").length).toBeGreaterThan(0);
     });
   });
 

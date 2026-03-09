@@ -410,6 +410,8 @@ async function main() {
     await page.locator(".info-box").waitFor();
     await page.getByRole("button", { name: "Resolver pendencia" }).click();
     await page.locator(".info-box").waitFor();
+    await page.getByRole("button", { name: "Migrar para anual" }).click();
+    await page.locator(".billing-stat-grid").getByText("annual").waitFor();
     checks.push("acoes_de_billing_responderam");
 
     await page.getByRole("link", { name: "Auditoria" }).click();

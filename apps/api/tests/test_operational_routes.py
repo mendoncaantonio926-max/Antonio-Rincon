@@ -225,6 +225,9 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert subscription_response.json()["commercial_status"] == "ativo"
     assert subscription_response.json()["collection_stage"] == "healthy"
     assert subscription_response.json()["failed_payments_count"] == 0
+    assert subscription_response.json()["seat_usage_count"] >= 1
+    assert subscription_response.json()["renewal_risk"] in {"low", "medium", "high", "critical"}
+    assert subscription_response.json()["recommended_billing_cycle"] in {"monthly", "annual"}
 
     cancel_response = client.post(
         "/billing/subscription/action",
@@ -267,6 +270,7 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert retry_subscription_response.status_code == 200
     assert retry_subscription_response.json()["failed_payments_count"] >= 2
     assert retry_subscription_response.json()["last_payment_attempt_at"] is not None
+    assert retry_subscription_response.json()["renewal_risk"] == "high"
 
     resolve_past_due_response = client.post(
         "/billing/subscription/action",
@@ -293,6 +297,26 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     )
     assert reactivate_after_expire_response.status_code == 200
 
+    annual_cycle_response = client.post(
+        "/billing/subscription/action",
+        headers=headers,
+        json={"action": "switch_to_annual"},
+    )
+    assert annual_cycle_response.status_code == 200
+    annual_subscription_response = client.get("/billing/subscription", headers=headers)
+    assert annual_subscription_response.status_code == 200
+    assert annual_subscription_response.json()["billing_cycle"] == "annual"
+
+    monthly_cycle_response = client.post(
+        "/billing/subscription/action",
+        headers=headers,
+        json={"action": "switch_to_monthly"},
+    )
+    assert monthly_cycle_response.status_code == 200
+    monthly_subscription_response = client.get("/billing/subscription", headers=headers)
+    assert monthly_subscription_response.status_code == 200
+    assert monthly_subscription_response.json()["billing_cycle"] == "monthly"
+
     renew_trial_response = client.post(
         "/billing/subscription/action",
         headers=headers,
@@ -302,10 +326,12 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
 
     billing_events_response = client.get("/billing/events", headers=headers)
     assert billing_events_response.status_code == 200
-    assert len(billing_events_response.json()) >= 7
+    assert len(billing_events_response.json()) >= 9
     assert any(item["action"] == "billing.subscription_mark_past_due" for item in billing_events_response.json())
     assert any(item["action"] == "billing.subscription_retry_charge" for item in billing_events_response.json())
     assert any(item["action"] == "billing.subscription_expire_subscription" for item in billing_events_response.json())
+    assert any(item["action"] == "billing.subscription_switch_to_annual" for item in billing_events_response.json())
+    assert any(item["action"] == "billing.subscription_switch_to_monthly" for item in billing_events_response.json())
 
     dashboard_response = client.get("/dashboard/summary", headers=headers)
     assert dashboard_response.status_code == 200

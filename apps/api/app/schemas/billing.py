@@ -19,6 +19,9 @@ class SubscriptionResponse(BaseModel):
     failed_payments_count: int
     grace_days_remaining: int
     trial_days_remaining: int
+    seat_usage_count: int
+    seat_usage_ratio: float
+    seat_pressure: str
     seats_included: int
     ai_requests_limit: int
     report_exports_limit: int
@@ -26,6 +29,9 @@ class SubscriptionResponse(BaseModel):
     can_export_reports: bool
     commercial_status: str
     collection_stage: str
+    renewal_risk: str
+    commercial_motion: str
+    recommended_billing_cycle: str
     next_commercial_action: str
     next_billing_at: str | None = None
     created_at: str

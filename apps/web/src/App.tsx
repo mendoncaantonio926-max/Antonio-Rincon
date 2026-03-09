@@ -2038,7 +2038,9 @@ function BillingPage() {
       | "mark_past_due"
       | "retry_charge"
       | "resolve_past_due"
-      | "expire_subscription",
+      | "expire_subscription"
+      | "switch_to_annual"
+      | "switch_to_monthly",
   ) {
     if (!tokens?.access_token) return;
     try {
@@ -2082,6 +2084,18 @@ function BillingPage() {
           <article className="brief-card">
             <strong>Tentativas falhas</strong>
             <span>{subscription?.failed_payments_count ?? 0}</span>
+          </article>
+          <article className="brief-card">
+            <strong>Risco de renovacao</strong>
+            <span>{subscription?.renewal_risk ?? "-"}</span>
+          </article>
+          <article className="brief-card">
+            <strong>Movimento comercial</strong>
+            <span>{subscription?.commercial_motion ?? "-"}</span>
+          </article>
+          <article className="brief-card">
+            <strong>Ciclo recomendado</strong>
+            <span>{subscription?.recommended_billing_cycle ?? "-"}</span>
           </article>
         </div>
         <div className="billing-stat-grid">
@@ -2130,6 +2144,18 @@ function BillingPage() {
             <span>{subscription?.seats_included ?? 0}</span>
           </article>
           <article className="stat-tile">
+            <strong>Assentos ocupados</strong>
+            <span>{subscription?.seat_usage_count ?? 0}</span>
+          </article>
+          <article className="stat-tile">
+            <strong>Ocupacao</strong>
+            <span>{Math.round((subscription?.seat_usage_ratio ?? 0) * 100)}%</span>
+          </article>
+          <article className="stat-tile">
+            <strong>Pressao de assentos</strong>
+            <span>{subscription?.seat_pressure ?? "-"}</span>
+          </article>
+          <article className="stat-tile">
             <strong>Plano sugerido</strong>
             <span>{subscription?.suggested_plan ?? "-"}</span>
           </article>
@@ -2151,6 +2177,12 @@ function BillingPage() {
           <article className="brief-card">
             <strong>Exportacao</strong>
             <span>{subscription?.can_export_reports ? "Disponivel" : "Bloqueada"}</span>
+          </article>
+          <article className="brief-card">
+            <strong>Capacidade de equipe</strong>
+            <span>
+              {subscription?.seat_usage_count ?? 0}/{subscription?.seats_included ?? 0} assentos
+            </span>
           </article>
           <article className="brief-card brief-card--wide">
             <strong>Leitura comercial</strong>
@@ -2211,6 +2243,20 @@ function BillingPage() {
             onClick={() => handleSubscriptionAction("cancel")}
           >
             Cancelar
+          </button>
+          <button
+            className="inline-button"
+            type="button"
+            onClick={() => handleSubscriptionAction("switch_to_annual")}
+          >
+            Migrar para anual
+          </button>
+          <button
+            className="inline-button"
+            type="button"
+            onClick={() => handleSubscriptionAction("switch_to_monthly")}
+          >
+            Voltar para mensal
           </button>
           <button
             className="inline-button"

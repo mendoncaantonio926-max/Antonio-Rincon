@@ -70,6 +70,30 @@ def get_suggested_plan(subscription: Subscription) -> str:
     return "enterprise"
 
 
+def get_seat_usage_count(tenant_id: str) -> int:
+    return len([item for item in store.memberships.values() if item.tenant_id == tenant_id])
+
+
+def get_seat_usage_ratio(subscription: Subscription) -> float:
+    if subscription.seats_included <= 0:
+        return 0
+    if subscription.seats_included >= 999:
+        return 0
+    usage_count = get_seat_usage_count(subscription.tenant_id)
+    return round(usage_count / subscription.seats_included, 2)
+
+
+def get_seat_pressure(subscription: Subscription) -> str:
+    usage_ratio = get_seat_usage_ratio(subscription)
+    if subscription.seats_included >= 999:
+        return "elastic"
+    if usage_ratio >= 1:
+        return "lotado"
+    if usage_ratio >= 0.8:
+        return "limite_proximo"
+    return "saudavel"
+
+
 def get_commercial_status(subscription: Subscription) -> str:
     if subscription.status == "past_due" and get_grace_days_remaining(subscription) > 0:
         return "em_graca"
@@ -98,7 +122,47 @@ def get_collection_stage(subscription: Subscription) -> str:
     return "healthy"
 
 
+def get_renewal_risk(subscription: Subscription) -> str:
+    usage_ratio = get_seat_usage_ratio(subscription)
+    trial_days_remaining = get_trial_days_remaining(subscription)
+    if subscription.status == "canceled":
+        return "critical"
+    if subscription.status == "past_due":
+        return "high"
+    if subscription.cancel_at_period_end:
+        return "high"
+    if subscription.status == "trialing" and trial_days_remaining <= 5:
+        return "medium"
+    if usage_ratio < 0.34 and subscription.status == "active":
+        return "medium"
+    return "low"
+
+
+def get_commercial_motion(subscription: Subscription) -> str:
+    usage_ratio = get_seat_usage_ratio(subscription)
+    renewal_risk = get_renewal_risk(subscription)
+    if subscription.status == "past_due":
+        return "regularizar"
+    if subscription.cancel_at_period_end or renewal_risk == "high":
+        return "reter"
+    if subscription.status == "trialing":
+        return "converter"
+    if usage_ratio >= 0.8:
+        return "expandir"
+    return "manter"
+
+
+def get_recommended_billing_cycle(subscription: Subscription) -> str:
+    usage_ratio = get_seat_usage_ratio(subscription)
+    if subscription.status in {"past_due", "canceled"}:
+        return "monthly"
+    if subscription.status == "active" and usage_ratio >= 0.66:
+        return "annual"
+    return subscription.billing_cycle
+
+
 def get_next_commercial_action(subscription: Subscription) -> str:
+    seat_pressure = get_seat_pressure(subscription)
     if subscription.status == "canceled":
         return "reativar conta e renegociar plano"
     if subscription.status == "past_due" and get_grace_days_remaining(subscription) > 0:
@@ -109,10 +173,16 @@ def get_next_commercial_action(subscription: Subscription) -> str:
         return "acionar retencao antes do fechamento do ciclo"
     if subscription.status == "trialing":
         return "converter trial em plano pago"
+    if seat_pressure == "lotado":
+        return "expandir assentos ou migrar de plano"
+    if seat_pressure == "limite_proximo":
+        return "preparar upsell antes do limite operacional"
     return "manter conta saudavel e mapear upsell"
 
 
 def serialize_subscription(subscription: Subscription) -> dict[str, str | int | bool]:
+    seat_usage_count = get_seat_usage_count(subscription.tenant_id)
+    seat_usage_ratio = get_seat_usage_ratio(subscription)
     payload = {
         "id": subscription.id,
         "tenant_id": subscription.tenant_id,
@@ -127,6 +197,9 @@ def serialize_subscription(subscription: Subscription) -> dict[str, str | int | 
         "failed_payments_count": subscription.failed_payments_count,
         "grace_days_remaining": get_grace_days_remaining(subscription),
         "trial_days_remaining": get_trial_days_remaining(subscription),
+        "seat_usage_count": seat_usage_count,
+        "seat_usage_ratio": seat_usage_ratio,
+        "seat_pressure": get_seat_pressure(subscription),
         "seats_included": subscription.seats_included,
         "ai_requests_limit": subscription.ai_requests_limit,
         "report_exports_limit": subscription.report_exports_limit,
@@ -134,6 +207,9 @@ def serialize_subscription(subscription: Subscription) -> dict[str, str | int | 
         "can_export_reports": subscription.report_exports_limit > 0,
         "commercial_status": get_commercial_status(subscription),
         "collection_stage": get_collection_stage(subscription),
+        "renewal_risk": get_renewal_risk(subscription),
+        "commercial_motion": get_commercial_motion(subscription),
+        "recommended_billing_cycle": get_recommended_billing_cycle(subscription),
         "next_commercial_action": get_next_commercial_action(subscription),
         "next_billing_at": subscription.current_period_ends_at,
         "created_at": subscription.created_at.isoformat(),
@@ -243,6 +319,14 @@ def apply_subscription_action(tenant_id: str, actor_user_id: str, action: str) -
         subscription.current_period_ends_at = date.today().isoformat()
         subscription.grace_period_ends_at = None
         message = "Assinatura encerrada ao fim da janela comercial local."
+    elif action == "switch_to_annual":
+        subscription.billing_cycle = "annual"
+        subscription.current_period_ends_at = (date.today() + timedelta(days=365)).isoformat()
+        message = "Assinatura movida para ciclo anual em modo local."
+    elif action == "switch_to_monthly":
+        subscription.billing_cycle = "monthly"
+        subscription.current_period_ends_at = (date.today() + timedelta(days=30)).isoformat()
+        message = "Assinatura movida para ciclo mensal em modo local."
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Acao de assinatura invalida.")
 
@@ -284,6 +368,8 @@ def list_billing_events(tenant_id: str) -> list[dict[str, str]]:
         "billing.subscription_retry_charge": "Tentativa de cobranca",
         "billing.subscription_resolve_past_due": "Pendencia resolvida",
         "billing.subscription_expire_subscription": "Assinatura encerrada",
+        "billing.subscription_switch_to_annual": "Ciclo anual ativado",
+        "billing.subscription_switch_to_monthly": "Ciclo mensal ativado",
     }
     serialized: list[dict[str, str]] = []
     for item in entries:
