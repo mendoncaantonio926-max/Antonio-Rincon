@@ -837,6 +837,31 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Capacidade por owner</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.owner_capacity ?? []).map((item) => (
+                    <span key={`owner-capacity-${item.owner_label}`}>
+                      {item.owner_label}: fila {item.active_queue_count}, capacidade{" "}
+                      {item.available_capacity}, carga {item.load_label}, janela{" "}
+                      {item.recommended_window}
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Alocacao sugerida</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.assignment_suggestions ?? []).map((item) => (
+                    <span key={`assignment-${item.lead_name}-${item.to_owner_label}`}>
+                      {item.lead_name}: de {item.from_owner_label} para {item.to_owner_label} em{" "}
+                      {item.recommended_window}. {item.reason}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

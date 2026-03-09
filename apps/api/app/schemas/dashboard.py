@@ -96,6 +96,24 @@ class DashboardRebalanceSuggestionResponse(BaseModel):
     reason: str
 
 
+class DashboardOwnerCapacityResponse(BaseModel):
+    owner_label: str
+    active_queue_count: int
+    overdue_count: int
+    due_today_count: int
+    available_capacity: int
+    load_label: str
+    recommended_window: str
+
+
+class DashboardAssignmentSuggestionResponse(BaseModel):
+    lead_name: str
+    from_owner_label: str
+    to_owner_label: str
+    recommended_window: str
+    reason: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -135,6 +153,8 @@ class DashboardSummaryResponse(BaseModel):
     recovery_queue: list[DashboardRecoveryItemResponse]
     window_pressure: list[DashboardWindowPressureResponse]
     rebalance_suggestions: list[DashboardRebalanceSuggestionResponse]
+    owner_capacity: list[DashboardOwnerCapacityResponse]
+    assignment_suggestions: list[DashboardAssignmentSuggestionResponse]
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str

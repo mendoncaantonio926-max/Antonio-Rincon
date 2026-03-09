@@ -376,6 +376,22 @@ export type DashboardSummary = {
     lead_name: string;
     reason: string;
   }>;
+  owner_capacity: Array<{
+    owner_label: string;
+    active_queue_count: number;
+    overdue_count: number;
+    due_today_count: number;
+    available_capacity: number;
+    load_label: string;
+    recommended_window: string;
+  }>;
+  assignment_suggestions: Array<{
+    lead_name: string;
+    from_owner_label: string;
+    to_owner_label: string;
+    recommended_window: string;
+    reason: string;
+  }>;
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;

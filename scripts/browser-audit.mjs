@@ -289,7 +289,7 @@ async function main() {
     await page.getByText("Gatilho principal").waitFor();
     await page.getByText("Fila comercial priorizada").waitFor();
     await page.getByText("Alertas por owner").waitFor();
-    await page.getByText("Fila de hoje").waitFor();
+    await page.getByText("Fila de hoje", { exact: true }).waitFor();
     await page.getByText("Primeira agenda do dia", { exact: true }).waitFor();
     await page.getByText("Resumo diario por owner").waitFor();
     await page.getByText("Produtividade por owner").waitFor();
@@ -301,6 +301,8 @@ async function main() {
     await page.getByText("Fila de recuperacao", { exact: true }).waitFor();
     await page.getByText("Pressao por janela").waitFor();
     await page.getByText("Redistribuicao sugerida").waitFor();
+    await page.getByText("Capacidade por owner").waitFor();
+    await page.getByText("Alocacao sugerida").waitFor();
     await page.getByText(/Conversao nos ultimos 7 dias/).waitFor();
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
@@ -316,6 +318,7 @@ async function main() {
     checks.push("dashboard_owner_throughput");
     checks.push("dashboard_owner_health");
     checks.push("dashboard_rebalance_guidance");
+    checks.push("dashboard_capacity_guidance");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");

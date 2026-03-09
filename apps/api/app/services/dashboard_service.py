@@ -475,6 +475,70 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
             }
         )
     rebalance_suggestions = rebalance_suggestions[:4]
+    owner_capacity = []
+    for group in commercial_owner_groups:
+        owner_label = str(group["label"])
+        available_capacity = max(
+            0,
+            4 - int(group["leads_count"]) - int(group["overdue_count"]),
+        )
+        load_label = "balanced"
+        if available_capacity == 0 or owner_label in stressed_owners:
+            load_label = "overloaded"
+        elif available_capacity >= 2:
+            load_label = "available"
+        recommended_window = "Esta semana"
+        if int(group["overdue_count"]) > 0:
+            recommended_window = "Apos limpar atrasos"
+        elif int(group["due_today_count"]) > 0:
+            recommended_window = "Apos a fila de hoje"
+        elif available_capacity >= 2:
+            recommended_window = "Hoje"
+        owner_capacity.append(
+            {
+                "owner_label": owner_label,
+                "active_queue_count": int(group["leads_count"]),
+                "overdue_count": int(group["overdue_count"]),
+                "due_today_count": int(group["due_today_count"]),
+                "available_capacity": available_capacity,
+                "load_label": load_label,
+                "recommended_window": recommended_window,
+            }
+        )
+    owner_capacity.sort(
+        key=lambda item: (
+            {"available": 0, "balanced": 1, "overloaded": 2}.get(str(item["load_label"]), 99),
+            -int(item["available_capacity"]),
+            int(item["overdue_count"]),
+            str(item["owner_label"]),
+        )
+    )
+    assignment_suggestions = []
+    candidate_owners = [item for item in owner_capacity if int(item["available_capacity"]) > 0]
+    for item in recovery_queue:
+        target_owner = next(
+            (
+                owner
+                for owner in candidate_owners
+                if str(owner["owner_label"]) != str(item["owner_label"])
+            ),
+            candidate_owners[0] if candidate_owners else None,
+        )
+        if target_owner is None:
+            continue
+        assignment_suggestions.append(
+            {
+                "lead_name": str(item["lead_name"]),
+                "from_owner_label": str(item["owner_label"]),
+                "to_owner_label": str(target_owner["owner_label"]),
+                "recommended_window": str(target_owner["recommended_window"]),
+                "reason": (
+                    f"{target_owner['owner_label']} tem capacidade para absorver o caso "
+                    f"com janela {target_owner['recommended_window']}."
+                ),
+            }
+        )
+    assignment_suggestions = assignment_suggestions[:4]
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -579,6 +643,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "recovery_queue": recovery_queue,
         "window_pressure": window_pressure[:5],
         "rebalance_suggestions": rebalance_suggestions,
+        "owner_capacity": owner_capacity[:4],
+        "assignment_suggestions": assignment_suggestions,
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

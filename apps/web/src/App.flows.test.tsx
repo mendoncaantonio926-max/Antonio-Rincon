@@ -548,6 +548,49 @@ const {
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
       .slice(0, 4);
+    const ownerCapacity = Array.from(ownerGroups.values()).map((group) => {
+      const availableCapacity = Math.max(0, 4 - group.leads_count - group.overdue_count);
+      return {
+        owner_label: group.label,
+        active_queue_count: group.leads_count,
+        overdue_count: group.overdue_count,
+        due_today_count: group.due_today_count,
+        available_capacity: availableCapacity,
+        load_label:
+          availableCapacity === 0 || stressedOwners.has(group.label)
+            ? "overloaded"
+            : availableCapacity >= 2
+              ? "available"
+              : "balanced",
+        recommended_window:
+          group.overdue_count > 0
+            ? "Apos limpar atrasos"
+            : group.due_today_count > 0
+              ? "Apos a fila de hoje"
+              : availableCapacity >= 2
+                ? "Hoje"
+                : "Esta semana",
+      };
+    });
+    const assignmentSuggestions = recoveryQueue
+      .map((item) => {
+        const targetOwner =
+          ownerCapacity.find(
+            (owner) => owner.available_capacity > 0 && owner.owner_label !== item.owner_label,
+          ) ?? ownerCapacity.find((owner) => owner.available_capacity > 0);
+        if (!targetOwner) {
+          return null;
+        }
+        return {
+          lead_name: item.lead_name,
+          from_owner_label: item.owner_label,
+          to_owner_label: targetOwner.owner_label,
+          recommended_window: targetOwner.recommended_window,
+          reason: `${targetOwner.owner_label} tem capacidade para absorver o caso com janela ${targetOwner.recommended_window}.`,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .slice(0, 4);
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -630,6 +673,8 @@ const {
       recovery_queue: recoveryQueue,
       window_pressure: windowPressure,
       rebalance_suggestions: rebalanceSuggestions,
+      owner_capacity: ownerCapacity,
+      assignment_suggestions: assignmentSuggestions,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -1886,6 +1931,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Fila de recuperacao")).toBeInTheDocument();
       expect(screen.getByText("Pressao por janela")).toBeInTheDocument();
       expect(screen.getByText("Redistribuicao sugerida")).toBeInTheDocument();
+      expect(screen.getByText("Capacidade por owner")).toBeInTheDocument();
+      expect(screen.getByText("Alocacao sugerida")).toBeInTheDocument();
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 
