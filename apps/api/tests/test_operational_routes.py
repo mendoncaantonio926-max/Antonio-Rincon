@@ -338,6 +338,8 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert dashboard_response.json()["plan"] == "pro"
     assert "next_action" in dashboard_response.json()
     assert "priority_contacts_count" in dashboard_response.json()
+    assert "leads_count" in dashboard_response.json()
+    assert "pending_leads_count" in dashboard_response.json()
 
 
 def test_public_lead_capture() -> None:
@@ -354,6 +356,39 @@ def test_public_lead_capture() -> None:
     )
     assert response.status_code == 201
     assert response.json()["email"] == "lead.comercial@example.com"
+
+
+def test_lead_can_be_converted_to_contact_once() -> None:
+    capture_response = client.post(
+        "/public/leads",
+        json={
+            "name": "Lead Convertivel",
+            "email": "lead.convertivel@example.com",
+            "phone": "11988887777",
+            "role": "Articuladora",
+            "city": "Santos",
+            "challenge": "Estruturar cadencia de relacionamento",
+            "source": "evento",
+        },
+    )
+    assert capture_response.status_code == 201
+    lead_id = capture_response.json()["id"]
+
+    token = _get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    convert_response = client.post(f"/leads/{lead_id}/convert", headers=headers)
+    assert convert_response.status_code == 200
+    assert convert_response.json()["converted_contact_id"] is not None
+    assert convert_response.json()["converted_at"] is not None
+
+    contacts_response = client.get("/contacts?query=lead.convertivel@example.com", headers=headers)
+    assert contacts_response.status_code == 200
+    assert len(contacts_response.json()) >= 1
+    assert any(item["kind"] == "lead" for item in contacts_response.json())
+
+    second_convert_response = client.post(f"/leads/{lead_id}/convert", headers=headers)
+    assert second_convert_response.status_code == 409
 
 
 def test_membership_invite_and_ai_summary() -> None:

@@ -170,6 +170,8 @@ class LeadModel(Base):
     city: Mapped[str | None] = mapped_column(String(120))
     challenge: Mapped[str | None] = mapped_column(Text)
     source: Mapped[str] = mapped_column(String(64), nullable=False, default="website")
+    converted_contact_id: Mapped[str | None] = mapped_column(String(36))
+    converted_at: Mapped[str | None] = mapped_column(String(32))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

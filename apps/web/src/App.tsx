@@ -451,6 +451,15 @@ function DashboardPage() {
           <p>Leitura de calor para coordenacao.</p>
         </article>
         <article className="metric-tile">
+          <span>Leads pendentes</span>
+          <strong>{summary?.pending_leads_count ?? 0}</strong>
+          <p>
+            {summary?.pending_leads_count
+              ? "Existe demanda quente aguardando conversao."
+              : "Fila comercial tratada no CRM."}
+          </p>
+        </article>
+        <article className="metric-tile">
           <span>Tarefas em aberto</span>
           <strong>{summary?.open_tasks_count ?? 0}</strong>
           <p>Frente operacional em execucao.</p>
@@ -555,6 +564,12 @@ function DashboardPage() {
             <article>
               <span>Base politica</span>
               <strong>{summary?.contacts_count ?? 0} contato(s) sustentam a operacao atual.</strong>
+            </article>
+            <article>
+              <span>Conversao comercial</span>
+              <strong>
+                {summary?.pending_leads_count ?? 0} lead(s) seguem aguardando qualificacao final.
+              </strong>
             </article>
             <article>
               <span>Coordenacao</span>
@@ -2321,21 +2336,43 @@ function LeadsPage() {
   const { tokens } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [leadMessage, setLeadMessage] = useState<string | null>(null);
+  const [pendingLeadId, setPendingLeadId] = useState<string | null>(null);
+  const loadLeads = useCallback(async () => {
+    if (!tokens?.access_token) return;
+    const nextLeads = await api.listLeads(tokens.access_token);
+    setLeads(nextLeads);
+  }, [tokens]);
   const recentLeads = leads.filter(
     (lead) => Date.now() - new Date(lead.created_at).getTime() <= 1000 * 60 * 60 * 24 * 7,
   ).length;
   const leadsWithPhone = leads.filter((lead) => Boolean(lead.phone)).length;
   const leadsWithCity = leads.filter((lead) => Boolean(lead.city)).length;
+  const convertedLeads = leads.filter((lead) => Boolean(lead.converted_contact_id)).length;
 
   useEffect(() => {
+    void loadLeads().catch((loadError) =>
+      setError(loadError instanceof Error ? loadError.message : "Falha ao carregar leads."),
+    );
+  }, [loadLeads]);
+
+  async function handleLeadConvert(leadId: string) {
     if (!tokens?.access_token) return;
-    void api
-      .listLeads(tokens.access_token)
-      .then(setLeads)
-      .catch((loadError) =>
-        setError(loadError instanceof Error ? loadError.message : "Falha ao carregar leads."),
+    setPendingLeadId(leadId);
+    setLeadMessage(null);
+    setError(null);
+    try {
+      const convertedLead = await api.convertLead(tokens.access_token, leadId);
+      setLeads((currentLeads) =>
+        currentLeads.map((lead) => (lead.id === convertedLead.id ? convertedLead : lead)),
       );
-  }, [tokens]);
+      setLeadMessage("Lead convertido para contato com sucesso.");
+    } catch (convertError) {
+      setError(convertError instanceof Error ? convertError.message : "Falha ao converter lead.");
+    } finally {
+      setPendingLeadId(null);
+    }
+  }
 
   return (
     <section className="app-section leads-layout">
@@ -2348,6 +2385,7 @@ function LeadsPage() {
           <span>{leads.length}</span>
         </div>
         {error ? <div className="error-box">{error}</div> : null}
+        {leadMessage ? <div className="info-box">{leadMessage}</div> : null}
         <div className="list-grid onboarding-guidance-grid summary-grid">
           <article className="summary-tile">
             <strong>Total captado</strong>
@@ -2365,11 +2403,15 @@ function LeadsPage() {
             <strong>Com cidade</strong>
             <span>{leadsWithCity}</span>
           </article>
+          <article className="summary-tile">
+            <strong>Ja convertidos</strong>
+            <span>{convertedLeads}</span>
+          </article>
         </div>
         <div className="leads-intro">
           <p className="meta-copy">
-            Este painel mostra a qualidade da entrada comercial e ajuda a separar interesse raso de
-            oportunidade com contexto suficiente para abordagem.
+            Este painel mostra a qualidade da entrada comercial e agora permite transformar
+            interesse validado em contato acionavel sem sair do fluxo.
           </p>
         </div>
         <div className="list-grid lead-records">
@@ -2386,7 +2428,28 @@ function LeadsPage() {
                 <span>{lead.city || "Cidade nao informada"}</span>
                 <span>{lead.role || "Papel nao informado"}</span>
               </div>
+              <div className="lead-card__status">
+                <Badge tone={lead.converted_contact_id ? "success" : "neutral"}>
+                  {lead.converted_contact_id ? "Convertido em contato" : "Pendente de triagem"}
+                </Badge>
+                <span className="meta-copy">Origem: {lead.source || "website"}</span>
+              </div>
               <p>{lead.challenge || "Sem desafio informado no primeiro contato."}</p>
+              <div className="lead-card__actions">
+                {lead.converted_contact_id ? (
+                  <span className="meta-copy">
+                    Convertido em{" "}
+                    {new Date(lead.converted_at || lead.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                ) : (
+                  <Button
+                    label={pendingLeadId === lead.id ? "Convertendo..." : "Converter para contato"}
+                    variant="secondary"
+                    onClick={() => void handleLeadConvert(lead.id)}
+                    disabled={pendingLeadId === lead.id}
+                  />
+                )}
+              </div>
             </article>
           ))}
         </div>

@@ -153,6 +153,8 @@ class LeadFormSubmission:
     city: str | None = None
     challenge: str | None = None
     source: str = "website"
+    converted_contact_id: str | None = None
+    converted_at: str | None = None
     id: str = field(default_factory=generate_id)
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 

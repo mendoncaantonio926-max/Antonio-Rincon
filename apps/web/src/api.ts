@@ -219,6 +219,9 @@ export type Lead = {
   city?: string | null;
   role?: string | null;
   challenge?: string | null;
+  source?: string;
+  converted_contact_id?: string | null;
+  converted_at?: string | null;
   created_at: string;
 };
 
@@ -253,6 +256,9 @@ export type DashboardSummary = {
   tenant_name: string;
   contacts_count: number;
   priority_contacts_count: number;
+  leads_count: number;
+  converted_leads_count: number;
+  pending_leads_count: number;
   open_tasks_count: number;
   overdue_tasks_count: number;
   opponents_count: number;
@@ -417,6 +423,9 @@ export const api = {
   },
   listLeads(token: string) {
     return request<Lead[]>("/leads", { token });
+  },
+  convertLead(token: string, leadId: string) {
+    return request<Lead>(`/leads/${leadId}/convert`, { method: "POST", token });
   },
   listMemberships(token: string) {
     return request<Membership[]>("/memberships", { token });

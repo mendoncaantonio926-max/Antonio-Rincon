@@ -395,6 +395,16 @@ async function main() {
     await page.getByRole("heading", { name: "Leads captados" }).waitFor();
     await page.getByText(leadEmail).waitFor();
     checks.push("lead_aparece_no_app");
+    const leadCard = page.locator(".lead-card", { hasText: leadEmail });
+    await leadCard.getByRole("button", { name: "Converter para contato" }).click();
+    await page.getByText("Lead convertido para contato com sucesso.").waitFor();
+    await leadCard.getByText("Convertido em contato").waitFor();
+    checks.push("lead_convertido_no_browser");
+
+    await page.getByRole("link", { name: "Contatos" }).click();
+    await page.waitForURL("**/app/contacts");
+    await page.getByText(leadEmail).waitFor();
+    checks.push("lead_convertido_aparece_em_contatos");
 
     await page.getByRole("link", { name: "Assinatura" }).click();
     await page.waitForURL("**/app/billing");

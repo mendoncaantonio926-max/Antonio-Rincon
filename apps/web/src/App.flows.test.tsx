@@ -175,6 +175,9 @@ const {
       city?: string | null;
       role?: string | null;
       challenge?: string | null;
+      source?: string;
+      converted_contact_id?: string | null;
+      converted_at?: string | null;
       created_at: string;
     }>,
   };
@@ -692,6 +695,42 @@ const {
       },
     ),
     listLeads: vi.fn(async () => leadsState.items),
+    convertLead: vi.fn(async (_token: string, leadId: string) => {
+      const lead = leadsState.items.find((item) => item.id === leadId);
+      if (!lead) {
+        throw new Error("Lead nao encontrado.");
+      }
+
+      let existingContact = contactsState.items.find(
+        (item) => (item.email || "").toLowerCase() === lead.email.toLowerCase(),
+      );
+      if (!existingContact) {
+        existingContact = {
+          id: `contact-${contactsState.items.length + 1}`,
+          name: lead.name,
+          kind: "lead",
+          status: "qualified",
+          email: lead.email,
+          phone: lead.phone ?? null,
+          city: lead.city ?? null,
+          tags: ["lead_convertido", `origem:${lead.source ?? "website"}`],
+          note_history: [],
+          created_at: "2026-03-08T14:30:00Z",
+          updated_at: "2026-03-08T14:30:00Z",
+        };
+        contactsState.items = [existingContact, ...contactsState.items];
+      }
+
+      const convertedLead = {
+        ...lead,
+        converted_contact_id: existingContact.id,
+        converted_at: "2026-03-08T14:35:00Z",
+      };
+      leadsState.items = leadsState.items.map((item) =>
+        item.id === leadId ? convertedLead : item,
+      );
+      return convertedLead;
+    }),
     currentTenant: vi.fn(async () => tenantState),
     updateCurrentTenant: vi.fn(async (_token: string, body: Record<string, unknown>) => {
       tenantState.tenant = {
@@ -751,6 +790,9 @@ const {
       contacts_count: contactsState.items.length,
       priority_contacts_count: contactsState.items.filter((item) => item.status === "priority")
         .length,
+      leads_count: leadsState.items.length,
+      converted_leads_count: leadsState.items.filter((item) => item.converted_contact_id).length,
+      pending_leads_count: leadsState.items.filter((item) => !item.converted_contact_id).length,
       open_tasks_count: tasksState.items.filter((item) => item.status !== "done").length,
       overdue_tasks_count: 1,
       opponents_count: opponentsState.items.length,
@@ -910,6 +952,9 @@ describe("App authenticated flows", () => {
         city: "Sao Paulo",
         role: "Coordenadora local",
         challenge: "Quer entender a operacao de relatorios.",
+        source: "website",
+        converted_contact_id: null,
+        converted_at: null,
         created_at: "2026-03-07T10:00:00Z",
       },
       {
@@ -920,6 +965,9 @@ describe("App authenticated flows", () => {
         city: null,
         role: null,
         challenge: null,
+        source: "indicado",
+        converted_contact_id: null,
+        converted_at: null,
         created_at: "2026-02-20T10:00:00Z",
       },
     ];
@@ -933,6 +981,7 @@ describe("App authenticated flows", () => {
     apiMock.listContacts.mockClear();
     apiMock.createContact.mockClear();
     apiMock.updateContact.mockClear();
+    apiMock.convertLead.mockClear();
     apiMock.addContactNote.mockClear();
     apiMock.listTasks.mockClear();
     apiMock.updateTask.mockClear();
@@ -1273,6 +1322,23 @@ describe("App authenticated flows", () => {
     });
   });
 
+  it("converte lead em contato no painel autenticado", async () => {
+    const user = userEvent.setup();
+    renderAuthenticatedApp("/app/leads");
+
+    await screen.findByRole("heading", { name: "Leads captados" });
+    await user.click(screen.getAllByRole("button", { name: "Converter para contato" })[0]);
+
+    await waitFor(() => {
+      expect(apiMock.convertLead).toHaveBeenCalledWith("token-valido", "lead-1");
+      expect(screen.getByText("Lead convertido para contato com sucesso.")).toBeInTheDocument();
+      expect(screen.getByText("Convertido em contato")).toBeInTheDocument();
+      expect(screen.getByText(/^Convertido em \d{2}\/\d{2}\/\d{4}$/)).toBeInTheDocument();
+    });
+
+    expect(contactsState.items.some((item) => item.email === "marina@exemplo.com")).toBe(true);
+  });
+
   it("atualiza a leitura do dashboard ao trocar o modulo de IA", async () => {
     const user = userEvent.setup();
     renderAuthenticatedApp("/app");
@@ -1285,6 +1351,7 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Atacar tarefas vencidas.")).toBeInTheDocument();
       expect(screen.getByText("78/100")).toBeInTheDocument();
       expect(screen.getAllByText("3 tarefas abertas").length).toBeGreaterThan(0);
+      expect(screen.getByText("Leads pendentes")).toBeInTheDocument();
     });
 
     await user.selectOptions(screen.getByDisplayValue("Workspace"), "billing");

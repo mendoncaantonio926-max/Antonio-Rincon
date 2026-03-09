@@ -1374,6 +1374,15 @@ h3,
   gap: 0.8rem;
 }
 
+.lead-card__status,
+.lead-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
 .lead-card__meta {
   display: grid;
   gap: 0.3rem;

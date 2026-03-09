@@ -15,7 +15,10 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
     tasks = list_tasks(tenant_id)
     opponents = list_opponents(tenant_id)
     reports = list_reports(tenant_id)
+    leads = list(store.leads.values())
     memberships_count = len([membership for membership in store.memberships.values() if membership.tenant_id == tenant_id])
+    converted_leads_count = len([lead for lead in leads if lead.converted_contact_id])
+    pending_leads_count = len(leads) - converted_leads_count
     overdue_tasks_count = 0
     today = date.today().isoformat()
 
@@ -27,6 +30,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
 
     if overdue_tasks_count > 0:
         next_action = "Priorize tarefas vencidas para recuperar o ritmo operacional."
+    elif pending_leads_count > 0:
+        next_action = "Converta os leads captados para nao perder janela comercial."
     elif len([contact for contact in contacts if contact.status == "priority"]) == 0 and contacts:
         next_action = "Classifique contatos prioritarios para orientar a coordenacao."
     elif not reports:
@@ -40,6 +45,9 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "tenant_name": tenant.name,
         "contacts_count": len(contacts),
         "priority_contacts_count": len([contact for contact in contacts if contact.status == "priority"]),
+        "leads_count": len(leads),
+        "converted_leads_count": converted_leads_count,
+        "pending_leads_count": pending_leads_count,
         "open_tasks_count": len([task for task in tasks if task.status != "done"]),
         "overdue_tasks_count": overdue_tasks_count,
         "opponents_count": len(opponents),

@@ -21,6 +21,9 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     reports = list_reports(tenant_id)
     subscription = get_subscription_for_tenant(tenant_id)
     opponents_summary = build_opponents_summary(tenant_id)
+    leads = list(store.leads.values())
+    pending_leads = len([lead for lead in leads if not lead.converted_contact_id])
+    converted_leads = len(leads) - pending_leads
     open_tasks = len([task for task in tasks if task.status != "done"])
     priority_contacts = len([contact for contact in contacts if contact.status == "priority"])
     overdue_tasks = len(
@@ -54,9 +57,25 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     blockers: list[str] = []
     supporting_signals = [
         f"{len(contacts)} contato(s) ativos no workspace.",
+        f"{pending_leads} lead(s) aguardando conversao e {converted_leads} ja convertidos.",
         f"{open_tasks} tarefa(s) em aberto e {overdue_tasks} vencida(s).",
         f"{len(opponents)} adversario(s) e {critical_events} sinal(is) critico(s) monitorado(s).",
     ]
+    if pending_leads > 0 and module in {"dashboard", "contacts"} and urgency != "high":
+        next_action = "Converter leads captados em contato"
+        action_reason = (
+            f"Ha {pending_leads} lead(s) aguardando triagem comercial, o que reduz velocidade de resposta."
+        )
+        urgency = "normal"
+        priority_score = max(priority_score, 66)
+        trigger_signal = f"{pending_leads} lead(s) pendente(s)"
+        focus_area = "conversao comercial"
+        suggested_owner = "comercial e articulacao"
+        due_window = "nas proximas 24 horas"
+        recommendations.append(
+            "Leads captados ainda nao viraram contatos. Converta a fila quente para preservar contexto e velocidade."
+        )
+        blockers.append("A fila comercial tem leads sem conversao para o CRM.")
     if overdue_tasks > 0:
         next_action = "Resolver tarefas vencidas"
         action_reason = f"Ha {overdue_tasks} tarefa(s) fora do prazo, o que compromete execucao e previsibilidade operacional."
@@ -239,6 +258,7 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         ] or recommendations[:3]
         supporting_signals = [
             f"{len(contacts)} contato(s) no CRM.",
+            f"{pending_leads} lead(s) aguardando conversao para o CRM.",
             f"{priority_contacts} contato(s) classificado(s) como prioritario(s).",
             "Notas, tags e historico territorial sustentam leitura mais precisa.",
         ]
@@ -403,9 +423,10 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     else:
         summary = (
             f"O workspace possui {len(contacts)} contatos, {priority_contacts} prioritario(s), "
-            f"{open_tasks} tarefas em aberto, {overdue_tasks} vencida(s), {len(opponents)} adversarios "
-            f"e {opponent_events} eventos monitorados. O momento atual sugere foco em execucao, "
-            f"classificacao de contexto e consolidacao executiva."
+            f"{pending_leads} lead(s) pendente(s) de conversao, {open_tasks} tarefas em aberto, "
+            f"{overdue_tasks} vencida(s), {len(opponents)} adversarios e {opponent_events} eventos "
+            f"monitorados. O momento atual sugere foco em execucao, conversao comercial e "
+            f"classificacao de contexto."
         )
 
     return {

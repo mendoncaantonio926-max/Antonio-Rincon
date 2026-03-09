@@ -7,6 +7,9 @@ class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
     priority_contacts_count: int
+    leads_count: int
+    converted_leads_count: int
+    pending_leads_count: int
     open_tasks_count: int
     overdue_tasks_count: int
     opponents_count: int
