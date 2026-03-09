@@ -176,6 +176,10 @@ const {
       role?: string | null;
       challenge?: string | null;
       source?: string;
+      stage: string;
+      owner_user_id?: string | null;
+      owner_name?: string | null;
+      follow_up_at?: string | null;
       converted_contact_id?: string | null;
       converted_at?: string | null;
       created_at: string;
@@ -694,7 +698,51 @@ const {
         return created;
       },
     ),
-    listLeads: vi.fn(async () => leadsState.items),
+    listLeads: vi.fn(
+      async (
+        _token: string,
+        params?: { query?: string; stage?: string; owner_user_id?: string },
+      ) => {
+        return leadsState.items.filter(
+          (item) =>
+            (params?.query
+              ? [item.name, item.email, item.phone, item.city, item.challenge]
+                  .filter(Boolean)
+                  .some((value) =>
+                    String(value)
+                      .toLowerCase()
+                      .includes(params.query?.toLowerCase() ?? ""),
+                  )
+              : true) &&
+            (params?.stage ? item.stage === params.stage : true) &&
+            (params?.owner_user_id ? item.owner_user_id === params.owner_user_id : true),
+        );
+      },
+    ),
+    updateLead: vi.fn(async (_token: string, leadId: string, body: Record<string, unknown>) => {
+      const lead = leadsState.items.find((item) => item.id === leadId);
+      if (!lead) {
+        throw new Error("Lead nao encontrado.");
+      }
+      const ownerUserId =
+        body.owner_user_id === undefined
+          ? (lead.owner_user_id ?? "")
+          : String(body.owner_user_id || "");
+      const ownerName =
+        ownerUserId.length > 0
+          ? (membershipsState.items.find((item) => item.user_id === ownerUserId)?.full_name ?? null)
+          : null;
+      const updatedLead = {
+        ...lead,
+        stage: String(body.stage ?? lead.stage),
+        owner_user_id: ownerUserId.length > 0 ? ownerUserId : null,
+        owner_name: ownerName,
+        follow_up_at:
+          body.follow_up_at === undefined ? lead.follow_up_at : String(body.follow_up_at || ""),
+      };
+      leadsState.items = leadsState.items.map((item) => (item.id === leadId ? updatedLead : item));
+      return updatedLead;
+    }),
     convertLead: vi.fn(async (_token: string, leadId: string) => {
       const lead = leadsState.items.find((item) => item.id === leadId);
       if (!lead) {
@@ -723,6 +771,7 @@ const {
 
       const convertedLead = {
         ...lead,
+        stage: "converted",
         converted_contact_id: existingContact.id,
         converted_at: "2026-03-08T14:35:00Z",
       };
@@ -953,6 +1002,10 @@ describe("App authenticated flows", () => {
         role: "Coordenadora local",
         challenge: "Quer entender a operacao de relatorios.",
         source: "website",
+        stage: "captured",
+        owner_user_id: null,
+        owner_name: null,
+        follow_up_at: null,
         converted_contact_id: null,
         converted_at: null,
         created_at: "2026-03-07T10:00:00Z",
@@ -966,6 +1019,10 @@ describe("App authenticated flows", () => {
         role: null,
         challenge: null,
         source: "indicado",
+        stage: "qualified",
+        owner_user_id: "user-1",
+        owner_name: "Antonio Rincon",
+        follow_up_at: "2026-03-10",
         converted_contact_id: null,
         converted_at: null,
         created_at: "2026-02-20T10:00:00Z",
@@ -981,6 +1038,7 @@ describe("App authenticated flows", () => {
     apiMock.listContacts.mockClear();
     apiMock.createContact.mockClear();
     apiMock.updateContact.mockClear();
+    apiMock.updateLead.mockClear();
     apiMock.convertLead.mockClear();
     apiMock.addContactNote.mockClear();
     apiMock.listTasks.mockClear();
@@ -1314,11 +1372,47 @@ describe("App authenticated flows", () => {
     await screen.findByRole("heading", { name: "Leads captados" });
 
     await waitFor(() => {
-      expect(apiMock.listLeads).toHaveBeenCalledWith("token-valido");
+      expect(apiMock.listLeads).toHaveBeenCalledWith("token-valido", {
+        query: undefined,
+        stage: undefined,
+        owner_user_id: undefined,
+      });
       expect(screen.getByText("Marina Gomes")).toBeInTheDocument();
       expect(screen.getByText("Carlos Lima")).toBeInTheDocument();
       expect(screen.getByText("Coordenadora local")).toBeInTheDocument();
       expect(screen.getByText("Sem WhatsApp")).toBeInTheDocument();
+    });
+  });
+
+  it("atualiza o funil e filtra leads por estagio", async () => {
+    const user = userEvent.setup();
+    renderAuthenticatedApp("/app/leads");
+
+    await screen.findByRole("heading", { name: "Leads captados" });
+    await user.selectOptions(screen.getAllByDisplayValue("Captado")[0], "follow_up");
+    await user.selectOptions(screen.getAllByDisplayValue("Sem dono")[0], "user-1");
+
+    await waitFor(() => {
+      expect(apiMock.updateLead).toHaveBeenCalledWith("token-valido", "lead-1", {
+        stage: "follow_up",
+      });
+      expect(apiMock.updateLead).toHaveBeenCalledWith("token-valido", "lead-1", {
+        owner_user_id: "user-1",
+      });
+      expect(screen.getByText("Lead atualizado no funil comercial.")).toBeInTheDocument();
+      expect(screen.getAllByText("Dono: Antonio Rincon").length).toBeGreaterThan(0);
+    });
+
+    await user.selectOptions(screen.getByDisplayValue("Todos os estagios"), "follow_up");
+
+    await waitFor(() => {
+      expect(apiMock.listLeads).toHaveBeenLastCalledWith("token-valido", {
+        query: undefined,
+        stage: "follow_up",
+        owner_user_id: undefined,
+      });
+      expect(screen.getByText("Marina Gomes")).toBeInTheDocument();
+      expect(screen.queryByText("Carlos Lima")).not.toBeInTheDocument();
     });
   });
 

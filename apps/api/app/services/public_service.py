@@ -10,6 +10,62 @@ from app.services.crud_service import create_contact
 from app.services.store import store
 
 
+def serialize_lead(lead: LeadFormSubmission) -> dict:
+    owner_name = None
+    if lead.owner_user_id and lead.owner_user_id in store.users:
+        owner_name = store.users[lead.owner_user_id].full_name
+    return {
+        "id": lead.id,
+        "name": lead.name,
+        "email": lead.email,
+        "phone": lead.phone,
+        "role": lead.role,
+        "city": lead.city,
+        "challenge": lead.challenge,
+        "source": lead.source,
+        "stage": lead.stage,
+        "owner_user_id": lead.owner_user_id,
+        "owner_name": owner_name,
+        "follow_up_at": lead.follow_up_at,
+        "converted_contact_id": lead.converted_contact_id,
+        "converted_at": lead.converted_at,
+        "created_at": lead.created_at.isoformat(),
+    }
+
+
+def list_leads(
+    *,
+    query: str | None = None,
+    stage: str | None = None,
+    owner_user_id: str | None = None,
+) -> list[LeadFormSubmission]:
+    leads = list(store.leads.values())
+    if query:
+        normalized_query = query.lower()
+        leads = [
+            lead
+            for lead in leads
+            if normalized_query in lead.name.lower()
+            or normalized_query in lead.email.lower()
+            or normalized_query in (lead.phone or "").lower()
+            or normalized_query in (lead.city or "").lower()
+            or normalized_query in (lead.challenge or "").lower()
+        ]
+    if stage:
+        leads = [lead for lead in leads if lead.stage == stage]
+    if owner_user_id:
+        leads = [lead for lead in leads if lead.owner_user_id == owner_user_id]
+    leads.sort(
+        key=lambda item: (
+            item.stage == "converted",
+            item.follow_up_at is None,
+            item.follow_up_at or "",
+            item.created_at.isoformat(),
+        )
+    )
+    return leads
+
+
 def create_lead(
     *,
     name: str,
@@ -32,6 +88,56 @@ def create_lead(
     store.leads[lead.id] = lead
     store.save()
     return lead
+
+
+def update_lead(
+    *,
+    tenant_id: str,
+    user_id: str,
+    lead_id: str,
+    updates: dict[str, str | None],
+) -> LeadFormSubmission:
+    lead = store.leads.get(lead_id)
+    if lead is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead nao encontrado.")
+
+    owner_user_id = updates.get("owner_user_id", lead.owner_user_id)
+    normalized_owner_user_id = owner_user_id or None
+    normalized_follow_up_at = updates.get("follow_up_at", lead.follow_up_at) or None
+    if normalized_owner_user_id:
+        membership = next(
+            (
+                item
+                for item in store.memberships.values()
+                if item.tenant_id == tenant_id and item.user_id == normalized_owner_user_id
+            ),
+            None,
+        )
+        if membership is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Responsavel nao encontrado.")
+
+    updated_lead = replace(
+        lead,
+        stage=updates.get("stage", lead.stage) or lead.stage,
+        owner_user_id=normalized_owner_user_id,
+        follow_up_at=normalized_follow_up_at,
+    )
+    store.leads[lead.id] = updated_lead
+    store.log_action(
+        AuditLog(
+            tenant_id=tenant_id,
+            actor_user_id=user_id,
+            action="lead.updated",
+            resource_type="lead",
+            resource_id=lead.id,
+            metadata={
+                "stage": updated_lead.stage,
+                "owner_user_id": updated_lead.owner_user_id,
+                "follow_up_at": updated_lead.follow_up_at,
+            },
+        )
+    )
+    return updated_lead
 
 
 def convert_lead_to_contact(*, tenant_id: str, user_id: str, lead_id: str) -> LeadFormSubmission:
@@ -103,6 +209,7 @@ def convert_lead_to_contact(*, tenant_id: str, user_id: str, lead_id: str) -> Le
 
     converted_lead = replace(
         lead,
+        stage="converted",
         converted_contact_id=contact.id,
         converted_at=datetime.now(UTC).isoformat(),
     )

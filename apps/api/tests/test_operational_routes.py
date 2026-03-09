@@ -381,6 +381,7 @@ def test_lead_can_be_converted_to_contact_once() -> None:
     assert convert_response.status_code == 200
     assert convert_response.json()["converted_contact_id"] is not None
     assert convert_response.json()["converted_at"] is not None
+    assert convert_response.json()["stage"] == "converted"
 
     contacts_response = client.get("/contacts?query=lead.convertivel@example.com", headers=headers)
     assert contacts_response.status_code == 200
@@ -389,6 +390,49 @@ def test_lead_can_be_converted_to_contact_once() -> None:
 
     second_convert_response = client.post(f"/leads/{lead_id}/convert", headers=headers)
     assert second_convert_response.status_code == 409
+
+
+def test_lead_pipeline_update_and_filters() -> None:
+    capture_response = client.post(
+        "/public/leads",
+        json={
+            "name": "Lead Pipeline",
+            "email": "lead.pipeline@example.com",
+            "phone": "11977776666",
+            "role": "Coordenador regional",
+            "city": "Sao Paulo",
+            "challenge": "Organizar a fila comercial",
+            "source": "website",
+        },
+    )
+    assert capture_response.status_code == 201
+    lead_id = capture_response.json()["id"]
+
+    token = _get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    update_response = client.patch(
+        f"/leads/{lead_id}",
+        headers=headers,
+        json={
+            "stage": "follow_up",
+            "owner_user_id": next(iter(client.get("/memberships", headers=headers).json()))["user_id"],
+            "follow_up_at": "2026-03-11",
+        },
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["stage"] == "follow_up"
+    assert update_response.json()["owner_name"] == "Owner Demo"
+    assert update_response.json()["follow_up_at"] == "2026-03-11"
+
+    filtered_by_stage = client.get("/leads?stage=follow_up", headers=headers)
+    assert filtered_by_stage.status_code == 200
+    assert any(item["id"] == lead_id for item in filtered_by_stage.json())
+
+    owner_user_id = update_response.json()["owner_user_id"]
+    filtered_by_owner = client.get(f"/leads?owner_user_id={owner_user_id}", headers=headers)
+    assert filtered_by_owner.status_code == 200
+    assert any(item["id"] == lead_id for item in filtered_by_owner.json())
 
 
 def test_membership_invite_and_ai_summary() -> None:

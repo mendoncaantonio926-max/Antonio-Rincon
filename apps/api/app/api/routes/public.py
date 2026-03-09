@@ -1,8 +1,7 @@
 from fastapi import APIRouter, status
 
-from app.domain.models import to_dict
 from app.schemas.public import LeadCreateRequest, LeadResponse
-from app.services.public_service import create_lead
+from app.services.public_service import create_lead, serialize_lead
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -18,4 +17,4 @@ def post_lead(payload: LeadCreateRequest) -> dict:
         challenge=payload.challenge,
         source=payload.source,
     )
-    return to_dict(lead)
+    return serialize_lead(lead)

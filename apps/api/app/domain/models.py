@@ -153,6 +153,9 @@ class LeadFormSubmission:
     city: str | None = None
     challenge: str | None = None
     source: str = "website"
+    stage: str = "captured"
+    owner_user_id: str | None = None
+    follow_up_at: str | None = None
     converted_contact_id: str | None = None
     converted_at: str | None = None
     id: str = field(default_factory=generate_id)

@@ -1370,8 +1370,25 @@ h3,
   gap: 1rem;
 }
 
+.lead-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+}
+
 .lead-card {
   gap: 0.8rem;
+}
+
+.lead-card__funnel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+}
+
+.lead-card__funnel label {
+  display: grid;
+  gap: 0.4rem;
 }
 
 .lead-card__status,

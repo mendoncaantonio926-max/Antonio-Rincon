@@ -220,6 +220,10 @@ export type Lead = {
   role?: string | null;
   challenge?: string | null;
   source?: string;
+  stage: string;
+  owner_user_id?: string | null;
+  owner_name?: string | null;
+  follow_up_at?: string | null;
   converted_contact_id?: string | null;
   converted_at?: string | null;
   created_at: string;
@@ -421,8 +425,15 @@ export const api = {
       },
     );
   },
-  listLeads(token: string) {
-    return request<Lead[]>("/leads", { token });
+  listLeads(token: string, params?: { query?: string; stage?: string; owner_user_id?: string }) {
+    const search = new URLSearchParams();
+    if (params?.query) search.set("query", params.query);
+    if (params?.stage) search.set("stage", params.stage);
+    if (params?.owner_user_id) search.set("owner_user_id", params.owner_user_id);
+    return request<Lead[]>(`/leads${search.size ? `?${search.toString()}` : ""}`, { token });
+  },
+  updateLead(token: string, leadId: string, body: Record<string, unknown>) {
+    return request<Lead>(`/leads/${leadId}`, { method: "PATCH", token, body });
   },
   convertLead(token: string, leadId: string) {
     return request<Lead>(`/leads/${leadId}/convert`, { method: "POST", token });

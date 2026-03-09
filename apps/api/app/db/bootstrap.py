@@ -54,6 +54,12 @@ def create_all() -> None:
                 text("ALTER TABLE subscriptions ADD COLUMN failed_payments_count INTEGER NOT NULL DEFAULT 0")
             )
         lead_columns = {column["name"] for column in inspector.get_columns("leads")}
+        if "stage" not in lead_columns:
+            connection.execute(text("ALTER TABLE leads ADD COLUMN stage VARCHAR(32) NOT NULL DEFAULT 'captured'"))
+        if "owner_user_id" not in lead_columns:
+            connection.execute(text("ALTER TABLE leads ADD COLUMN owner_user_id VARCHAR(36)"))
+        if "follow_up_at" not in lead_columns:
+            connection.execute(text("ALTER TABLE leads ADD COLUMN follow_up_at VARCHAR(32)"))
         if "converted_contact_id" not in lead_columns:
             connection.execute(text("ALTER TABLE leads ADD COLUMN converted_contact_id VARCHAR(36)"))
         if "converted_at" not in lead_columns:

@@ -2335,26 +2335,64 @@ function BillingPage() {
 function LeadsPage() {
   const { tokens } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [memberships, setMemberships] = useState<Membership[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [leadMessage, setLeadMessage] = useState<string | null>(null);
   const [pendingLeadId, setPendingLeadId] = useState<string | null>(null);
+  const [leadQuery, setLeadQuery] = useState("");
+  const [stageFilter, setStageFilter] = useState("");
+  const [ownerFilter, setOwnerFilter] = useState("");
   const loadLeads = useCallback(async () => {
     if (!tokens?.access_token) return;
-    const nextLeads = await api.listLeads(tokens.access_token);
+    const nextLeads = await api.listLeads(tokens.access_token, {
+      query: leadQuery || undefined,
+      stage: stageFilter || undefined,
+      owner_user_id: ownerFilter || undefined,
+    });
     setLeads(nextLeads);
-  }, [tokens]);
+  }, [leadQuery, ownerFilter, stageFilter, tokens]);
   const recentLeads = leads.filter(
     (lead) => Date.now() - new Date(lead.created_at).getTime() <= 1000 * 60 * 60 * 24 * 7,
   ).length;
   const leadsWithPhone = leads.filter((lead) => Boolean(lead.phone)).length;
   const leadsWithCity = leads.filter((lead) => Boolean(lead.city)).length;
   const convertedLeads = leads.filter((lead) => Boolean(lead.converted_contact_id)).length;
+  const followUpsPlanned = leads.filter((lead) => Boolean(lead.follow_up_at)).length;
 
   useEffect(() => {
     void loadLeads().catch((loadError) =>
       setError(loadError instanceof Error ? loadError.message : "Falha ao carregar leads."),
     );
   }, [loadLeads]);
+
+  useEffect(() => {
+    if (!tokens?.access_token) return;
+    void api
+      .listMemberships(tokens.access_token)
+      .then(setMemberships)
+      .catch(() => undefined);
+  }, [tokens]);
+
+  async function handleLeadUpdate(
+    leadId: string,
+    updates: { stage?: string; owner_user_id?: string; follow_up_at?: string },
+  ) {
+    if (!tokens?.access_token) return;
+    setPendingLeadId(leadId);
+    setLeadMessage(null);
+    setError(null);
+    try {
+      const updatedLead = await api.updateLead(tokens.access_token, leadId, updates);
+      setLeads((currentLeads) =>
+        currentLeads.map((lead) => (lead.id === updatedLead.id ? updatedLead : lead)),
+      );
+      setLeadMessage("Lead atualizado no funil comercial.");
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Falha ao atualizar lead.");
+    } finally {
+      setPendingLeadId(null);
+    }
+  }
 
   async function handleLeadConvert(leadId: string) {
     if (!tokens?.access_token) return;
@@ -2407,12 +2445,49 @@ function LeadsPage() {
             <strong>Ja convertidos</strong>
             <span>{convertedLeads}</span>
           </article>
+          <article className="summary-tile">
+            <strong>Follow-up agendado</strong>
+            <span>{followUpsPlanned}</span>
+          </article>
         </div>
         <div className="leads-intro">
           <p className="meta-copy">
             Este painel mostra a qualidade da entrada comercial e agora permite transformar
             interesse validado em contato acionavel sem sair do fluxo.
           </p>
+        </div>
+        <div className="toolbar lead-toolbar">
+          <input
+            placeholder="Buscar por nome, email, cidade ou desafio"
+            value={leadQuery}
+            onChange={(event) => setLeadQuery(event.target.value)}
+          />
+          <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value)}>
+            <option value="">Todos os estagios</option>
+            <option value="captured">Captado</option>
+            <option value="qualified">Qualificado</option>
+            <option value="follow_up">Em follow-up</option>
+            <option value="proposal">Proposta</option>
+            <option value="converted">Convertido</option>
+            <option value="archived">Arquivado</option>
+          </select>
+          <select value={ownerFilter} onChange={(event) => setOwnerFilter(event.target.value)}>
+            <option value="">Todos os responsaveis</option>
+            {memberships.map((member) => (
+              <option key={member.id} value={member.user_id}>
+                {member.full_name}
+              </option>
+            ))}
+          </select>
+          <Button
+            label="Limpar funil"
+            variant="secondary"
+            onClick={() => {
+              setLeadQuery("");
+              setStageFilter("");
+              setOwnerFilter("");
+            }}
+          />
         </div>
         <div className="list-grid lead-records">
           {leads.length === 0 ? <p className="meta-copy">Nenhum lead captado ainda.</p> : null}
@@ -2434,8 +2509,68 @@ function LeadsPage() {
                 </Badge>
                 <span className="meta-copy">Origem: {lead.source || "website"}</span>
               </div>
+              <div className="lead-card__funnel">
+                <label>
+                  <span className="meta-copy">Estagio</span>
+                  <select
+                    value={lead.stage}
+                    onChange={(event) =>
+                      void handleLeadUpdate(lead.id, {
+                        stage: event.target.value,
+                      })
+                    }
+                    disabled={pendingLeadId === lead.id}
+                  >
+                    <option value="captured">Captado</option>
+                    <option value="qualified">Qualificado</option>
+                    <option value="follow_up">Em follow-up</option>
+                    <option value="proposal">Proposta</option>
+                    <option value="converted">Convertido</option>
+                    <option value="archived">Arquivado</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="meta-copy">Responsavel</span>
+                  <select
+                    value={lead.owner_user_id || ""}
+                    onChange={(event) =>
+                      void handleLeadUpdate(lead.id, {
+                        owner_user_id: event.target.value,
+                      })
+                    }
+                    disabled={pendingLeadId === lead.id}
+                  >
+                    <option value="">Sem dono</option>
+                    {memberships.map((member) => (
+                      <option key={member.id} value={member.user_id}>
+                        {member.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className="meta-copy">Proximo follow-up</span>
+                  <input
+                    type="date"
+                    value={lead.follow_up_at || ""}
+                    onChange={(event) =>
+                      void handleLeadUpdate(lead.id, {
+                        follow_up_at: event.target.value,
+                      })
+                    }
+                    disabled={pendingLeadId === lead.id}
+                  />
+                </label>
+              </div>
               <p>{lead.challenge || "Sem desafio informado no primeiro contato."}</p>
               <div className="lead-card__actions">
+                <span className="meta-copy">
+                  {lead.owner_name
+                    ? `Dono: ${lead.owner_name}`
+                    : lead.follow_up_at
+                      ? `Follow-up em ${new Date(lead.follow_up_at).toLocaleDateString("pt-BR")}`
+                      : "Sem proximo passo definido"}
+                </span>
                 {lead.converted_contact_id ? (
                   <span className="meta-copy">
                     Convertido em{" "}

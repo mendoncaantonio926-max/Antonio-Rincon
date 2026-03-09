@@ -396,6 +396,35 @@ async function main() {
     await page.getByText(leadEmail).waitFor();
     checks.push("lead_aparece_no_app");
     const leadCard = page.locator(".lead-card", { hasText: leadEmail });
+    await leadCard.locator("select").first().selectOption("follow_up");
+    await page.getByText("Lead atualizado no funil comercial.").waitFor();
+    const ownerSelect = leadCard.locator("select").nth(1);
+    await page.waitForFunction(
+      () => {
+        const leadCardElement = document.querySelector(".lead-card");
+        if (!leadCardElement) return false;
+        const selects = leadCardElement.querySelectorAll("select");
+        return (
+          selects.length > 1 &&
+          !selects[1].hasAttribute("disabled") &&
+          selects[1].options.length > 1
+        );
+      },
+      undefined,
+      { timeout: 15000 },
+    );
+    const ownerOptionValue = await ownerSelect.locator("option").nth(1).getAttribute("value");
+    if (ownerOptionValue) {
+      await ownerSelect.selectOption(ownerOptionValue);
+    }
+    await leadCard.locator('input[type="date"]').fill("2026-03-10");
+    await page.getByText("Lead atualizado no funil comercial.").waitFor();
+    await leadCard.getByText("Dono: Owner Demo").waitFor();
+    checks.push("lead_funil_atualizado_no_browser");
+    await page.locator(".lead-toolbar select").first().selectOption("follow_up");
+    await leadCard.waitFor();
+    checks.push("leads_filtrados_por_estagio_no_browser");
+    await page.locator(".lead-toolbar select").first().selectOption("");
     await leadCard.getByRole("button", { name: "Converter para contato" }).click();
     await page.getByText("Lead convertido para contato com sucesso.").waitFor();
     await leadCard.getByText("Convertido em contato").waitFor();

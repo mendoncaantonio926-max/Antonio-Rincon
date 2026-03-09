@@ -22,6 +22,16 @@ class LeadResponse(BaseModel):
     city: str | None = None
     challenge: str | None = None
     source: str
+    stage: str
+    owner_user_id: str | None = None
+    owner_name: str | None = None
+    follow_up_at: str | None = None
     converted_contact_id: str | None = None
     converted_at: str | None = None
     created_at: str
+
+
+class LeadUpdateRequest(BaseModel):
+    stage: str | None = None
+    owner_user_id: str | None = None
+    follow_up_at: str | None = None
