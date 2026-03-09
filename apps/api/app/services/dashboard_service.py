@@ -268,14 +268,29 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
     previous_window_end = today_date - timedelta(days=7)
     current_window_converted_count = 0
     previous_window_converted_count = 0
+    owner_throughput_map: dict[str, dict[str, str | int]] = {}
     for lead in leads:
         converted_date = _parse_iso_date(lead.converted_at)
         if converted_date is None:
             continue
+        serialized = serialize_lead(lead, tenant_id)
+        owner_label = str(serialized["owner_name"] or serialized["suggested_owner_name"] or "Sem owner")
+        group = owner_throughput_map.setdefault(
+            owner_label,
+            {
+                "owner_label": owner_label,
+                "current_window_count": 0,
+                "previous_window_count": 0,
+                "delta": 0,
+                "direction": "stable",
+            },
+        )
         if converted_date >= current_window_start:
             current_window_converted_count += 1
+            group["current_window_count"] = int(group["current_window_count"]) + 1
         elif previous_window_start <= converted_date <= previous_window_end:
             previous_window_converted_count += 1
+            group["previous_window_count"] = int(group["previous_window_count"]) + 1
     throughput_delta = current_window_converted_count - previous_window_converted_count
     throughput_direction = "stable"
     if throughput_delta > 0:
@@ -294,6 +309,30 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
             f"Janela anterior: {previous_window_converted_count}. Delta {throughput_delta}."
         ),
     }
+    owner_throughput = []
+    for group in owner_throughput_map.values():
+        delta = int(group["current_window_count"]) - int(group["previous_window_count"])
+        direction = "stable"
+        if delta > 0:
+            direction = "up"
+        elif delta < 0:
+            direction = "down"
+        owner_throughput.append(
+            {
+                "owner_label": str(group["owner_label"]),
+                "current_window_count": int(group["current_window_count"]),
+                "previous_window_count": int(group["previous_window_count"]),
+                "delta": delta,
+                "direction": direction,
+            }
+        )
+    owner_throughput.sort(
+        key=lambda item: (
+            -int(item["delta"]),
+            -int(item["current_window_count"]),
+            str(item["owner_label"]),
+        )
+    )
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -393,6 +432,7 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, object]:
         "window_productivity": window_productivity[:5],
         "owner_targets": owner_targets[:4],
         "throughput_comparison": throughput_comparison,
+        "owner_throughput": owner_throughput[:4],
         "morning_focus_summary": morning_focus_summary,
         "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,

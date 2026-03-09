@@ -413,6 +413,19 @@ const {
       return Boolean(convertedAt && convertedAt >= "2026-02-24" && convertedAt <= "2026-03-02");
     }).length;
     const throughputDelta = currentWindowConvertedCount - previousWindowConvertedCount;
+    const ownerThroughput = ownerProductivity.map((item) => {
+      const currentWindowCount = item.label === "Antonio Rincon" ? currentWindowConvertedCount : 0;
+      const previousWindowCount =
+        item.label === "Antonio Rincon" ? previousWindowConvertedCount : 0;
+      const delta = currentWindowCount - previousWindowCount;
+      return {
+        owner_label: item.label,
+        current_window_count: currentWindowCount,
+        previous_window_count: previousWindowCount,
+        delta,
+        direction: delta > 0 ? "up" : delta < 0 ? "down" : "stable",
+      };
+    });
 
     return {
       tenant_name: tenantState.tenant.name,
@@ -490,6 +503,7 @@ const {
         direction: throughputDelta > 0 ? "up" : throughputDelta < 0 ? "down" : "stable",
         summary: `Conversao nos ultimos 7 dias: ${currentWindowConvertedCount}. Janela anterior: ${previousWindowConvertedCount}. Delta ${throughputDelta}.`,
       },
+      owner_throughput: ownerThroughput,
       morning_focus_summary:
         "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
       owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
@@ -1741,6 +1755,7 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Produtividade por janela")).toBeInTheDocument();
       expect(screen.getByText("Meta por owner")).toBeInTheDocument();
       expect(screen.getByText("Throughput comercial")).toBeInTheDocument();
+      expect(screen.getByText("Variacao por owner")).toBeInTheDocument();
       expect(screen.getByText(/Conversao nos ultimos 7 dias/)).toBeInTheDocument();
     });
 

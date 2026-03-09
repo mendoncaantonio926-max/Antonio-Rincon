@@ -296,6 +296,7 @@ async function main() {
     await page.getByText("Produtividade por janela").waitFor();
     await page.getByText("Meta por owner").waitFor();
     await page.getByText("Throughput comercial").waitFor();
+    await page.getByText("Variacao por owner").waitFor();
     await page.getByText(/Conversao nos ultimos 7 dias/).waitFor();
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
@@ -308,6 +309,7 @@ async function main() {
     checks.push("dashboard_ai_priorizada");
     checks.push("dashboard_comercial_acao_rapida");
     checks.push("dashboard_comercial_throughput");
+    checks.push("dashboard_owner_throughput");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");

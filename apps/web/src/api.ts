@@ -341,6 +341,13 @@ export type DashboardSummary = {
     direction: string;
     summary: string;
   };
+  owner_throughput: Array<{
+    owner_label: string;
+    current_window_count: number;
+    previous_window_count: number;
+    delta: number;
+    direction: string;
+  }>;
   morning_focus_summary: string;
   owner_daily_briefs: Array<{
     owner_label: string;

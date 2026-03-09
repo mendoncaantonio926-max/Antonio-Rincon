@@ -776,6 +776,19 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Variacao por owner</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.owner_throughput ?? []).map((item) => (
+                    <span key={`owner-throughput-${item.owner_label}`}>
+                      {item.owner_label}: {item.current_window_count} agora,{" "}
+                      {item.previous_window_count} antes, delta {item.delta} ({item.direction})
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>

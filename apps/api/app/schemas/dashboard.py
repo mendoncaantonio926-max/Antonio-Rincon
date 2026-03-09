@@ -56,6 +56,14 @@ class DashboardThroughputComparisonResponse(BaseModel):
     summary: str
 
 
+class DashboardOwnerThroughputResponse(BaseModel):
+    owner_label: str
+    current_window_count: int
+    previous_window_count: int
+    delta: int
+    direction: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -90,6 +98,7 @@ class DashboardSummaryResponse(BaseModel):
     window_productivity: list[DashboardProductivityResponse]
     owner_targets: list[DashboardOwnerTargetResponse]
     throughput_comparison: DashboardThroughputComparisonResponse
+    owner_throughput: list[DashboardOwnerThroughputResponse]
     morning_focus_summary: str
     owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str
