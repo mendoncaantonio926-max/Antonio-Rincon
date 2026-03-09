@@ -449,6 +449,14 @@ const {
         overdue_count: group.overdue_count,
         due_today_count: group.due_today_count,
       })),
+      morning_focus_summary:
+        "Primeira agenda do dia: Carlos Lima (Antonio Rincon), Marina Gomes (Antonio Rincon).",
+      owner_daily_briefs: Array.from(ownerGroups.values()).map((group) => ({
+        owner_label: group.label,
+        first_action:
+          group.overdue_count > 0 ? "Ligar para Carlos Lima agora" : "Manter cadencia do dia",
+        brief: `${group.label} carrega ${group.leads_count} lead(s), ${group.overdue_count} atrasado(s) e ${group.due_today_count} para hoje.`,
+      })),
       next_action: "Fechar as pendencias operacionais.",
     };
   }
@@ -1686,6 +1694,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText(/Puxar com Antonio Rincon/)).toBeInTheDocument();
       expect(screen.getByText("Alertas por owner")).toBeInTheDocument();
       expect(screen.getByText("Fila de hoje")).toBeInTheDocument();
+      expect(screen.getByText("Primeira agenda do dia")).toBeInTheDocument();
+      expect(screen.getByText("Resumo diario por owner")).toBeInTheDocument();
       expect(screen.getByText("Produtividade por owner")).toBeInTheDocument();
       expect(screen.getByText("Produtividade por janela")).toBeInTheDocument();
     });

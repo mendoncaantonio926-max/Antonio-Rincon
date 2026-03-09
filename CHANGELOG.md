@@ -24,6 +24,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora expone agrupamentos da fila comercial por owner e janela, com acao rapida para atribuir owner e puxar follow-up para hoje
 - dashboard agora expone alertas por owner e uma fila diaria de execucao comercial para orientar cadencia operacional
 - dashboard agora expone produtividade por owner e por janela para ler conversao, fila pendente e atraso no mesmo quadro comercial
+- dashboard agora expone primeira agenda do dia e resumo diario por owner para transformar a fila comercial em ritual de execucao
 
 ### Changed
 

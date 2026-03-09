@@ -233,6 +233,46 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         }
         for item in pending_leads[:5]
     ]
+    owner_daily_briefs = []
+    for group in commercial_owner_groups[:4]:
+        owner_label = str(group["label"])
+        owner_items = [
+            item
+            for item in pending_leads
+            if str(item["owner_name"] or item["suggested_owner_name"] or "Sem owner") == owner_label
+        ]
+        first_item = owner_items[0] if owner_items else None
+        first_action = "Manter cadencia do dia"
+        if first_item is not None:
+            follow_up_bucket = str(first_item["follow_up_bucket"])
+            if follow_up_bucket == "overdue":
+                first_action = f"Ligar para {first_item['name']} agora"
+            elif follow_up_bucket == "today":
+                first_action = f"Fechar follow-up de {first_item['name']} ainda hoje"
+            elif follow_up_bucket == "unscheduled":
+                first_action = f"Definir owner e data para {first_item['name']}"
+            else:
+                first_action = f"Avancar {first_item['name']} na proxima janela"
+        owner_daily_briefs.append(
+            {
+                "owner_label": owner_label,
+                "first_action": first_action,
+                "brief": (
+                    f"{owner_label} carrega {group['leads_count']} lead(s), "
+                    f"{group['overdue_count']} atrasado(s) e {group['due_today_count']} para hoje."
+                ),
+            }
+        )
+    if daily_execution_queue:
+        top_items = ", ".join(
+            [
+                f"{item['lead_name']} ({item['owner_label']})"
+                for item in daily_execution_queue[:3]
+            ]
+        )
+        morning_focus_summary = f"Primeira agenda do dia: {top_items}."
+    else:
+        morning_focus_summary = "Sem fila critica aberta para a primeira agenda do dia."
 
     return {
         "tenant_name": tenant.name,
@@ -280,5 +320,7 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "daily_execution_queue": daily_execution_queue,
         "owner_productivity": owner_productivity[:4],
         "window_productivity": window_productivity[:5],
+        "morning_focus_summary": morning_focus_summary,
+        "owner_daily_briefs": owner_daily_briefs,
         "next_action": next_action,
     }

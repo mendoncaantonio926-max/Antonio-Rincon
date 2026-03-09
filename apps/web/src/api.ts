@@ -325,6 +325,12 @@ export type DashboardSummary = {
     overdue_count: number;
     due_today_count: number;
   }>;
+  morning_focus_summary: string;
+  owner_daily_briefs: Array<{
+    owner_label: string;
+    first_action: string;
+    brief: string;
+  }>;
   next_action: string;
 };
 

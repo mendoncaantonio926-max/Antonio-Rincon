@@ -702,6 +702,24 @@ function DashboardPage() {
             </div>
             <div className="dashboard-commercial-grid">
               <article className="dashboard-commercial-list">
+                <span>Primeira agenda do dia</span>
+                <div className="dashboard-recommendations">
+                  <span>{summary?.morning_focus_summary ?? "Carregando agenda comercial..."}</span>
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Resumo diario por owner</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.owner_daily_briefs ?? []).map((item) => (
+                    <span key={`brief-${item.owner_label}`}>
+                      {item.owner_label}: {item.first_action}. {item.brief}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
                 <span>Produtividade por owner</span>
                 <div className="dashboard-recommendations">
                   {(summary?.owner_productivity ?? []).map((item) => (

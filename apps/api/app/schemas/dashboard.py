@@ -32,6 +32,12 @@ class DashboardProductivityResponse(BaseModel):
     due_today_count: int
 
 
+class DashboardOwnerBriefResponse(BaseModel):
+    owner_label: str
+    first_action: str
+    brief: str
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -64,4 +70,6 @@ class DashboardSummaryResponse(BaseModel):
     daily_execution_queue: list[DashboardExecutionItemResponse]
     owner_productivity: list[DashboardProductivityResponse]
     window_productivity: list[DashboardProductivityResponse]
+    morning_focus_summary: str
+    owner_daily_briefs: list[DashboardOwnerBriefResponse]
     next_action: str
