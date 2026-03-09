@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -286,13 +286,24 @@ const {
       const threshold = new Date("2026-02-06T00:00:00Z");
       return new Date(item.event_date) >= threshold;
     }).length;
+    const previousWindowEventsCount = opponentEventsState.items.filter((item) => {
+      const lowerBound = new Date("2026-01-07T00:00:00Z");
+      const upperBound = new Date("2026-02-06T00:00:00Z");
+      const eventDate = new Date(item.event_date);
+      return eventDate >= lowerBound && eventDate < upperBound;
+    }).length;
+    const momentumDelta = recentEventsCount - previousWindowEventsCount;
 
     return {
       total_opponents: opponentsState.items.length,
+      total_events_count: opponentEventsState.items.length,
       critical_watch_count: opponentsState.items.filter((item) => item.watch_level === "critical")
         .length,
       critical_events_count: criticalEventsCount,
       recent_events_count: recentEventsCount,
+      previous_window_events_count: previousWindowEventsCount,
+      momentum_delta: momentumDelta,
+      momentum_direction: momentumDelta > 0 ? "up" : momentumDelta < 0 ? "down" : "stable",
       stance_distribution: {
         incumbent: opponentsState.items.filter((item) => item.stance === "incumbent").length,
         challenger: opponentsState.items.filter((item) => item.stance === "challenger").length,
@@ -304,6 +315,18 @@ const {
         attention: opponentsState.items.filter((item) => item.watch_level === "attention").length,
         critical: opponentsState.items.filter((item) => item.watch_level === "critical").length,
       },
+      spotlight: {
+        opponent_id: opponentsState.items[0]?.id ?? null,
+        name: opponentsState.items[0]?.name ?? "Radar ainda sem volume historico",
+        stance: opponentsState.items[0]?.stance ?? "challenger",
+        watch_level: opponentsState.items[0]?.watch_level ?? "observe",
+        summary: "Leitura comparativa pronta para coordenacao.",
+        momentum_direction: momentumDelta > 0 ? "up" : momentumDelta < 0 ? "down" : "stable",
+        momentum_delta: momentumDelta,
+        recent_events: recentEventsCount,
+        critical_events: criticalEventsCount,
+        last_event_date: opponentEventsState.items[0]?.event_date ?? null,
+      },
       top_watchlist: opponentsState.items
         .map((opponent) => {
           const relatedEvents = opponentEventsState.items.filter(
@@ -314,9 +337,16 @@ const {
             const threshold = new Date("2026-02-06T00:00:00Z");
             return new Date(item.event_date) >= threshold;
           });
+          const previousWindowEvents = relatedEvents.filter((item) => {
+            const lowerBound = new Date("2026-01-07T00:00:00Z");
+            const upperBound = new Date("2026-02-06T00:00:00Z");
+            const eventDate = new Date(item.event_date);
+            return eventDate >= lowerBound && eventDate < upperBound;
+          });
           const lastEventDate = [...relatedEvents].sort((left, right) =>
             right.event_date.localeCompare(left.event_date),
           )[0]?.event_date;
+          const itemMomentumDelta = recentEvents.length - previousWindowEvents.length;
 
           return {
             opponent_id: opponent.id,
@@ -326,6 +356,10 @@ const {
             total_events: relatedEvents.length,
             critical_events: criticalEvents.length,
             recent_events: recentEvents.length,
+            previous_window_events: previousWindowEvents.length,
+            momentum_delta: itemMomentumDelta,
+            momentum_direction:
+              itemMomentumDelta > 0 ? "up" : itemMomentumDelta < 0 ? "down" : "stable",
             last_event_date: lastEventDate ?? null,
           };
         })
@@ -1094,12 +1128,16 @@ describe("App authenticated flows", () => {
     renderAuthenticatedApp("/app/opponents");
 
     await screen.findByRole("heading", { name: "Adversarios" });
-    await user.type(screen.getByLabelText("Nome"), "Frente Central");
-    await user.type(screen.getByLabelText("Contexto"), "Base forte no centro expandido");
+    fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "Frente Central" } });
+    fireEvent.change(screen.getByLabelText("Contexto"), {
+      target: { value: "Base forte no centro expandido" },
+    });
     await user.selectOptions(screen.getByLabelText("Classificacao"), "incumbent");
     await user.selectOptions(screen.getByLabelText("Nivel de monitoramento"), "critical");
-    await user.type(screen.getByLabelText("Tags"), "centro, rua");
-    await user.type(screen.getByLabelText("Observacoes"), "Exige monitoramento diario.");
+    fireEvent.change(screen.getByLabelText("Tags"), { target: { value: "centro, rua" } });
+    fireEvent.change(screen.getByLabelText("Observacoes"), {
+      target: { value: "Exige monitoramento diario." },
+    });
     await user.click(screen.getByRole("button", { name: "Salvar adversario" }));
 
     await waitFor(() => {
@@ -1108,10 +1146,14 @@ describe("App authenticated flows", () => {
       expect(screen.getAllByText("incumbent - critical").length).toBeGreaterThan(0);
     });
 
-    await user.type(screen.getByLabelText("Titulo"), "Subiu insercao local");
-    await user.type(screen.getByLabelText("Data"), "2026-03-08");
+    fireEvent.change(screen.getByLabelText("Titulo"), {
+      target: { value: "Subiu insercao local" },
+    });
+    fireEvent.change(screen.getByLabelText("Data"), { target: { value: "2026-03-08" } });
     await user.selectOptions(screen.getByLabelText("Severidade"), "critical");
-    await user.type(screen.getByLabelText("Descricao"), "Evento critico em bairro prioritario.");
+    fireEvent.change(screen.getByLabelText("Descricao"), {
+      target: { value: "Evento critico em bairro prioritario." },
+    });
     await user.click(screen.getByRole("button", { name: "Adicionar evento" }));
 
     await waitFor(() => {
@@ -1123,6 +1165,56 @@ describe("App authenticated flows", () => {
       });
       expect(screen.getByText("Subiu insercao local")).toBeInTheDocument();
       expect(screen.getByText("critical")).toBeInTheDocument();
+    });
+  });
+
+  it("mostra leitura temporal na area de adversarios", async () => {
+    opponentsState.items = [
+      {
+        id: "opponent-1",
+        name: "Adversario Centro",
+        context: "Base forte no centro",
+        stance: "incumbent",
+        watch_level: "critical",
+        links: [],
+        notes: "Em pressao crescente",
+        tags: ["centro"],
+      },
+    ];
+    opponentEventsState.items = [
+      {
+        id: "event-1",
+        opponent_id: "opponent-1",
+        title: "Agenda ampliada",
+        description: "Mais rua no ultimo ciclo.",
+        event_date: "2026-03-02",
+        severity: "critical",
+      },
+      {
+        id: "event-2",
+        opponent_id: "opponent-1",
+        title: "Novo apoio local",
+        description: "Ganho territorial recente.",
+        event_date: "2026-02-20",
+        severity: "warning",
+      },
+      {
+        id: "event-3",
+        opponent_id: "opponent-1",
+        title: "Movimento anterior",
+        description: "Janela historica previa.",
+        event_date: "2026-01-15",
+        severity: "info",
+      },
+    ];
+    renderAuthenticatedApp("/app/opponents");
+
+    await screen.findByRole("heading", { name: "Adversarios" });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Pressao em alta/)).toBeInTheDocument();
+      expect(screen.getByText(/Spotlight temporal/)).toBeInTheDocument();
+      expect(screen.getAllByText(/delta/i).length).toBeGreaterThan(0);
     });
   });
 
@@ -1167,12 +1259,15 @@ describe("App authenticated flows", () => {
 
     await screen.findByRole("heading", { name: "Ative o workspace sem sair do fluxo" });
     await user.selectOptions(screen.getByDisplayValue("Campanha"), "mandate");
-    await user.clear(screen.getByDisplayValue("ativar workspace"));
-    await user.type(screen.getByLabelText("Objetivo inicial"), "organizar base territorial");
-    await user.type(screen.getByLabelText("Nome da campanha"), "Mandato Centro");
-    await user.type(screen.getByLabelText("Cargo"), "Vereador");
-    await user.type(screen.getByLabelText("Cidade"), "Sao Paulo");
-    await user.type(screen.getByLabelText("Estado"), "SP");
+    fireEvent.change(screen.getByLabelText("Objetivo inicial"), {
+      target: { value: "organizar base territorial" },
+    });
+    fireEvent.change(screen.getByLabelText("Nome da campanha"), {
+      target: { value: "Mandato Centro" },
+    });
+    fireEvent.change(screen.getByLabelText("Cargo"), { target: { value: "Vereador" } });
+    fireEvent.change(screen.getByLabelText("Cidade"), { target: { value: "Sao Paulo" } });
+    fireEvent.change(screen.getByLabelText("Estado"), { target: { value: "SP" } });
     await user.selectOptions(screen.getByDisplayValue("Pre-campanha"), "mandate");
     await user.click(screen.getByRole("button", { name: "Salvar campanha inicial" }));
 
@@ -1200,8 +1295,7 @@ describe("App authenticated flows", () => {
 
     await screen.findByRole("heading", { name: "Equipe" });
     const workspaceInput = screen.getByLabelText("Nome do workspace");
-    await user.clear(workspaceInput);
-    await user.type(workspaceInput, "Pulso Premium");
+    fireEvent.change(workspaceInput, { target: { value: "Pulso Premium" } });
     await user.click(screen.getByRole("button", { name: "Atualizar identidade" }));
 
     await waitFor(() => {
@@ -1212,8 +1306,12 @@ describe("App authenticated flows", () => {
       expect(screen.getAllByText("Pulso Premium").length).toBeGreaterThan(0);
     });
 
-    await user.type(screen.getByLabelText("Nome completo"), "Marina Operacoes");
-    await user.type(screen.getByLabelText("Email"), "marina@pulso.local");
+    fireEvent.change(screen.getByLabelText("Nome completo"), {
+      target: { value: "Marina Operacoes" },
+    });
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "marina@pulso.local" },
+    });
     await user.selectOptions(screen.getByDisplayValue("Analise"), "coordinator");
     await user.click(screen.getByRole("button", { name: "Enviar convite" }));
 

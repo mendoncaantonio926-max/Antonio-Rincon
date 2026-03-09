@@ -44,14 +44,35 @@ class OpponentComparisonItemResponse(BaseModel):
     total_events: int
     critical_events: int
     recent_events: int
+    previous_window_events: int
+    momentum_delta: int
+    momentum_direction: str
+    last_event_date: str | None = None
+
+
+class OpponentSpotlightResponse(BaseModel):
+    opponent_id: str | None = None
+    name: str
+    stance: str
+    watch_level: str
+    summary: str
+    momentum_direction: str
+    momentum_delta: int
+    recent_events: int
+    critical_events: int
     last_event_date: str | None = None
 
 
 class OpponentSummaryResponse(BaseModel):
     total_opponents: int
+    total_events_count: int
     critical_watch_count: int
     critical_events_count: int
     recent_events_count: int
+    previous_window_events_count: int
+    momentum_delta: int
+    momentum_direction: str
     stance_distribution: dict[str, int]
     watch_distribution: dict[str, int]
+    spotlight: OpponentSpotlightResponse
     top_watchlist: list[OpponentComparisonItemResponse]

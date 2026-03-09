@@ -194,6 +194,8 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert opponents_summary_response.status_code == 200
     assert opponents_summary_response.json()["total_opponents"] >= 1
     assert opponents_summary_response.json()["critical_events_count"] >= 1
+    assert "momentum_delta" in opponents_summary_response.json()
+    assert "spotlight" in opponents_summary_response.json()
     assert len(opponents_summary_response.json()["top_watchlist"]) >= 1
 
     state_response = client.get("/onboarding", headers=headers)

@@ -90,11 +90,27 @@ export type OpponentEvent = {
 
 export type OpponentSummary = {
   total_opponents: number;
+  total_events_count: number;
   critical_watch_count: number;
   critical_events_count: number;
   recent_events_count: number;
+  previous_window_events_count: number;
+  momentum_delta: number;
+  momentum_direction: string;
   stance_distribution: Record<string, number>;
   watch_distribution: Record<string, number>;
+  spotlight: {
+    opponent_id?: string | null;
+    name: string;
+    stance: string;
+    watch_level: string;
+    summary: string;
+    momentum_direction: string;
+    momentum_delta: number;
+    recent_events: number;
+    critical_events: number;
+    last_event_date?: string | null;
+  };
   top_watchlist: Array<{
     opponent_id: string;
     name: string;
@@ -103,6 +119,9 @@ export type OpponentSummary = {
     total_events: number;
     critical_events: number;
     recent_events: number;
+    previous_window_events: number;
+    momentum_delta: number;
+    momentum_direction: string;
     last_event_date?: string | null;
   }>;
 };

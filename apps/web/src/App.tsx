@@ -2479,6 +2479,12 @@ function OpponentsPage() {
       summary?.stance_distribution?.challenger ??
       opponents.filter((item) => item.stance === "challenger").length,
   };
+  const momentumLabel =
+    summary?.momentum_direction === "up"
+      ? "Pressao em alta"
+      : summary?.momentum_direction === "down"
+        ? "Pressao em queda"
+        : "Pressao estavel";
 
   return (
     <section className="app-section split-layout wide-layout opponents-layout">
@@ -2557,6 +2563,61 @@ function OpponentsPage() {
             <strong>Ultimos 30 dias</strong>
             <span>{summary?.recent_events_count ?? 0}</span>
           </article>
+          <article className="summary-tile">
+            <strong>Janela anterior</strong>
+            <span>{summary?.previous_window_events_count ?? 0}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Ritmo competitivo</strong>
+            <span>
+              {momentumLabel} ({summary?.momentum_delta ?? 0})
+            </span>
+          </article>
+        </div>
+        <div className="opponent-spotlight panel">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow">Spotlight temporal</p>
+              <h2>{summary?.spotlight.name ?? "Radar competitivo"}</h2>
+            </div>
+            <Badge
+              tone={
+                summary?.spotlight.momentum_direction === "up"
+                  ? "warning"
+                  : summary?.spotlight.momentum_direction === "down"
+                    ? "success"
+                    : "info"
+              }
+            >
+              {summary?.spotlight.momentum_direction ?? "stable"}
+            </Badge>
+          </div>
+          <p className="meta-copy">
+            {summary?.spotlight.summary ??
+              "A leitura comparativa aparece quando a timeline ganha volume historico."}
+          </p>
+          <div className="list-grid summary-grid">
+            <article className="summary-tile">
+              <strong>Delta recente</strong>
+              <span>{summary?.spotlight.momentum_delta ?? 0}</span>
+            </article>
+            <article className="summary-tile">
+              <strong>Eventos recentes</strong>
+              <span>{summary?.spotlight.recent_events ?? 0}</span>
+            </article>
+            <article className="summary-tile">
+              <strong>Eventos criticos</strong>
+              <span>{summary?.spotlight.critical_events ?? 0}</span>
+            </article>
+            <article className="summary-tile">
+              <strong>Ultimo sinal</strong>
+              <span>
+                {summary?.spotlight.last_event_date
+                  ? new Date(summary.spotlight.last_event_date).toLocaleDateString("pt-BR")
+                  : "Sem evento recente"}
+              </span>
+            </article>
+          </div>
         </div>
         <div className="toolbar">
           <input
@@ -2633,6 +2694,20 @@ function OpponentsPage() {
               <span>
                 {item.critical_events} critico(s) - {item.recent_events} recentes
               </span>
+              <span>
+                Janela anterior {item.previous_window_events} - delta {item.momentum_delta}
+              </span>
+              <Badge
+                tone={
+                  item.momentum_direction === "up"
+                    ? "warning"
+                    : item.momentum_direction === "down"
+                      ? "success"
+                      : "info"
+                }
+              >
+                {item.momentum_direction}
+              </Badge>
               <span>
                 {item.last_event_date
                   ? new Date(item.last_event_date).toLocaleDateString("pt-BR")

@@ -396,12 +396,28 @@ def list_opponent_events(tenant_id: str, opponent_id: str, severity: str | None 
 
 def build_opponents_summary(tenant_id: str) -> dict:
     opponents = list_opponents(tenant_id)
-    recent_threshold = (datetime.now(UTC).date() - timedelta(days=30)).isoformat()
+    today = datetime.now(UTC).date()
+    recent_threshold = (today - timedelta(days=30)).isoformat()
+    previous_threshold = (today - timedelta(days=60)).isoformat()
     stance_distribution = {"incumbent": 0, "challenger": 0, "ally_risk": 0, "local_force": 0}
     watch_distribution = {"observe": 0, "attention": 0, "critical": 0}
     comparison_items: list[dict] = []
+    spotlight = {
+        "opponent_id": None,
+        "name": "Radar ainda sem volume historico",
+        "stance": "indefinido",
+        "watch_level": "observe",
+        "summary": "Crie eventos na timeline para ativar a leitura comparativa entre janelas.",
+        "momentum_direction": "stable",
+        "momentum_delta": 0,
+        "recent_events": 0,
+        "critical_events": 0,
+        "last_event_date": None,
+    }
+    total_events = 0
     total_critical_events = 0
     total_recent_events = 0
+    total_previous_window_events = 0
 
     for opponent in opponents:
         stance_distribution[opponent.stance] = stance_distribution.get(opponent.stance, 0) + 1
@@ -409,8 +425,15 @@ def build_opponents_summary(tenant_id: str) -> dict:
         events = list_opponent_events(tenant_id, opponent.id)
         critical_events = len([event for event in events if event.severity == "critical"])
         recent_events = len([event for event in events if event.event_date >= recent_threshold])
+        previous_window_events = len(
+            [event for event in events if previous_threshold <= event.event_date < recent_threshold]
+        )
+        momentum_delta = recent_events - previous_window_events
+        momentum_direction = "up" if momentum_delta > 0 else "down" if momentum_delta < 0 else "stable"
+        total_events += len(events)
         total_critical_events += critical_events
         total_recent_events += recent_events
+        total_previous_window_events += previous_window_events
         comparison_items.append(
             {
                 "opponent_id": opponent.id,
@@ -420,21 +443,56 @@ def build_opponents_summary(tenant_id: str) -> dict:
                 "total_events": len(events),
                 "critical_events": critical_events,
                 "recent_events": recent_events,
+                "previous_window_events": previous_window_events,
+                "momentum_delta": momentum_delta,
+                "momentum_direction": momentum_direction,
                 "last_event_date": events[0].event_date if events else None,
             }
         )
+        if (
+            comparison_items[-1]["critical_events"],
+            comparison_items[-1]["momentum_delta"],
+            comparison_items[-1]["recent_events"],
+            comparison_items[-1]["total_events"],
+        ) > (
+            spotlight["critical_events"],
+            spotlight["momentum_delta"],
+            spotlight["recent_events"],
+            0 if spotlight["opponent_id"] is None else spotlight["recent_events"] + spotlight["critical_events"],
+        ):
+            spotlight = {
+                "opponent_id": opponent.id,
+                "name": opponent.name,
+                "stance": opponent.stance,
+                "watch_level": opponent.watch_level,
+                "summary": (
+                    f"{opponent.name} combina {critical_events} evento(s) critico(s) e "
+                    f"{recent_events} sinal(is) na janela recente."
+                ),
+                "momentum_direction": momentum_direction,
+                "momentum_delta": momentum_delta,
+                "recent_events": recent_events,
+                "critical_events": critical_events,
+                "last_event_date": events[0].event_date if events else None,
+            }
 
     comparison_items.sort(
-        key=lambda item: (item["critical_events"], item["recent_events"], item["total_events"]),
+        key=lambda item: (item["critical_events"], item["momentum_delta"], item["recent_events"], item["total_events"]),
         reverse=True,
     )
+    momentum_delta = total_recent_events - total_previous_window_events
     return {
         "total_opponents": len(opponents),
+        "total_events_count": total_events,
         "critical_watch_count": watch_distribution.get("critical", 0),
         "critical_events_count": total_critical_events,
         "recent_events_count": total_recent_events,
+        "previous_window_events_count": total_previous_window_events,
+        "momentum_delta": momentum_delta,
+        "momentum_direction": "up" if momentum_delta > 0 else "down" if momentum_delta < 0 else "stable",
         "stance_distribution": stance_distribution,
         "watch_distribution": watch_distribution,
+        "spotlight": spotlight,
         "top_watchlist": comparison_items[:5],
     }
 

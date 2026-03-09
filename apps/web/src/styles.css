@@ -1259,6 +1259,13 @@ h3,
   gap: 1rem;
 }
 
+.opponent-spotlight {
+  gap: 0.9rem;
+  background:
+    radial-gradient(circle at top left, rgba(180, 132, 63, 0.16), transparent 42%),
+    rgba(255, 251, 245, 0.92);
+}
+
 .contacts-records,
 .report-records,
 .opponent-records,
