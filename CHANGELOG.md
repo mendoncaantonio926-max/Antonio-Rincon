@@ -166,6 +166,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 ### Ops
 
 - browser audit real agora valida tambem o spotlight temporal da tela de adversarios
+- browser audit real agora valida tambem a leitura priorizada da IA no dashboard
 - prontidao de release consolidada em wrapper reutilizavel para uso local
 
 ## [0.1.4] - 2026-03-06

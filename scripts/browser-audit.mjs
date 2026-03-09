@@ -285,11 +285,14 @@ async function main() {
     await page.getByRole("button", { name: "Entrar" }).click();
     await page.waitForURL("**/app", { timeout: 15000 });
     await page.getByText("Operacao em andamento").waitFor();
+    await page.getByText("Escore de prioridade").waitFor();
+    await page.getByText("Gatilho principal").waitFor();
     const dashboardShot = path.join(logDir, "dashboard.png");
     if (await safeScreenshot(page, dashboardShot, browserMessages)) {
       screenshots.dashboard = dashboardShot;
     }
     checks.push("login_funcionando");
+    checks.push("dashboard_ai_priorizada");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");
