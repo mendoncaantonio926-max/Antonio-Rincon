@@ -18,12 +18,14 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - leads agora podem ser convertidos diretamente em contatos no CRM, com persistencia da conversao, reutilizacao inteligente por email e auditoria da acao
 - dashboard agora expone fila de leads total, convertida e pendente para dar visibilidade executiva da demanda comercial
 - leads agora suportam estagio, responsavel e data de follow-up, com filtros de funil e atualizacao inline no painel autenticado
+- dashboard agora expone leads quentes, follow-ups atrasados e follow-ups vencendo hoje para leitura comercial imediata
 
 ### Changed
 
 - billing agora permite alternar ciclo mensal/anual em modo local e usa esses sinais para orientar retencao e expansao
 - IA contextual agora incorpora leads pendentes na recomendacao executiva e o browser audit valida a conversao ponta a ponta entre landing, leads e contatos
 - browser audit agora valida tambem atualizacao de funil e filtro por estagio na area de leads
+- IA contextual agora prioriza SLA comercial rompido quando follow-ups ficam atrasados, e os cards de lead destacam urgencia comercial por estagio e prazo
 ### Fixed
 
 ### Docs

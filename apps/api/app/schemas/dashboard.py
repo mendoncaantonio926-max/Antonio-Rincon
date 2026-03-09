@@ -10,6 +10,9 @@ class DashboardSummaryResponse(BaseModel):
     leads_count: int
     converted_leads_count: int
     pending_leads_count: int
+    hot_leads_count: int
+    overdue_followups_count: int
+    due_today_followups_count: int
     open_tasks_count: int
     overdue_tasks_count: int
     opponents_count: int

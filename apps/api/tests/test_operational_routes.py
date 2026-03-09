@@ -340,6 +340,7 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert "priority_contacts_count" in dashboard_response.json()
     assert "leads_count" in dashboard_response.json()
     assert "pending_leads_count" in dashboard_response.json()
+    assert "overdue_followups_count" in dashboard_response.json()
 
 
 def test_public_lead_capture() -> None:
@@ -417,13 +418,13 @@ def test_lead_pipeline_update_and_filters() -> None:
         json={
             "stage": "follow_up",
             "owner_user_id": next(iter(client.get("/memberships", headers=headers).json()))["user_id"],
-            "follow_up_at": "2026-03-11",
+            "follow_up_at": "2026-03-01",
         },
     )
     assert update_response.status_code == 200
     assert update_response.json()["stage"] == "follow_up"
     assert update_response.json()["owner_name"] == "Owner Demo"
-    assert update_response.json()["follow_up_at"] == "2026-03-11"
+    assert update_response.json()["follow_up_at"] == "2026-03-01"
 
     filtered_by_stage = client.get("/leads?stage=follow_up", headers=headers)
     assert filtered_by_stage.status_code == 200
@@ -433,6 +434,10 @@ def test_lead_pipeline_update_and_filters() -> None:
     filtered_by_owner = client.get(f"/leads?owner_user_id={owner_user_id}", headers=headers)
     assert filtered_by_owner.status_code == 200
     assert any(item["id"] == lead_id for item in filtered_by_owner.json())
+
+    dashboard_response = client.get("/dashboard/summary", headers=headers)
+    assert dashboard_response.status_code == 200
+    assert dashboard_response.json()["overdue_followups_count"] >= 1
 
 
 def test_membership_invite_and_ai_summary() -> None:

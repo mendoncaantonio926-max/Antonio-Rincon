@@ -24,6 +24,27 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     leads = list(store.leads.values())
     pending_leads = len([lead for lead in leads if not lead.converted_contact_id])
     converted_leads = len(leads) - pending_leads
+    overdue_followups = len(
+        [
+            lead
+            for lead in leads
+            if not lead.converted_contact_id and lead.follow_up_at and lead.follow_up_at < date.today().isoformat()
+        ]
+    )
+    due_today_followups = len(
+        [
+            lead
+            for lead in leads
+            if not lead.converted_contact_id and lead.follow_up_at == date.today().isoformat()
+        ]
+    )
+    hot_leads = len(
+        [
+            lead
+            for lead in leads
+            if not lead.converted_contact_id and lead.stage in {"qualified", "follow_up", "proposal"}
+        ]
+    )
     open_tasks = len([task for task in tasks if task.status != "done"])
     priority_contacts = len([contact for contact in contacts if contact.status == "priority"])
     overdue_tasks = len(
@@ -57,10 +78,26 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     blockers: list[str] = []
     supporting_signals = [
         f"{len(contacts)} contato(s) ativos no workspace.",
-        f"{pending_leads} lead(s) aguardando conversao e {converted_leads} ja convertidos.",
+        f"{pending_leads} lead(s) aguardando conversao, {hot_leads} quentes e {converted_leads} ja convertidos.",
         f"{open_tasks} tarefa(s) em aberto e {overdue_tasks} vencida(s).",
         f"{len(opponents)} adversario(s) e {critical_events} sinal(is) critico(s) monitorado(s).",
     ]
+    if overdue_followups > 0 and module in {"dashboard", "contacts"}:
+        next_action = "Regularizar follow-ups atrasados"
+        action_reason = (
+            f"Ha {overdue_followups} lead(s) com follow-up fora do SLA comercial, pressionando conversao."
+        )
+        urgency = "high"
+        priority_score = max(priority_score, 87)
+        trigger_signal = f"{overdue_followups} follow-up(s) atrasado(s)"
+        focus_area = "sla comercial"
+        suggested_owner = "comercial"
+        due_window = "hoje"
+        recommendations.insert(
+            0,
+            "Existem follow-ups atrasados no funil. Reorganize a abordagem antes de abrir novas frentes comerciais.",
+        )
+        blockers.insert(0, "O funil comercial tem follow-ups fora do SLA combinado.")
     if pending_leads > 0 and module in {"dashboard", "contacts"} and urgency != "high":
         next_action = "Converter leads captados em contato"
         action_reason = (
@@ -259,6 +296,7 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         supporting_signals = [
             f"{len(contacts)} contato(s) no CRM.",
             f"{pending_leads} lead(s) aguardando conversao para o CRM.",
+            f"{overdue_followups} follow-up(s) atrasado(s) e {due_today_followups} vencendo hoje.",
             f"{priority_contacts} contato(s) classificado(s) como prioritario(s).",
             "Notas, tags e historico territorial sustentam leitura mais precisa.",
         ]
@@ -424,8 +462,9 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         summary = (
             f"O workspace possui {len(contacts)} contatos, {priority_contacts} prioritario(s), "
             f"{pending_leads} lead(s) pendente(s) de conversao, {open_tasks} tarefas em aberto, "
-            f"{overdue_tasks} vencida(s), {len(opponents)} adversarios e {opponent_events} eventos "
-            f"monitorados. O momento atual sugere foco em execucao, conversao comercial e "
+            f"{overdue_followups} follow-up(s) atrasado(s), {overdue_tasks} vencida(s), "
+            f"{len(opponents)} adversarios e {opponent_events} eventos monitorados. "
+            f"O momento atual sugere foco em execucao, conversao comercial e "
             f"classificacao de contexto."
         )
 

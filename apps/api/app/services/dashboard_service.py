@@ -17,10 +17,31 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
     reports = list_reports(tenant_id)
     leads = list(store.leads.values())
     memberships_count = len([membership for membership in store.memberships.values() if membership.tenant_id == tenant_id])
+    today = date.today().isoformat()
     converted_leads_count = len([lead for lead in leads if lead.converted_contact_id])
     pending_leads_count = len(leads) - converted_leads_count
+    overdue_followups_count = len(
+        [
+            lead
+            for lead in leads
+            if not lead.converted_contact_id and lead.follow_up_at and lead.follow_up_at < today
+        ]
+    )
+    due_today_followups_count = len(
+        [
+            lead
+            for lead in leads
+            if not lead.converted_contact_id and lead.follow_up_at and lead.follow_up_at == today
+        ]
+    )
+    hot_leads_count = len(
+        [
+            lead
+            for lead in leads
+            if not lead.converted_contact_id and lead.stage in {"qualified", "follow_up", "proposal"}
+        ]
+    )
     overdue_tasks_count = 0
-    today = date.today().isoformat()
 
     for task in tasks:
         if task.status == "done" or not task.due_date:
@@ -30,6 +51,8 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
 
     if overdue_tasks_count > 0:
         next_action = "Priorize tarefas vencidas para recuperar o ritmo operacional."
+    elif overdue_followups_count > 0:
+        next_action = "Regularize follow-ups comerciais atrasados para proteger conversao."
     elif pending_leads_count > 0:
         next_action = "Converta os leads captados para nao perder janela comercial."
     elif len([contact for contact in contacts if contact.status == "priority"]) == 0 and contacts:
@@ -48,6 +71,9 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "leads_count": len(leads),
         "converted_leads_count": converted_leads_count,
         "pending_leads_count": pending_leads_count,
+        "hot_leads_count": hot_leads_count,
+        "overdue_followups_count": overdue_followups_count,
+        "due_today_followups_count": due_today_followups_count,
         "open_tasks_count": len([task for task in tasks if task.status != "done"]),
         "overdue_tasks_count": overdue_tasks_count,
         "opponents_count": len(opponents),

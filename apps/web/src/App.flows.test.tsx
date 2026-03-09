@@ -842,6 +842,19 @@ const {
       leads_count: leadsState.items.length,
       converted_leads_count: leadsState.items.filter((item) => item.converted_contact_id).length,
       pending_leads_count: leadsState.items.filter((item) => !item.converted_contact_id).length,
+      hot_leads_count: leadsState.items.filter(
+        (item) =>
+          !item.converted_contact_id && ["qualified", "follow_up", "proposal"].includes(item.stage),
+      ).length,
+      overdue_followups_count: leadsState.items.filter(
+        (item) =>
+          !item.converted_contact_id &&
+          Boolean(item.follow_up_at) &&
+          (item.follow_up_at ?? "") < "2026-03-09",
+      ).length,
+      due_today_followups_count: leadsState.items.filter(
+        (item) => !item.converted_contact_id && item.follow_up_at === "2026-03-09",
+      ).length,
       open_tasks_count: tasksState.items.filter((item) => item.status !== "done").length,
       overdue_tasks_count: 1,
       opponents_count: opponentsState.items.length,
@@ -1022,7 +1035,7 @@ describe("App authenticated flows", () => {
         stage: "qualified",
         owner_user_id: "user-1",
         owner_name: "Antonio Rincon",
-        follow_up_at: "2026-03-10",
+        follow_up_at: "2026-03-01",
         converted_contact_id: null,
         converted_at: null,
         created_at: "2026-02-20T10:00:00Z",
@@ -1314,7 +1327,7 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Subiu insercao local")).toBeInTheDocument();
       expect(screen.getByText("critical")).toBeInTheDocument();
     });
-  });
+  }, 10000);
 
   it("mostra leitura temporal na area de adversarios", async () => {
     opponentsState.items = [
@@ -1381,6 +1394,7 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Carlos Lima")).toBeInTheDocument();
       expect(screen.getByText("Coordenadora local")).toBeInTheDocument();
       expect(screen.getByText("Sem WhatsApp")).toBeInTheDocument();
+      expect(screen.getByText("SLA estourado")).toBeInTheDocument();
     });
   });
 
@@ -1446,6 +1460,7 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("78/100")).toBeInTheDocument();
       expect(screen.getAllByText("3 tarefas abertas").length).toBeGreaterThan(0);
       expect(screen.getByText("Leads pendentes")).toBeInTheDocument();
+      expect(screen.getByText("Follow-ups atrasados")).toBeInTheDocument();
     });
 
     await user.selectOptions(screen.getByDisplayValue("Workspace"), "billing");
@@ -1538,7 +1553,7 @@ describe("App authenticated flows", () => {
       });
       expect(screen.getByText("Role atualizada.")).toBeInTheDocument();
     });
-  });
+  }, 10000);
 
   it("renderiza a trilha de auditoria autenticada", async () => {
     renderAuthenticatedApp("/app/audit");

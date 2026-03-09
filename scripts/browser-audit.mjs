@@ -417,7 +417,12 @@ async function main() {
     if (ownerOptionValue) {
       await ownerSelect.selectOption(ownerOptionValue);
     }
-    await leadCard.locator('input[type="date"]').fill("2026-03-10");
+    await leadCard.locator('input[type="date"]').evaluate((element) => {
+      const input = element;
+      input.value = "2026-03-01";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
     await page.getByText("Lead atualizado no funil comercial.").waitFor();
     await leadCard.getByText("Dono: Owner Demo").waitFor();
     checks.push("lead_funil_atualizado_no_browser");

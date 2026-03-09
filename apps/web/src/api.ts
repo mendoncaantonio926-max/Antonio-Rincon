@@ -263,6 +263,9 @@ export type DashboardSummary = {
   leads_count: number;
   converted_leads_count: number;
   pending_leads_count: number;
+  hot_leads_count: number;
+  overdue_followups_count: number;
+  due_today_followups_count: number;
   open_tasks_count: number;
   overdue_tasks_count: number;
   opponents_count: number;

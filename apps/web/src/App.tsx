@@ -460,6 +460,15 @@ function DashboardPage() {
           </p>
         </article>
         <article className="metric-tile">
+          <span>Follow-ups atrasados</span>
+          <strong>{summary?.overdue_followups_count ?? 0}</strong>
+          <p>
+            {summary?.overdue_followups_count
+              ? "O SLA comercial ja foi rompido em parte da fila."
+              : "Sem atraso comercial no momento."}
+          </p>
+        </article>
+        <article className="metric-tile">
           <span>Tarefas em aberto</span>
           <strong>{summary?.open_tasks_count ?? 0}</strong>
           <p>Frente operacional em execucao.</p>
@@ -569,6 +578,13 @@ function DashboardPage() {
               <span>Conversao comercial</span>
               <strong>
                 {summary?.pending_leads_count ?? 0} lead(s) seguem aguardando qualificacao final.
+              </strong>
+            </article>
+            <article>
+              <span>Ritmo comercial</span>
+              <strong>
+                {summary?.hot_leads_count ?? 0} lead(s) quente(s), com{" "}
+                {summary?.due_today_followups_count ?? 0} follow-up(s) vencendo hoje.
               </strong>
             </article>
             <article>
@@ -2358,6 +2374,39 @@ function LeadsPage() {
   const leadsWithCity = leads.filter((lead) => Boolean(lead.city)).length;
   const convertedLeads = leads.filter((lead) => Boolean(lead.converted_contact_id)).length;
   const followUpsPlanned = leads.filter((lead) => Boolean(lead.follow_up_at)).length;
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const overdueFollowUps = leads.filter(
+    (lead) =>
+      Boolean(lead.follow_up_at) &&
+      !lead.converted_contact_id &&
+      (lead.follow_up_at ?? "") < todayIso,
+  ).length;
+  const dueTodayFollowUps = leads.filter(
+    (lead) =>
+      Boolean(lead.follow_up_at) && !lead.converted_contact_id && lead.follow_up_at === todayIso,
+  ).length;
+  const hotLeads = leads.filter(
+    (lead) =>
+      !lead.converted_contact_id && ["qualified", "follow_up", "proposal"].includes(lead.stage),
+  ).length;
+  function getLeadCommercialSignal(lead: Lead) {
+    const followUpAt = lead.follow_up_at ?? "";
+    const isOverdue = Boolean(followUpAt) && followUpAt < todayIso;
+    const isDueToday = followUpAt === todayIso;
+    if (lead.converted_contact_id) {
+      return { tone: "success" as const, label: "Convertido em contato" };
+    }
+    if (isOverdue) {
+      return { tone: "danger" as const, label: "SLA estourado" };
+    }
+    if (isDueToday) {
+      return { tone: "warning" as const, label: "Follow-up hoje" };
+    }
+    if (["qualified", "follow_up", "proposal"].includes(lead.stage)) {
+      return { tone: "info" as const, label: "Lead quente" };
+    }
+    return { tone: "neutral" as const, label: "Pendente de triagem" };
+  }
 
   useEffect(() => {
     void loadLeads().catch((loadError) =>
@@ -2449,11 +2498,24 @@ function LeadsPage() {
             <strong>Follow-up agendado</strong>
             <span>{followUpsPlanned}</span>
           </article>
+          <article className="summary-tile">
+            <strong>Follow-up atrasado</strong>
+            <span>{overdueFollowUps}</span>
+          </article>
+          <article className="summary-tile">
+            <strong>Leads quentes</strong>
+            <span>{hotLeads}</span>
+          </article>
         </div>
         <div className="leads-intro">
           <p className="meta-copy">
             Este painel mostra a qualidade da entrada comercial e agora permite transformar
             interesse validado em contato acionavel sem sair do fluxo.
+          </p>
+          <p className="meta-copy">
+            {overdueFollowUps
+              ? `${overdueFollowUps} follow-up(s) estao fora do SLA e ${dueTodayFollowUps} vencem hoje.`
+              : "Sem follow-up atrasado agora. Mantenha a cadencia antes da janela esfriar."}
           </p>
         </div>
         <div className="toolbar lead-toolbar">
@@ -2491,102 +2553,105 @@ function LeadsPage() {
         </div>
         <div className="list-grid lead-records">
           {leads.length === 0 ? <p className="meta-copy">Nenhum lead captado ainda.</p> : null}
-          {leads.map((lead) => (
-            <article className="list-card lead-card" key={lead.id}>
-              <div className="section-header">
-                <strong>{lead.name}</strong>
-                <span>{new Date(lead.created_at).toLocaleDateString("pt-BR")}</span>
-              </div>
-              <span>{lead.email}</span>
-              <div className="lead-card__meta">
-                <span>{lead.phone || "Sem WhatsApp"}</span>
-                <span>{lead.city || "Cidade nao informada"}</span>
-                <span>{lead.role || "Papel nao informado"}</span>
-              </div>
-              <div className="lead-card__status">
-                <Badge tone={lead.converted_contact_id ? "success" : "neutral"}>
-                  {lead.converted_contact_id ? "Convertido em contato" : "Pendente de triagem"}
-                </Badge>
-                <span className="meta-copy">Origem: {lead.source || "website"}</span>
-              </div>
-              <div className="lead-card__funnel">
-                <label>
-                  <span className="meta-copy">Estagio</span>
-                  <select
-                    value={lead.stage}
-                    onChange={(event) =>
-                      void handleLeadUpdate(lead.id, {
-                        stage: event.target.value,
-                      })
-                    }
-                    disabled={pendingLeadId === lead.id}
-                  >
-                    <option value="captured">Captado</option>
-                    <option value="qualified">Qualificado</option>
-                    <option value="follow_up">Em follow-up</option>
-                    <option value="proposal">Proposta</option>
-                    <option value="converted">Convertido</option>
-                    <option value="archived">Arquivado</option>
-                  </select>
-                </label>
-                <label>
-                  <span className="meta-copy">Responsavel</span>
-                  <select
-                    value={lead.owner_user_id || ""}
-                    onChange={(event) =>
-                      void handleLeadUpdate(lead.id, {
-                        owner_user_id: event.target.value,
-                      })
-                    }
-                    disabled={pendingLeadId === lead.id}
-                  >
-                    <option value="">Sem dono</option>
-                    {memberships.map((member) => (
-                      <option key={member.id} value={member.user_id}>
-                        {member.full_name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span className="meta-copy">Proximo follow-up</span>
-                  <input
-                    type="date"
-                    value={lead.follow_up_at || ""}
-                    onChange={(event) =>
-                      void handleLeadUpdate(lead.id, {
-                        follow_up_at: event.target.value,
-                      })
-                    }
-                    disabled={pendingLeadId === lead.id}
-                  />
-                </label>
-              </div>
-              <p>{lead.challenge || "Sem desafio informado no primeiro contato."}</p>
-              <div className="lead-card__actions">
-                <span className="meta-copy">
-                  {lead.owner_name
-                    ? `Dono: ${lead.owner_name}`
-                    : lead.follow_up_at
-                      ? `Follow-up em ${new Date(lead.follow_up_at).toLocaleDateString("pt-BR")}`
-                      : "Sem proximo passo definido"}
-                </span>
-                {lead.converted_contact_id ? (
+          {leads.map((lead) => {
+            const commercialSignal = getLeadCommercialSignal(lead);
+            return (
+              <article className="list-card lead-card" key={lead.id}>
+                <div className="section-header">
+                  <strong>{lead.name}</strong>
+                  <span>{new Date(lead.created_at).toLocaleDateString("pt-BR")}</span>
+                </div>
+                <span>{lead.email}</span>
+                <div className="lead-card__meta">
+                  <span>{lead.phone || "Sem WhatsApp"}</span>
+                  <span>{lead.city || "Cidade nao informada"}</span>
+                  <span>{lead.role || "Papel nao informado"}</span>
+                </div>
+                <div className="lead-card__status">
+                  <Badge tone={commercialSignal.tone}>{commercialSignal.label}</Badge>
+                  <span className="meta-copy">Origem: {lead.source || "website"}</span>
+                </div>
+                <div className="lead-card__funnel">
+                  <label>
+                    <span className="meta-copy">Estagio</span>
+                    <select
+                      value={lead.stage}
+                      onChange={(event) =>
+                        void handleLeadUpdate(lead.id, {
+                          stage: event.target.value,
+                        })
+                      }
+                      disabled={pendingLeadId === lead.id}
+                    >
+                      <option value="captured">Captado</option>
+                      <option value="qualified">Qualificado</option>
+                      <option value="follow_up">Em follow-up</option>
+                      <option value="proposal">Proposta</option>
+                      <option value="converted">Convertido</option>
+                      <option value="archived">Arquivado</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span className="meta-copy">Responsavel</span>
+                    <select
+                      value={lead.owner_user_id || ""}
+                      onChange={(event) =>
+                        void handleLeadUpdate(lead.id, {
+                          owner_user_id: event.target.value,
+                        })
+                      }
+                      disabled={pendingLeadId === lead.id}
+                    >
+                      <option value="">Sem dono</option>
+                      {memberships.map((member) => (
+                        <option key={member.id} value={member.user_id}>
+                          {member.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="meta-copy">Proximo follow-up</span>
+                    <input
+                      type="date"
+                      value={lead.follow_up_at || ""}
+                      onChange={(event) =>
+                        void handleLeadUpdate(lead.id, {
+                          follow_up_at: event.target.value,
+                        })
+                      }
+                      disabled={pendingLeadId === lead.id}
+                    />
+                  </label>
+                </div>
+                <p>{lead.challenge || "Sem desafio informado no primeiro contato."}</p>
+                <div className="lead-card__actions">
                   <span className="meta-copy">
-                    Convertido em{" "}
-                    {new Date(lead.converted_at || lead.created_at).toLocaleDateString("pt-BR")}
+                    {lead.owner_name
+                      ? `Dono: ${lead.owner_name}`
+                      : lead.follow_up_at
+                        ? `Follow-up em ${new Date(lead.follow_up_at).toLocaleDateString("pt-BR")}`
+                        : "Sem proximo passo definido"}
                   </span>
-                ) : (
-                  <Button
-                    label={pendingLeadId === lead.id ? "Convertendo..." : "Converter para contato"}
-                    variant="secondary"
-                    onClick={() => void handleLeadConvert(lead.id)}
-                    disabled={pendingLeadId === lead.id}
-                  />
-                )}
-              </div>
-            </article>
-          ))}
+                  {lead.converted_contact_id ? (
+                    <span className="meta-copy">
+                      Convertido em{" "}
+                      {new Date(lead.converted_at || lead.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                  ) : (
+                    <Button
+                      label={
+                        pendingLeadId === lead.id ? "Convertendo..." : "Converter para contato"
+                      }
+                      variant="secondary"
+                      onClick={() => void handleLeadConvert(lead.id)}
+                      disabled={pendingLeadId === lead.id}
+                    />
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
