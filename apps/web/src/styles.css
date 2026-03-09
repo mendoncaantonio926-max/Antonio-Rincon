@@ -1118,6 +1118,50 @@ h3,
   font-size: 0.9rem;
 }
 
+.dashboard-ai-impact-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-ai-impact-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.9rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(120, 87, 45, 0.12);
+}
+
+.dashboard-ai-impact-card > span {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dashboard-ai-impact-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.dashboard-ai-impact-list p {
+  display: grid;
+  gap: 0.18rem;
+  margin: 0;
+}
+
+.dashboard-ai-impact-list strong {
+  color: var(--ink-strong);
+  font-size: 0.92rem;
+}
+
+.dashboard-ai-impact-list p span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 .dashboard-ai-meta,
 .dashboard-ai-lists {
   display: grid;
@@ -1737,6 +1781,7 @@ ul {
   .dashboard-metrics,
   .dashboard-ai-meta,
   .dashboard-ai-lists,
+  .dashboard-ai-impact-grid,
   .billing-hero-strip,
   .billing-stat-grid,
   .billing-brief-grid {
@@ -1775,6 +1820,7 @@ ul {
   .dashboard-metrics,
   .dashboard-ai-meta,
   .dashboard-ai-lists,
+  .dashboard-ai-impact-grid,
   .billing-hero-strip,
   .billing-stat-grid,
   .billing-brief-grid {

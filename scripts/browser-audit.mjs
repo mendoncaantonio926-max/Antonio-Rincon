@@ -332,6 +332,8 @@ async function main() {
         text.includes("Fila critica reduzida:")
       );
     });
+    await page.getByText("Meta recuperada por owner").waitFor();
+    await page.getByText("Recuperacao por janela").waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
     await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();
     await page.getByRole("button", { name: "Aplicar Pressionado" }).click();
@@ -358,6 +360,7 @@ async function main() {
     checks.push("dashboard_ai_action");
     checks.push("dashboard_ai_batch_feedback");
     checks.push("dashboard_ai_forecast_impact");
+    checks.push("dashboard_ai_owner_window_impact");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");

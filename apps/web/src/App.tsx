@@ -23,6 +23,61 @@ import {
 import { AuthProvider, useAuth } from "./auth";
 import { ProtectedRoute } from "./ProtectedRoute";
 
+const leadWindowLabels: Record<string, string> = {
+  overdue: "Atrasado",
+  today: "Hoje",
+  this_week: "Esta semana",
+  later: "Mais a frente",
+  unscheduled: "Sem agenda",
+};
+
+function getLeadOwnerLabel(lead: Lead) {
+  return lead.owner_name || lead.suggested_owner_name || "Sem owner";
+}
+
+function getLeadWindowLabel(lead: Lead) {
+  return leadWindowLabels[lead.follow_up_bucket] ?? "Sem agenda";
+}
+
+function distributeRecoveredGap(
+  totalRecoveredGap: number,
+  buckets: Array<{ label: string; appliedCount: number }>,
+) {
+  const totalApplied = buckets.reduce((sum, item) => sum + item.appliedCount, 0);
+  if (!totalApplied) {
+    return buckets.map((item) => ({ ...item, recoveredGap: 0 }));
+  }
+
+  const allocations = buckets.map((item) => {
+    const rawShare = (totalRecoveredGap * item.appliedCount) / totalApplied;
+    return {
+      ...item,
+      recoveredGap: Math.floor(rawShare),
+      remainder: rawShare - Math.floor(rawShare),
+    };
+  });
+  let remaining = totalRecoveredGap - allocations.reduce((sum, item) => sum + item.recoveredGap, 0);
+
+  allocations
+    .sort((left, right) => right.remainder - left.remainder)
+    .forEach((item) => {
+      if (remaining <= 0) {
+        return;
+      }
+      item.recoveredGap += 1;
+      remaining -= 1;
+    });
+
+  return allocations
+    .map(({ remainder: _remainder, ...item }) => item)
+    .sort(
+      (left, right) =>
+        right.recoveredGap - left.recoveredGap ||
+        right.appliedCount - left.appliedCount ||
+        left.label.localeCompare(right.label),
+    );
+}
+
 function LandingPage() {
   const [leadMessage, setLeadMessage] = useState<string | null>(null);
   const [leadPending, setLeadPending] = useState(false);
@@ -399,6 +454,13 @@ function DashboardPage() {
     recoveredGap: number;
     reducedCriticalQueue: number;
     reducedOverdueFollowups: number;
+    ownerImpact: Array<{ label: string; appliedCount: number; recoveredGap: number }>;
+    windowImpact: Array<{
+      label: string;
+      appliedCount: number;
+      recoveredGap: number;
+      backlogReduced: number;
+    }>;
   } | null>(null);
 
   const loadDashboard = useCallback(async () => {
@@ -518,8 +580,63 @@ function DashboardPage() {
         if (!appliedCount) {
           return;
         }
+        const afterLeads = await api.listLeads(tokens.access_token);
+        const afterLeadMap = new Map(afterLeads.map((item) => [item.id, item]));
         const refreshed = await loadDashboard();
         const refreshedSummary = refreshed?.dashboardPayload;
+        const recoveredGap = refreshedSummary?.goal_risk
+          ? Math.max(
+              beforeSummary.goal_risk.gap_to_target - refreshedSummary.goal_risk.gap_to_target,
+              0,
+            )
+          : (aiSummary.execution_outlook?.recovered_gap ?? 0);
+        const ownerBuckets = new Map<string, number>();
+        const windowBuckets = new Map<string, number>();
+        for (const step of aiSummary.execution_batch) {
+          const updatedLead = afterLeadMap.get(step.lead_id);
+          if (!updatedLead) {
+            continue;
+          }
+          ownerBuckets.set(
+            getLeadOwnerLabel(updatedLead),
+            (ownerBuckets.get(getLeadOwnerLabel(updatedLead)) ?? 0) + 1,
+          );
+          windowBuckets.set(
+            getLeadWindowLabel(updatedLead),
+            (windowBuckets.get(getLeadWindowLabel(updatedLead)) ?? 0) + 1,
+          );
+        }
+        const ownerImpact = distributeRecoveredGap(
+          recoveredGap,
+          Array.from(ownerBuckets.entries()).map(([label, appliedCount]) => ({
+            label,
+            appliedCount,
+          })),
+        ).slice(0, 4);
+        const beforeWindowMap = new Map(
+          beforeSummary.commercial_window_groups.map((item) => [item.label, item.leads_count]),
+        );
+        const afterWindowMap = new Map(
+          (refreshedSummary?.commercial_window_groups ?? []).map((item) => [
+            item.label,
+            item.leads_count,
+          ]),
+        );
+        const windowImpact = distributeRecoveredGap(
+          recoveredGap,
+          Array.from(windowBuckets.entries()).map(([label, appliedCount]) => ({
+            label,
+            appliedCount,
+          })),
+        )
+          .map((item) => ({
+            ...item,
+            backlogReduced: Math.max(
+              (beforeWindowMap.get(item.label) ?? 0) - (afterWindowMap.get(item.label) ?? 0),
+              0,
+            ),
+          }))
+          .slice(0, 4);
         setDashboardLeadMessage(`Regua da IA aplicada em ${appliedCount} lead(s).`);
         setDashboardAiRunResult({
           appliedCount,
@@ -530,12 +647,7 @@ function DashboardPage() {
             aiSummary.execution_outlook?.remaining_queue ??
             Math.max(beforeSummary.pending_leads_count - appliedCount, 0),
           expectedGain: aiSummary.execution_outlook?.expected_gain ?? appliedCount,
-          recoveredGap: refreshedSummary?.goal_risk
-            ? Math.max(
-                beforeSummary.goal_risk.gap_to_target - refreshedSummary.goal_risk.gap_to_target,
-                0,
-              )
-            : (aiSummary.execution_outlook?.recovered_gap ?? 0),
+          recoveredGap,
           reducedCriticalQueue: refreshedSummary
             ? Math.max(
                 beforeSummary.critical_queue_count - refreshedSummary.critical_queue_count,
@@ -548,6 +660,8 @@ function DashboardPage() {
                 0,
               )
             : 0,
+          ownerImpact,
+          windowImpact,
         });
       } else if (
         summary?.priority_lead_id &&
@@ -562,8 +676,39 @@ function DashboardPage() {
         }
         await api.updateLead(tokens.access_token, summary.priority_lead_id, updates);
         setDashboardLeadMessage("Recomendacao da IA aplicada na fila comercial.");
+        const afterLeads = await api.listLeads(tokens.access_token);
+        const updatedLead = afterLeads.find((item) => item.id === summary.priority_lead_id) ?? null;
         const refreshed = await loadDashboard();
         const refreshedSummary = refreshed?.dashboardPayload;
+        const recoveredGap = refreshedSummary?.goal_risk
+          ? Math.max(summary.goal_risk.gap_to_target - refreshedSummary.goal_risk.gap_to_target, 0)
+          : (aiSummary.execution_outlook?.recovered_gap ?? 1);
+        const ownerImpact = updatedLead
+          ? distributeRecoveredGap(recoveredGap, [
+              { label: getLeadOwnerLabel(updatedLead), appliedCount: 1 },
+            ])
+          : [];
+        const beforeWindowMap = new Map(
+          summary.commercial_window_groups.map((item) => [item.label, item.leads_count]),
+        );
+        const afterWindowMap = new Map(
+          (refreshedSummary?.commercial_window_groups ?? []).map((item) => [
+            item.label,
+            item.leads_count,
+          ]),
+        );
+        const windowImpact =
+          updatedLead === null
+            ? []
+            : distributeRecoveredGap(recoveredGap, [
+                { label: getLeadWindowLabel(updatedLead), appliedCount: 1 },
+              ]).map((item) => ({
+                ...item,
+                backlogReduced: Math.max(
+                  (beforeWindowMap.get(item.label) ?? 0) - (afterWindowMap.get(item.label) ?? 0),
+                  0,
+                ),
+              }));
         setDashboardAiRunResult({
           appliedCount: 1,
           ownersApplied: updates.owner_user_id ? 1 : 0,
@@ -571,12 +716,7 @@ function DashboardPage() {
           remainingQueue:
             refreshedSummary?.pending_leads_count ?? Math.max(summary.pending_leads_count - 1, 0),
           expectedGain: aiSummary.execution_outlook?.expected_gain ?? 1,
-          recoveredGap: refreshedSummary?.goal_risk
-            ? Math.max(
-                summary.goal_risk.gap_to_target - refreshedSummary.goal_risk.gap_to_target,
-                0,
-              )
-            : (aiSummary.execution_outlook?.recovered_gap ?? 1),
+          recoveredGap,
           reducedCriticalQueue: refreshedSummary
             ? Math.max(summary.critical_queue_count - refreshedSummary.critical_queue_count, 0)
             : (aiSummary.execution_outlook?.reduced_critical_queue ?? 1),
@@ -586,6 +726,8 @@ function DashboardPage() {
                 0,
               )
             : 0,
+          ownerImpact,
+          windowImpact,
         });
       } else {
         return;
@@ -769,6 +911,37 @@ function DashboardPage() {
                 Backlog comercial reduzido: {dashboardAiRunResult.reducedOverdueFollowups}
               </span>
               <span>Ainda faltam: {dashboardAiRunResult.remainingQueue}</span>
+              {dashboardAiRunResult.ownerImpact.length ? (
+                <div className="dashboard-ai-impact-grid">
+                  <article className="dashboard-ai-impact-card">
+                    <span>Meta recuperada por owner</span>
+                    <div className="dashboard-ai-impact-list">
+                      {dashboardAiRunResult.ownerImpact.map((item) => (
+                        <p key={item.label}>
+                          <strong>{item.label}</strong>
+                          <span>
+                            Gap recuperado {item.recoveredGap} em {item.appliedCount} lead(s)
+                          </span>
+                        </p>
+                      ))}
+                    </div>
+                  </article>
+                  <article className="dashboard-ai-impact-card">
+                    <span>Recuperacao por janela</span>
+                    <div className="dashboard-ai-impact-list">
+                      {dashboardAiRunResult.windowImpact.map((item) => (
+                        <p key={item.label}>
+                          <strong>{item.label}</strong>
+                          <span>
+                            Gap {item.recoveredGap}, backlog reduzido {item.backlogReduced} em{" "}
+                            {item.appliedCount} lead(s)
+                          </span>
+                        </p>
+                      ))}
+                    </div>
+                  </article>
+                </div>
+              ) : null}
             </div>
           ) : null}
           <div className="dashboard-ai-meta">
