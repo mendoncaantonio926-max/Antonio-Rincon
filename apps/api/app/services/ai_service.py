@@ -110,6 +110,7 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
     execution_mode = None
     execution_payload = None
     execution_batch = []
+    execution_outlook = None
 
     recommendations: list[str] = []
     blockers: list[str] = []
@@ -157,6 +158,18 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
                         "follow_up_at": step_follow_up_at,
                     }
                 )
+            batch_size = len(execution_batch)
+            expected_gain = min(max(int(goal_risk.get("gap_to_target", 0)), 1), batch_size)
+            remaining_queue = max(len(pending_lead_queue) - batch_size, 0)
+            execution_outlook = {
+                "batch_size": batch_size,
+                "expected_gain": expected_gain,
+                "remaining_queue": remaining_queue,
+                "summary": (
+                    f"Lote de {batch_size} lead(s), com ganho esperado de {expected_gain} "
+                    f"movimento(s) de conversao e {remaining_queue} ainda pendente(s) depois da rodada."
+                ),
+            }
         if (
             module == "dashboard"
             and goal_risk.get("risk_label") in {"attention", "critical"}
@@ -642,4 +655,5 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
         "execution_mode": execution_mode,
         "execution_payload": execution_payload,
         "execution_batch": execution_batch,
+        "execution_outlook": execution_outlook,
     }

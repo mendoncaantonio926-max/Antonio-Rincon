@@ -272,6 +272,12 @@ export type AiSummary = {
     owner_user_id?: string | null;
     follow_up_at?: string | null;
   }>;
+  execution_outlook?: {
+    batch_size: number;
+    expected_gain: number;
+    remaining_queue: number;
+    summary: string;
+  } | null;
 };
 
 export type DashboardSummary = {

@@ -390,6 +390,11 @@ function DashboardPage() {
   const [aiModule, setAiModule] = useState("dashboard");
   const [dashboardLeadPending, setDashboardLeadPending] = useState<string | null>(null);
   const [dashboardLeadMessage, setDashboardLeadMessage] = useState<string | null>(null);
+  const [dashboardAiRunResult, setDashboardAiRunResult] = useState<{
+    appliedCount: number;
+    remainingQueue: number;
+    expectedGain: number;
+  } | null>(null);
 
   const loadDashboard = useCallback(async () => {
     if (!tokens?.access_token) {
@@ -496,6 +501,13 @@ function DashboardPage() {
           return;
         }
         setDashboardLeadMessage(`Regua da IA aplicada em ${appliedCount} lead(s).`);
+        setDashboardAiRunResult({
+          appliedCount,
+          remainingQueue:
+            aiSummary.execution_outlook?.remaining_queue ??
+            Math.max((summary?.pending_leads_count ?? appliedCount) - appliedCount, 0),
+          expectedGain: aiSummary.execution_outlook?.expected_gain ?? appliedCount,
+        });
       } else if (
         summary?.priority_lead_id &&
         aiSummary.execution_mode === "update_priority_lead" &&
@@ -509,6 +521,11 @@ function DashboardPage() {
         }
         await api.updateLead(tokens.access_token, summary.priority_lead_id, updates);
         setDashboardLeadMessage("Recomendacao da IA aplicada na fila comercial.");
+        setDashboardAiRunResult({
+          appliedCount: 1,
+          remainingQueue: Math.max((summary?.pending_leads_count ?? 1) - 1, 0),
+          expectedGain: aiSummary.execution_outlook?.expected_gain ?? 1,
+        });
       } else {
         return;
       }
@@ -653,6 +670,30 @@ function DashboardPage() {
                 onClick={() => void handleDashboardAiAction()}
                 disabled={dashboardLeadPending !== null}
               />
+            </div>
+          ) : null}
+          {aiSummary?.execution_outlook && aiModule === "dashboard" ? (
+            <div className="dashboard-ai-meta dashboard-ai-meta--compact">
+              <article className="dashboard-ai-meta-card">
+                <span>Lote sugerido</span>
+                <strong>{aiSummary.execution_outlook.batch_size}</strong>
+              </article>
+              <article className="dashboard-ai-meta-card">
+                <span>Ganho esperado</span>
+                <strong>{aiSummary.execution_outlook.expected_gain}</strong>
+              </article>
+              <article className="dashboard-ai-meta-card">
+                <span>Fila restante</span>
+                <strong>{aiSummary.execution_outlook.remaining_queue}</strong>
+              </article>
+            </div>
+          ) : null}
+          {dashboardAiRunResult && aiModule === "dashboard" ? (
+            <div className="dashboard-ai-run-result">
+              <strong>Lote aplicado</strong>
+              <span>{dashboardAiRunResult.appliedCount} lead(s) atualizados</span>
+              <span>Ganho esperado: {dashboardAiRunResult.expectedGain}</span>
+              <span>Ainda faltam: {dashboardAiRunResult.remainingQueue}</span>
             </div>
           ) : null}
           <div className="dashboard-ai-meta">

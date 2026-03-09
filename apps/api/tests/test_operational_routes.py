@@ -566,6 +566,8 @@ def test_membership_invite_and_ai_summary() -> None:
     assert ai_response.json()["execution_payload"]["follow_up_at"] is not None
     assert isinstance(ai_response.json()["execution_batch"], list)
     assert len(ai_response.json()["execution_batch"]) >= 1
+    assert ai_response.json()["execution_outlook"]["batch_size"] >= 1
+    assert ai_response.json()["execution_outlook"]["expected_gain"] >= 1
 
     ai_contacts_response = client.get("/ai/summary?module=contacts", headers=headers)
     assert ai_contacts_response.status_code == 200

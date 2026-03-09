@@ -320,6 +320,7 @@ async function main() {
     await page
       .getByText(/Regua da IA aplicada em|Recomendacao da IA aplicada na fila comercial./)
       .waitFor();
+    await page.getByText("Lote aplicado").waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
     await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();
     await page.getByRole("button", { name: "Aplicar Pressionado" }).click();

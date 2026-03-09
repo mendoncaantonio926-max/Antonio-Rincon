@@ -16,6 +16,13 @@ class AiExecutionStepResponse(BaseModel):
     follow_up_at: str | None = None
 
 
+class AiExecutionOutlookResponse(BaseModel):
+    batch_size: int
+    expected_gain: int
+    remaining_queue: int
+    summary: str
+
+
 class AiSummaryResponse(BaseModel):
     headline: str
     module: str
@@ -35,3 +42,4 @@ class AiSummaryResponse(BaseModel):
     execution_mode: str | None = None
     execution_payload: AiExecutionPayloadResponse | None = None
     execution_batch: list[AiExecutionStepResponse] = []
+    execution_outlook: AiExecutionOutlookResponse | None = None

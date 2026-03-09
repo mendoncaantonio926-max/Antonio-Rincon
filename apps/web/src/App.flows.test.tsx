@@ -1056,6 +1056,13 @@ const {
             follow_up_at: "2026-03-10",
           },
         ],
+        execution_outlook: {
+          batch_size: 2,
+          expected_gain: 2,
+          remaining_queue: 0,
+          summary:
+            "Lote de 2 lead(s), com ganho esperado de 2 movimento(s) de conversao e 0 ainda pendente(s) depois da rodada.",
+        },
       },
       billing: {
         headline: "Assinatura sob atencao",
@@ -1076,6 +1083,7 @@ const {
         execution_mode: null,
         execution_payload: null,
         execution_batch: [],
+        execution_outlook: null,
       },
     },
   };
@@ -2226,6 +2234,9 @@ describe("App authenticated flows", () => {
       expect(apiMock.getAiSummary).toHaveBeenCalledWith("token-valido", "dashboard");
       expect(screen.getByText("Atacar tarefas vencidas.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Executar recomendacao" })).toBeInTheDocument();
+      expect(screen.getByText("Lote sugerido")).toBeInTheDocument();
+      expect(screen.getByText("Ganho esperado")).toBeInTheDocument();
+      expect(screen.getByText("Fila restante")).toBeInTheDocument();
       expect(screen.getByText("78/100")).toBeInTheDocument();
       expect(screen.getAllByText("3 tarefas abertas").length).toBeGreaterThan(0);
       expect(screen.getByText("Leads pendentes")).toBeInTheDocument();
@@ -2333,6 +2344,10 @@ describe("App authenticated flows", () => {
         follow_up_at: "2026-03-10",
       });
       expect(screen.getByText("Regua da IA aplicada em 2 lead(s).")).toBeInTheDocument();
+      expect(screen.getByText("Lote aplicado")).toBeInTheDocument();
+      expect(screen.getByText("2 lead(s) atualizados")).toBeInTheDocument();
+      expect(screen.getByText("Ganho esperado: 2")).toBeInTheDocument();
+      expect(screen.getByText("Ainda faltam: 0")).toBeInTheDocument();
     });
 
     await waitFor(() => {

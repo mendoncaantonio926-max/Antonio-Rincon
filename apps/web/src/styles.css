@@ -1094,6 +1094,30 @@ h3,
   margin-top: 0.9rem;
 }
 
+.dashboard-ai-meta--compact {
+  margin-top: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-ai-run-result {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.9rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  background: rgba(18, 31, 51, 0.05);
+  border: 1px solid rgba(18, 31, 51, 0.08);
+}
+
+.dashboard-ai-run-result strong {
+  font-size: 0.95rem;
+}
+
+.dashboard-ai-run-result span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .dashboard-ai-meta,
 .dashboard-ai-lists {
   display: grid;
