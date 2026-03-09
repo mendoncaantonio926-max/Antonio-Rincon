@@ -349,6 +349,8 @@ def test_onboarding_billing_and_dashboard_flow() -> None:
     assert isinstance(dashboard_response.json()["commercial_window_groups"], list)
     assert isinstance(dashboard_response.json()["owner_alerts"], list)
     assert isinstance(dashboard_response.json()["daily_execution_queue"], list)
+    assert isinstance(dashboard_response.json()["owner_productivity"], list)
+    assert isinstance(dashboard_response.json()["window_productivity"], list)
 
 
 def test_public_lead_capture() -> None:

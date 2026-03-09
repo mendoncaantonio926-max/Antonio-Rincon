@@ -311,6 +311,20 @@ export type DashboardSummary = {
     follow_up_label: string;
     risk_score: number;
   }>;
+  owner_productivity: Array<{
+    label: string;
+    pending_count: number;
+    converted_count: number;
+    overdue_count: number;
+    due_today_count: number;
+  }>;
+  window_productivity: Array<{
+    label: string;
+    pending_count: number;
+    converted_count: number;
+    overdue_count: number;
+    due_today_count: number;
+  }>;
   next_action: string;
 };
 

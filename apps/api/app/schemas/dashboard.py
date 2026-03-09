@@ -24,6 +24,14 @@ class DashboardExecutionItemResponse(BaseModel):
     risk_score: int
 
 
+class DashboardProductivityResponse(BaseModel):
+    label: str
+    pending_count: int
+    converted_count: int
+    overdue_count: int
+    due_today_count: int
+
+
 class DashboardSummaryResponse(BaseModel):
     tenant_name: str
     contacts_count: int
@@ -54,4 +62,6 @@ class DashboardSummaryResponse(BaseModel):
     commercial_window_groups: list[DashboardQueueGroupResponse]
     owner_alerts: list[DashboardOwnerAlertResponse]
     daily_execution_queue: list[DashboardExecutionItemResponse]
+    owner_productivity: list[DashboardProductivityResponse]
+    window_productivity: list[DashboardProductivityResponse]
     next_action: str

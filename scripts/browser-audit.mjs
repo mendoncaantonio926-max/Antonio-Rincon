@@ -290,6 +290,8 @@ async function main() {
     await page.getByText("Fila comercial priorizada").waitFor();
     await page.getByText("Alertas por owner").waitFor();
     await page.getByText("Fila de hoje").waitFor();
+    await page.getByText("Produtividade por owner").waitFor();
+    await page.getByText("Produtividade por janela").waitFor();
     await page.getByText(/Puxar com|Sem prioridade comercial aberta/).waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
     await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();

@@ -435,6 +435,20 @@ const {
           }[item.follow_up_bucket] ?? "Sem agenda",
         risk_score: item.risk_score,
       })),
+      owner_productivity: Array.from(ownerGroups.values()).map((group) => ({
+        label: group.label,
+        pending_count: group.leads_count,
+        converted_count: group.label === "Antonio Rincon" ? 1 : 0,
+        overdue_count: group.overdue_count,
+        due_today_count: group.due_today_count,
+      })),
+      window_productivity: Array.from(windowGroups.values()).map((group) => ({
+        label: group.label,
+        pending_count: group.leads_count,
+        converted_count: group.label === "Convertido" ? 1 : 0,
+        overdue_count: group.overdue_count,
+        due_today_count: group.due_today_count,
+      })),
       next_action: "Fechar as pendencias operacionais.",
     };
   }
@@ -1672,6 +1686,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText(/Puxar com Antonio Rincon/)).toBeInTheDocument();
       expect(screen.getByText("Alertas por owner")).toBeInTheDocument();
       expect(screen.getByText("Fila de hoje")).toBeInTheDocument();
+      expect(screen.getByText("Produtividade por owner")).toBeInTheDocument();
+      expect(screen.getByText("Produtividade por janela")).toBeInTheDocument();
     });
 
     await user.selectOptions(screen.getByDisplayValue("Workspace"), "billing");

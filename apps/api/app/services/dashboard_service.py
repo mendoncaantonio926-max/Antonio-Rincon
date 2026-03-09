@@ -157,6 +157,72 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
                 ),
             }
         )
+    owner_productivity_map: dict[str, dict[str, str | int]] = {}
+    for lead in leads:
+        serialized = serialize_lead(lead, tenant_id)
+        owner_label = str(serialized["owner_name"] or serialized["suggested_owner_name"] or "Sem owner")
+        group = owner_productivity_map.setdefault(
+            owner_label,
+            {
+                "label": owner_label,
+                "pending_count": 0,
+                "converted_count": 0,
+                "overdue_count": 0,
+                "due_today_count": 0,
+            },
+        )
+        if serialized["converted_contact_id"]:
+            group["converted_count"] = int(group["converted_count"]) + 1
+        else:
+            group["pending_count"] = int(group["pending_count"]) + 1
+            if serialized["follow_up_bucket"] == "overdue":
+                group["overdue_count"] = int(group["overdue_count"]) + 1
+            if serialized["follow_up_bucket"] == "today":
+                group["due_today_count"] = int(group["due_today_count"]) + 1
+
+    window_productivity_map: dict[str, dict[str, str | int]] = {}
+    for lead in leads:
+        serialized = serialize_lead(lead, tenant_id)
+        window_label = follow_up_bucket_labels.get(
+            str(serialized["follow_up_bucket"]),
+            "Convertido" if serialized["converted_contact_id"] else "Sem agenda",
+        )
+        group = window_productivity_map.setdefault(
+            window_label,
+            {
+                "label": window_label,
+                "pending_count": 0,
+                "converted_count": 0,
+                "overdue_count": 0,
+                "due_today_count": 0,
+            },
+        )
+        if serialized["converted_contact_id"]:
+            group["converted_count"] = int(group["converted_count"]) + 1
+        else:
+            group["pending_count"] = int(group["pending_count"]) + 1
+            if serialized["follow_up_bucket"] == "overdue":
+                group["overdue_count"] = int(group["overdue_count"]) + 1
+            if serialized["follow_up_bucket"] == "today":
+                group["due_today_count"] = int(group["due_today_count"]) + 1
+    owner_productivity = sorted(
+        owner_productivity_map.values(),
+        key=lambda item: (
+            -int(item["converted_count"]),
+            -int(item["pending_count"]),
+            -int(item["overdue_count"]),
+            str(item["label"]),
+        ),
+    )
+    window_productivity = sorted(
+        window_productivity_map.values(),
+        key=lambda item: (
+            -int(item["converted_count"]),
+            -int(item["pending_count"]),
+            -int(item["overdue_count"]),
+            str(item["label"]),
+        ),
+    )
     daily_execution_queue = [
         {
             "lead_id": str(item["id"]),
@@ -212,5 +278,7 @@ def get_dashboard_summary(tenant_id: str) -> dict[str, str | int]:
         "commercial_window_groups": commercial_window_groups[:5],
         "owner_alerts": owner_alerts[:4],
         "daily_execution_queue": daily_execution_queue,
+        "owner_productivity": owner_productivity[:4],
+        "window_productivity": window_productivity[:5],
         "next_action": next_action,
     }

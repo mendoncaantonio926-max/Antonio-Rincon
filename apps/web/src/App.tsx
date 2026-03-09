@@ -700,6 +700,30 @@ function DashboardPage() {
                 </div>
               </article>
             </div>
+            <div className="dashboard-commercial-grid">
+              <article className="dashboard-commercial-list">
+                <span>Produtividade por owner</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.owner_productivity ?? []).map((item) => (
+                    <span key={`owner-productivity-${item.label}`}>
+                      {item.label}: {item.converted_count} convertido(s), {item.pending_count} na
+                      fila
+                    </span>
+                  ))}
+                </div>
+              </article>
+              <article className="dashboard-commercial-list">
+                <span>Produtividade por janela</span>
+                <div className="dashboard-recommendations">
+                  {(summary?.window_productivity ?? []).map((item) => (
+                    <span key={`window-productivity-${item.label}`}>
+                      {item.label}: {item.converted_count} convertido(s), {item.pending_count}{" "}
+                      ativo(s)
+                    </span>
+                  ))}
+                </div>
+              </article>
+            </div>
           </article>
           <div className="snapshot-list">
             <article>
