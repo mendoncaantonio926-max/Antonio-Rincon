@@ -1060,8 +1060,10 @@ const {
           batch_size: 2,
           expected_gain: 2,
           remaining_queue: 0,
+          recovered_gap: 2,
+          reduced_critical_queue: 2,
           summary:
-            "Lote de 2 lead(s), com ganho esperado de 2 movimento(s) de conversao e 0 ainda pendente(s) depois da rodada.",
+            "Lote de 2 lead(s), com ganho esperado de 2 movimento(s) de conversao, recuperacao de 2 no gap de meta e queda de 2 na fila critica, deixando 0 pendente(s) depois da rodada.",
         },
       },
       billing: {
@@ -2237,6 +2239,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Lote sugerido")).toBeInTheDocument();
       expect(screen.getByText("Ganho esperado")).toBeInTheDocument();
       expect(screen.getByText("Fila restante")).toBeInTheDocument();
+      expect(screen.getByText("Gap recuperado")).toBeInTheDocument();
+      expect(screen.getByText("Fila critica reduzida")).toBeInTheDocument();
       expect(screen.getByText("78/100")).toBeInTheDocument();
       expect(screen.getAllByText("3 tarefas abertas").length).toBeGreaterThan(0);
       expect(screen.getByText("Leads pendentes")).toBeInTheDocument();
@@ -2347,6 +2351,8 @@ describe("App authenticated flows", () => {
       expect(screen.getByText("Lote aplicado")).toBeInTheDocument();
       expect(screen.getByText("2 lead(s) atualizados")).toBeInTheDocument();
       expect(screen.getByText("Ganho esperado: 2")).toBeInTheDocument();
+      expect(screen.getByText("Gap recuperado: 2")).toBeInTheDocument();
+      expect(screen.getByText("Fila critica reduzida: 2")).toBeInTheDocument();
       expect(screen.getByText("Ainda faltam: 0")).toBeInTheDocument();
     });
 

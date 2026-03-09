@@ -276,6 +276,8 @@ export type AiSummary = {
     batch_size: number;
     expected_gain: number;
     remaining_queue: number;
+    recovered_gap: number;
+    reduced_critical_queue: number;
     summary: string;
   } | null;
 };

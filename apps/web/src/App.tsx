@@ -394,6 +394,8 @@ function DashboardPage() {
     appliedCount: number;
     remainingQueue: number;
     expectedGain: number;
+    recoveredGap: number;
+    reducedCriticalQueue: number;
   } | null>(null);
 
   const loadDashboard = useCallback(async () => {
@@ -507,6 +509,8 @@ function DashboardPage() {
             aiSummary.execution_outlook?.remaining_queue ??
             Math.max((summary?.pending_leads_count ?? appliedCount) - appliedCount, 0),
           expectedGain: aiSummary.execution_outlook?.expected_gain ?? appliedCount,
+          recoveredGap: aiSummary.execution_outlook?.recovered_gap ?? 0,
+          reducedCriticalQueue: aiSummary.execution_outlook?.reduced_critical_queue ?? appliedCount,
         });
       } else if (
         summary?.priority_lead_id &&
@@ -525,6 +529,8 @@ function DashboardPage() {
           appliedCount: 1,
           remainingQueue: Math.max((summary?.pending_leads_count ?? 1) - 1, 0),
           expectedGain: aiSummary.execution_outlook?.expected_gain ?? 1,
+          recoveredGap: aiSummary.execution_outlook?.recovered_gap ?? 1,
+          reducedCriticalQueue: aiSummary.execution_outlook?.reduced_critical_queue ?? 1,
         });
       } else {
         return;
@@ -686,6 +692,14 @@ function DashboardPage() {
                 <span>Fila restante</span>
                 <strong>{aiSummary.execution_outlook.remaining_queue}</strong>
               </article>
+              <article className="dashboard-ai-meta-card">
+                <span>Gap recuperado</span>
+                <strong>{aiSummary.execution_outlook.recovered_gap}</strong>
+              </article>
+              <article className="dashboard-ai-meta-card">
+                <span>Fila critica reduzida</span>
+                <strong>{aiSummary.execution_outlook.reduced_critical_queue}</strong>
+              </article>
             </div>
           ) : null}
           {dashboardAiRunResult && aiModule === "dashboard" ? (
@@ -693,6 +707,8 @@ function DashboardPage() {
               <strong>Lote aplicado</strong>
               <span>{dashboardAiRunResult.appliedCount} lead(s) atualizados</span>
               <span>Ganho esperado: {dashboardAiRunResult.expectedGain}</span>
+              <span>Gap recuperado: {dashboardAiRunResult.recoveredGap}</span>
+              <span>Fila critica reduzida: {dashboardAiRunResult.reducedCriticalQueue}</span>
               <span>Ainda faltam: {dashboardAiRunResult.remainingQueue}</span>
             </div>
           ) : null}

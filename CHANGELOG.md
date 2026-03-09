@@ -41,6 +41,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - dashboard agora permite executar a recomendacao da IA diretamente na fila comercial prioritaria
 - a recomendacao da IA no dashboard agora pode aplicar uma mini-regua comercial em lote sobre a fila prioritaria
 - o dashboard agora mostra retorno da regua da IA com lote aplicado, ganho esperado e fila restante
+- o dashboard agora mostra impacto da regua da IA no forecast, incluindo gap recuperado e reducao da fila critica
 - exportacao de relatorios no scaffold local agora recompõe a cota padrao do plano para contas ativas ou trial durante validacoes repetidas
 
 ### Changed
@@ -67,6 +68,7 @@ O formato segue uma estrutura simples inspirada em Keep a Changelog:
 - browser audit agora valida tambem a aplicacao direta de cenarios do forecast no dashboard executivo
 - browser audit agora valida tambem a execucao da recomendacao da IA no dashboard executivo
 - browser audit agora valida tambem o retorno visivel da regua da IA no dashboard executivo
+- browser audit agora valida tambem o impacto da regua da IA no forecast do dashboard
 ### Fixed
 
 ### Docs

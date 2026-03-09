@@ -20,6 +20,8 @@ class AiExecutionOutlookResponse(BaseModel):
     batch_size: int
     expected_gain: int
     remaining_queue: int
+    recovered_gap: int
+    reduced_critical_queue: int
     summary: str
 
 

@@ -161,13 +161,22 @@ def get_ai_summary(tenant_id: str, module: str = "dashboard") -> dict:
             batch_size = len(execution_batch)
             expected_gain = min(max(int(goal_risk.get("gap_to_target", 0)), 1), batch_size)
             remaining_queue = max(len(pending_lead_queue) - batch_size, 0)
+            recovered_gap = min(int(goal_risk.get("gap_to_target", 0)), expected_gain)
+            reduced_critical_queue = min(
+                int(dashboard_summary.get("critical_queue_count", 0)),
+                batch_size,
+            )
             execution_outlook = {
                 "batch_size": batch_size,
                 "expected_gain": expected_gain,
                 "remaining_queue": remaining_queue,
+                "recovered_gap": recovered_gap,
+                "reduced_critical_queue": reduced_critical_queue,
                 "summary": (
                     f"Lote de {batch_size} lead(s), com ganho esperado de {expected_gain} "
-                    f"movimento(s) de conversao e {remaining_queue} ainda pendente(s) depois da rodada."
+                    f"movimento(s) de conversao, recuperacao de {recovered_gap} no gap de meta "
+                    f"e queda de {reduced_critical_queue} na fila critica, deixando {remaining_queue} "
+                    "pendente(s) depois da rodada."
                 ),
             }
         if (

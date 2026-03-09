@@ -321,6 +321,8 @@ async function main() {
       .getByText(/Regua da IA aplicada em|Recomendacao da IA aplicada na fila comercial./)
       .waitFor();
     await page.getByText("Lote aplicado").waitFor();
+    await page.getByText(/^Gap recuperado$/).waitFor();
+    await page.getByText(/^Fila critica reduzida$/).waitFor();
     await page.getByRole("button", { name: "Puxar follow-up para hoje" }).click();
     await page.getByText("Follow-up priorizado para hoje no dashboard.").waitFor();
     await page.getByRole("button", { name: "Aplicar Pressionado" }).click();
@@ -346,6 +348,7 @@ async function main() {
     checks.push("dashboard_forecast_action");
     checks.push("dashboard_ai_action");
     checks.push("dashboard_ai_batch_feedback");
+    checks.push("dashboard_ai_forecast_impact");
 
     await page.getByRole("link", { name: "Contatos" }).click();
     await page.waitForURL("**/app/contacts");
